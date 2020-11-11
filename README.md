@@ -134,6 +134,8 @@ A WebRTC server works together with `cge`, to serve web clients.
 
 Install VS2019 with ATL, CLang.
 
+[CLang/LLVM x64](https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/LLVM-11.0.0-win64.exe) is also needed, while VS may only has CLang x86.
+
 ### 4.2 Boost
 
 Install [Boost](https://www.boost.org/) and set `BOOST_ROOT` environment variable to install directory. [Details](https://blog.umu618.com/2020/09/11/umutech-boost-1-installation/)
