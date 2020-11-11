@@ -1,0 +1,23 @@
+---
+---
+Checks: '-*,boost-use-to-string,bugprone-use-after-move,cppcoreguidelines-*,modernize-*,misc-*,-misc-unused-parameters,-misc-non-private-member-variables-in-classes,readability-identifier-naming'
+HeaderFilterRegex: 'child1'
+CheckOptions:
+  - {key: readability-identifier-naming.ClassCase,                value: CamelCase}
+  - {key: readability-identifier-naming.ClassMemberSuffix,        value: '_'}
+  - {key: readability-identifier-naming.ConstantCase,             value: CamelCase}
+  - {key: readability-identifier-naming.ConstantPrefix,           value: 'k'}
+  - {key: readability-identifier-naming.EnumCase,                 value: CamelCase}
+  - {key: readability-identifier-naming.FunctionCase,             value: CamelCase}
+  - {key: readability-identifier-naming.GlobalVariablePrefix,     value: 'g_'}
+  - {key: readability-identifier-naming.IgnoreMainLikeFunctions,  value: 1}
+  - {key: readability-identifier-naming.MemberCase,               value: lower_case}
+  - {key: readability-identifier-naming.MethodCase,               value: CamelCase}
+  - {key: readability-identifier-naming.NamespaceCase,            value: lower_case}
+  - {key: readability-identifier-naming.ParameterCase,            value: lower_case}
+  - {key: readability-identifier-naming.StructCase,               value: CamelCase}
+  - {key: readability-identifier-naming.UnionCase,                value: CamelCase}
+  - {key: readability-identifier-naming.VariableCase,             value: lower_case}
+  - {key: readability-identifier-naming.IgnoreMainLikeFunctions,  value: 1}
+  - {key: modernize-use-emplace.IgnoreImplicitConstructors,       value: 1}
+...
