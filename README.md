@@ -154,7 +154,7 @@ The same as [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) and [SDL_net
 
 Required by cgvhid, cgvidd.
 
-### Building and Testing
+## 5. Building and Testing
 
 Open each solution file with VS, and press F7.
 
@@ -176,4 +176,6 @@ Assume you want to test USF4.
 
 - Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
 
-Note that `cgvhid` is not ready at this moment, so you can't control the game through `cgc`. `cgvhid` will ready next week, and `cge` will be updated to invoke the driver.
+**Note** that `cgvhid` is not ready at this moment, so you can't control the game through `cgc`. `cgvhid` will ready next week, and `cge` will be updated to invoke the driver.
+
+**Note** that only support D3D9 games now, will support D3D11 games soon.
