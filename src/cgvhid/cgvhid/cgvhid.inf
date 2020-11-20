@@ -1,0 +1,100 @@
+;
+; cvhid.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=CGVD
+ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171}
+Provider=%ManufacturerName%
+CatalogFile=cgvhid.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+Cgvhid_Device_CoInstaller_CopyFiles = 11
+
+; ================= Class section =====================
+
+[ClassInstall32]
+Addreg=CGVHIDClassReg
+
+[CGVHIDClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+cgvhid.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%Cgvhid.DeviceDesc%=Cgvhid_Device, Root\cgvhid
+
+[Cgvhid_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+cgvhid.sys
+
+[Cgvhid_Device.NT.HW]
+AddReg=HWAddReg
+
+[HWAddReg]
+HKR,,"LowerFilters",0x00010008,"cgvhid"
+
+;-------------- Service installation
+[Cgvhid_Device.NT.Services]
+AddService = Cgvhid,0x00000000, Cgvhid_Service_Inst
+AddService = mshidkmdf,0x00000002, mshidkmdfService
+
+; -------------- Cgvhid driver install sections
+[Cgvhid_Service_Inst]
+DisplayName    = %Cgvhid.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\cgvhid.sys
+
+[mshidkmdfService]
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%12%\mshidkmdf.sys
+
+;
+;--- Cgvhid_Device Coinstaller installation ------
+;
+
+[Cgvhid_Device.NT.CoInstallers]
+AddReg=Cgvhid_Device_CoInstaller_AddReg
+CopyFiles=Cgvhid_Device_CoInstaller_CopyFiles
+
+[Cgvhid_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[Cgvhid_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[Cgvhid_Device.NT.Wdf]
+KmdfService =  Cgvhid, Cgvhid_wdfsect
+[Cgvhid_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="Ksyun"
+ClassName="Cloud Gaming Virtual Device"
+DiskName = "Cgvhid Installation Disk"
+Cgvhid.DeviceDesc = "Ksyun Edge Cloud Gaming Virtual HID Device"
+Cgvhid.SVCDESC = "Cgvhid Service"

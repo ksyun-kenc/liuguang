@@ -176,7 +176,7 @@ Assume you want to test USF4.
 
 - Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
 
-**Note** that `cgvhid` is not ready at this moment, so you can't control the game through `cgc`. `cgvhid` will ready next week, and `cge` will be updated to invoke the driver.
+**Note** that `cge` doesn't invoke `cgvhid` driver at this moment， will be updated soon.
 
 **Note** that only support D3D9 games now, will support D3D11 games soon.
 
