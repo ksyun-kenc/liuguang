@@ -181,7 +181,9 @@ Boost 的编译命令，参考：
 
 假设您要测试 USF4。
 
-- 服务器上运行 `cge`。
+- 服务器上安装 `cgvhid`。
+
+- 服务器上运行 `cge --keyboard-replay=cgvhid`。
 
 - 服务器上运行 `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\d3d9yuv.dll`，其中 `-e SSFIV.exe` 处要填好正确的路径名。
 

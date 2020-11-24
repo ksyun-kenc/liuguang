@@ -181,7 +181,9 @@ Test with games:
 
 Assume you want to test USF4.
 
-- Run `cge` on server.
+- Install `cgvhid` on server.
+
+- Run `cge --keyboard-replay=cgvhid` on server.
 
 - Run `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\d3d9yuv.dll` on server.
 
