@@ -51,9 +51,18 @@ constexpr std::string_view kProgramInfo{
 constexpr std::string_view kDefaultBindAddress{"::"};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
 constexpr std::string_view kDefaultAudioCodec{"libopus"};
+constexpr std::array<std::string_view, 3> kValidAudioCodecs = {
+    kDefaultAudioCodec, "aac", "opus"};
 constexpr uint16_t kDefaultControlPort = 8080;
+constexpr std::string_view kDefaultKeyboardReplay{"none"};
+// Should be the same order with KeyboardReplay
+constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
+    kDefaultKeyboardReplay, "cgvhid"};
 constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
+constexpr std::string_view kDefaultVideoCodec{"h264"};
+constexpr std::array<std::string_view, 2> kValidVideoCodecs = {
+    kDefaultVideoCodec, "h265"};
 constexpr int kDefaultVideoGop = 180;
 constexpr uint32_t kDefaultVideoQuality = 23;
 
@@ -72,13 +81,17 @@ int main(int argc, char* argv[]) {
   std::string bind_address;
   uint16_t control_port = 0;
   bool enable_nvenc = true;
+  KeyboardReplay keyboard_replay;
   uint16_t stream_port = 0;
   uint64_t video_bitrate = 0;
+  std::string video_codec;
   int video_gop = 0;
   std::string video_preset;
   uint32_t video_quality = 0;
 
   try {
+    std::string keyboard_replay_string;
+
     po::options_description desc("Usage");
     // clang-format off
     desc.add_options()("help,h", "produce help message")
@@ -97,6 +110,9 @@ int main(int argc, char* argv[]) {
       ("enable-nvenc",
         po::value<bool>(&enable_nvenc)->default_value(true),
         "Enable nvenc")
+      ("keyboard-replay",
+        po::value<std::string>(&keyboard_replay_string)->default_value(kDefaultKeyboardReplay.data()),
+        "keyboard replay method, can be one of {none, cgvhid}")
       ("stream-port",
         po::value<uint16_t>(&stream_port)->default_value(kDefaultStreamPort),
         "set the websocket port for streaming, if port is 0, disable stream "
@@ -107,6 +123,9 @@ int main(int argc, char* argv[]) {
       ("video-bitrate",
         po::value<uint64_t>(&video_bitrate)->default_value(kDefaultVideoBitrate),
         "set video bitrate")
+      ("video-codec",
+        po::value<std::string>(&video_codec)->default_value(kDefaultVideoCodec.data()),
+        "set video codec, can be one of {h264, h265}")
       ("video-gop",
         po::value<int>(&video_gop)->default_value(kDefaultVideoGop),
         "set video gop")
@@ -130,15 +149,29 @@ int main(int argc, char* argv[]) {
     if (audio_bitrate < kMinAudioBitrate || audio_bitrate > kMaxAudioBitrate) {
       throw std::out_of_range("audio-bitrate out of range!");
     }
-    if (audio_codec != kDefaultAudioCodec && audio_codec != "aac" &&
-        audio_codec != "opus") {
+    if (kValidAudioCodecs.cend() == std::find(kValidAudioCodecs.cbegin(),
+                                              kValidAudioCodecs.cend(),
+                                              audio_codec)) {
       throw std::invalid_argument("unsupported audio-codec!");
     }
     if (0 == control_port) {
       control_port = kDefaultControlPort;
     }
+    auto keyboard_replay_pos =
+        std::find(kValidKeyboardReplayMethods.cbegin(),
+                  kValidKeyboardReplayMethods.cend(), keyboard_replay_string);
+    if (kValidKeyboardReplayMethods.cend() == keyboard_replay_pos) {
+      throw std::invalid_argument("unsupported keyboard-replay!");
+    }
+    keyboard_replay = static_cast<KeyboardReplay>(std::distance(
+        kValidKeyboardReplayMethods.cbegin(), keyboard_replay_pos));
     if (video_bitrate < kMinVideoBitrate) {
       throw std::out_of_range("video-bitrate too low!");
+    }
+    if (kValidVideoCodecs.cend() == std::find(kValidVideoCodecs.cbegin(),
+                                              kValidVideoCodecs.cend(),
+                                              video_codec)) {
+      throw std::invalid_argument("unsupported video-codec!");
     }
     if (video_gop < kMinGop || video_gop > kMaxGop) {
       throw std::out_of_range("video-gop out of range!");
@@ -156,8 +189,10 @@ int main(int argc, char* argv[]) {
               << "bind-address: " << bind_address << '\n'
               << "control-port: " << control_port << '\n'
               << "enable-nvenc: " << std::boolalpha << enable_nvenc << '\n'
+              << "keyboard-replay: " << keyboard_replay_string << '\n'
               << "stream-port: " << stream_port << '\n'
               << "video-bitrate: " << video_bitrate << '\n'
+              << "video-codec: " << video_codec << '\n'
               << "video-gop: " << video_gop << '\n'
               << "video-preset: " << video_preset << '\n'
               << "video-quality: " << video_quality << '\n';
@@ -191,8 +226,9 @@ int main(int argc, char* argv[]) {
   Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
                             udp::endpoint(kAddress, control_port),
                             std::move(audio_codec), audio_bitrate, enable_nvenc,
-                            video_bitrate, video_gop, std::move(video_preset),
-                            video_quality);
+                            keyboard_replay, video_bitrate,
+                            std::move(video_codec), video_gop,
+                            std::move(video_preset), video_quality);
   Engine::GetInstance().EncoderStop();
   return EXIT_SUCCESS;
 }

@@ -28,21 +28,27 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
                  bool enable_nvenc,
+                 KeyboardReplay keyboard_replay,
                  uint64_t video_bitrate,
+                 std::string video_codec,
                  int video_gop,
                  std::string video_preset,
                  uint32_t video_quality) {
   try {
-    encoder_.Init(std::move(audio_codec), audio_bitrate, enable_nvenc,
-                  video_bitrate, video_gop, std::move(video_preset),
-                  video_quality);
+    if (!encoder_.Init(std::move(audio_codec), audio_bitrate, enable_nvenc,
+                       video_bitrate, video_codec, video_gop,
+                       std::move(video_preset), video_quality)) {
+      std::cout << "Initialize engine failed!\n";
+      return;
+    }
 
     if (0 != ws_endpoint.port()) {
       ws_server_ = std::make_shared<WsServer>(*this, ws_endpoint);
       std::cout << "WebSocket server on: " << ws_endpoint << '\n';
       ws_server_->Run();
     }
-    udp_server_ = std::make_shared<UdpServer>(*this, udp_endpoint);
+    udp_server_ = std::make_shared<UdpServer>(*this, udp_endpoint,
+                                              std::move(keyboard_replay));
     std::cout << "UDP Server on: " << udp_endpoint << '\n';
     udp_server_->Run();
   } catch (std::exception& e) {

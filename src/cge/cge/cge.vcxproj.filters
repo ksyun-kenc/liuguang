@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\cgvhid_client">
+      <UniqueIdentifier>{c769d11b-4cba-400d-b2d6-9b77a26f3966}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cge.cpp">
@@ -44,6 +47,12 @@
     </ClCompile>
     <ClCompile Include="audio_resampler.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cgvhid\cgvhid_client\cgvhid.cpp">
+      <Filter>Source Files\cgvhid_client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cgvhid\cgvhid_client\cgvhid_client.cpp">
+      <Filter>Source Files\cgvhid_client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="app.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

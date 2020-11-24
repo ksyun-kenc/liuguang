@@ -7,6 +7,8 @@
 class WsServer;
 class UdpServer;
 
+enum class KeyboardReplay { NONE = 0, CGVHID };
+
 struct NetPacketHeader {
   uint32_t type : 8;
   uint32_t ts : 24;
@@ -34,7 +36,9 @@ class Engine {
            std::string audio_codec,
            uint64_t audio_bitrate,
            bool enable_nvenc,
+           KeyboardReplay keyboard_replay,
            uint64_t video_bitrate,
+           std::string video_codec,
            int video_gop,
            std::string video_preset,
            uint32_t video_quality);

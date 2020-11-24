@@ -35,6 +35,7 @@ class VideoEncoder : public EncoderInterface {
 
   bool Init(bool enable_nvenc,
             uint64_t bitrate,
+            std::string codec,
             int gop,
             std::string video_preset,
             uint32_t quality) noexcept;
@@ -53,6 +54,7 @@ class VideoEncoder : public EncoderInterface {
  private:
   bool enable_nvenc_;
   uint64_t bitrate_;
+  AVCodecID codec_id_;
   int gop_;
   std::string video_preset_;
   uint32_t quality_;

@@ -40,8 +40,10 @@ audio-codec: libopus
 bind-address: ::
 control-port: 8080
 enable-nvenc: true
+keyboard-replay: none
 stream-port: 8080
 video-bitrate: 1000000
+video-codec: h264
 video-gop: 180
 video-preset: llhp
 video-quality: 23
@@ -58,6 +60,8 @@ Usage:
   --bind-address arg (=::)       set bind address for listening, eg: 0.0.0.0
   --control-port arg (=8080)     set the UDP port for control flow
   --enable-nvenc arg (=1)        Enable nvenc
+  --keyboard-replay arg (=none)  keyboard replay method, can be one of {none,
+                                 cgvhid}
   --stream-port arg (=8080)      set the websocket port for streaming, if port
                                  is 0, disable stream out via network. Capture
                                  and encode picture directly at startup but not
@@ -66,6 +70,7 @@ Usage:
                                  as control port, this port is only for media
                                  output.
   --video-bitrate arg (=1000000) set video bitrate
+  --video-codec arg (=h264)      set video codec, can be one of {h264, h265}
   --video-gop arg (=180)         set video gop
   --video-preset arg
   --video-quality arg (=23)      set video quality, lower is better, available
@@ -101,7 +106,7 @@ Allowed options:
 
 ### cgvhid
 
-Cloud gameing Virtual HID driver. For replaying controller event on server.
+Cloud gameing Virtual HID driver. For replaying controller event on server. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgvhid.7z)
 
 ![Hook game](doc/cgvhid.png)
 
@@ -115,7 +120,7 @@ A tool for testing. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/vi
 
 ### cgc
 
-A testing version client to work with `cge`. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc.7z).
+A testing version client to work with `cge`. Download h264 version [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc.7z) and h265 version [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc-h265.7z).
 
 ```
 Usage:
@@ -139,6 +144,12 @@ Install VS2019 with ATL, CLang.
 ### 4.2 Boost
 
 Install [Boost](https://www.boost.org/) and set `BOOST_ROOT` environment variable to install directory. [Details](https://blog.umu618.com/2020/09/11/umutech-boost-1-installation/)
+
+Boost compile command:
+
+```
+.\b2 --address-model=64 runtime-link=static
+```
 
 ### 4.3 FFmpeg
 
@@ -175,8 +186,6 @@ Assume you want to test USF4.
 - Run `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\d3d9yuv.dll` on server.
 
 - Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
-
-**Note** that `cge` doesn't invoke `cgvhid` driver at this moment， will be updated soon.
 
 **Note** that only support D3D9 games now, will support D3D11 games soon.
 

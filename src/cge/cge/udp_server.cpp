@@ -18,6 +18,8 @@
 
 #include "udp_server.h"
 
+#include "control.h"
+
 namespace {
 
 inline void Fail(beast::error_code ec, std::string_view what) {
@@ -26,8 +28,21 @@ inline void Fail(beast::error_code ec, std::string_view what) {
 
 }  // namespace
 
-UdpServer::UdpServer(Engine& engine, udp::endpoint endpoint)
-    : engine_(engine), socket_(engine.GetIoContext(), endpoint) {}
+UdpServer::UdpServer(Engine& engine,
+                     udp::endpoint endpoint,
+                     KeyboardReplay keyboard_replay)
+    : engine_(engine),
+      socket_(engine.GetIoContext(), endpoint),
+      keyboard_replay_(keyboard_replay) {
+  if (KeyboardReplay::CGVHID == keyboard_replay) {
+    cgvhid_client_.Init(0, 0);
+    int error_code = cgvhid_client_.KeyboardReset();
+    if (0 != error_code) {
+      keyboard_replay = KeyboardReplay::NONE;
+      std::cerr << "KeyboardReset() failed with " << error_code << '\n';
+    }
+  }
+}
 
 void UdpServer::OnRead(const boost::system::error_code& ec,
                        std::size_t bytes_transferred) {
@@ -35,6 +50,25 @@ void UdpServer::OnRead(const boost::system::error_code& ec,
     return Fail(ec, "receive_from");
   }
 
+  if (bytes_transferred >= sizeof(ControlBase)) {
+    auto control_element =
+        reinterpret_cast<ControlElement*>(recv_buffer_.data());
+    switch (static_cast<ControlType>(control_element->base.type)) {
+      case ControlType::KEYBOARD:
+        if (bytes_transferred < sizeof(ControlKeyboard)) {
+          break;
+        }
+        if (KeyboardReplay::CGVHID == keyboard_replay_) {
+          if (ControlKeyboardFlagUp & control_element->keyboard.flags) {
+            cgvhid_client_.KeyboardRelease(control_element->keyboard.key_code);
+          } else if (ControlKeyboardFlagDown &
+                     control_element->keyboard.flags) {
+            cgvhid_client_.KeyboardPress(control_element->keyboard.key_code);
+          }
+        }
+        break;
+    }
+  }
   Read();
 }
 

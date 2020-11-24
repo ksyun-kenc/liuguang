@@ -21,10 +21,13 @@
 #include "net.hpp"
 
 #include "engine.h"
+#include "cgvhid_client.h"
 
 class UdpServer : public std::enable_shared_from_this<UdpServer> {
  public:
-  UdpServer(Engine& engine, udp::endpoint endpoint);
+  UdpServer(Engine& engine,
+            udp::endpoint endpoint,
+            KeyboardReplay keyboard_replay);
   ~UdpServer() = default;
 
   void Run() { Read(); }
@@ -49,4 +52,6 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
   udp::socket socket_;
   udp::endpoint remote_endpoint_;
   std::array<char, 65536> recv_buffer_{};
+  KeyboardReplay keyboard_replay_;
+  CgvhidClient cgvhid_client_;
 };

@@ -14,28 +14,35 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include "audio_encoder.h"
-#include "video_encoder.h"
-
-class Encoder {
- public:
-  Encoder() = default;
-  ~Encoder() = default;
-
-  bool Init(std::string audio_codec,
-            uint64_t audio_bitrate,
-            bool enable_nvenc,
-            uint64_t video_bitrate,
-            std::string video_codec,
-            int video_gop,
-            std::string video_preset,
-            uint32_t video_quality) noexcept;
-  void Run();
-  void Stop();
-
- private:
-  AudioEncoder audio_encoder_;
-  VideoEncoder video_encoder_;
+#pragma pack(push, 1)
+enum class ControlType : uint8_t {
+  KEYBOARD = 1,
+  MOUSE,
+  JOYSTICK,
+  GAMEPAD,
+  PING,
+  PONG
 };
+
+struct ControlBase {
+  uint32_t type : 8;
+  uint32_t ts : 24;
+  uint8_t flags;
+};
+
+struct ControlPing : public ControlBase {
+};
+
+struct ControlKeyboard : public ControlBase {
+  uint16_t key_code;
+};
+
+union ControlElement {
+  ControlBase base;
+  ControlPing ping;
+  ControlKeyboard keyboard;
+};
+#pragma pack(pop)
+
+constexpr uint8_t ControlKeyboardFlagUp = 0x01;
+constexpr uint8_t ControlKeyboardFlagDown = 0x02;

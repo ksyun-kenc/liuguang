@@ -23,3 +23,7 @@ bcdedit.exe -set testsigning on
 - Install driver via `devmgmt.msc`.
 
 - Run `cgvhid_test`.
+
+## Note
+
+`cgvhid` only works in Console Session. Do NOT test it in Remote Desktop.
