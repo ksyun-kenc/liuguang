@@ -1,5 +1,7 @@
 # 鎏光云游戏引擎
 
+[简体中文](README.zh-CN.md) | English
+
 ## 1. Requirements
 
 ### Server
@@ -7,11 +9,11 @@
 | Target | Minimum | Recommended |
 | --- | --- | --- |
 | System | Windows 7, 8, 8.1, 10 | Windows 10 |
-| GPU | NVDIA GPU | RTX 1080Ti, GTX 2070S tested |
+| GPU | NVIDIA GPU | RTX 1080Ti, GTX 2070S tested |
 | Software | GeForce Experience | latest GeForce Experience |
 | Driver | GeForce Game Ready Driver | latest GeForce Game Ready Driver |
 
-* If you don't have an NVDIA GPU, select --enable-nvenc=false to run `cge`.
+* If you don't have an NVIDIA GPU, select --enable-nvenc=false to run `cge`.
 
 ### Client
 
@@ -22,7 +24,7 @@
 
 ## 2. Basic
 
-![Data Flow](doc/cg.png)
+[![Data Flow](doc/cg.png)](doc/cg.gv)
 
 ## 3. QuickStart
 
@@ -91,7 +93,7 @@ Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgh.7z)
 
 A tool for injecting hook dll into game process.
 
-![Hook game](doc/cgi.png)
+[![Hook game](doc/cgi.png)](doc/cgi.gv)
 
 ```
 Allowed options:

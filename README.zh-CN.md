@@ -1,5 +1,7 @@
 # 鎏光云游戏引擎
 
+简体中文 | [English](README.md)
+
 ## 1. 配置要求
 
 ### 服务端
@@ -7,11 +9,11 @@
 | 目标 | 最小化 | 建议 |
 | --- | --- | --- |
 | 操作系统 | Windows 7, 8, 8.1, 10 | Windows 10 |
-| GPU | NVDIA GPU | 已测试 RTX 1080Ti, GTX 2070S |
+| GPU | NVIDIA GPU | 已测试 RTX 1080Ti, GTX 2070S |
 | 软件 | GeForce Experience | 最新的 GeForce Experience |
 | 驱动 | GeForce Game Ready Driver | 最新的 GeForce Game Ready Driver |
 
-* 如果您没有 NVDIA GPU，可以使用 `--enable-nvenc=false` 参数启动 `cge`，将使用 CPU 编码。
+* 如果您没有 NVIDIA GPU，可以使用 `--enable-nvenc=false` 参数启动 `cge`，将使用 CPU 编码。
 
 ### 客户端
 
@@ -22,7 +24,7 @@
 
 ## 2. 基本信息
 
-![Data Flow](doc/cg.png)
+[![Data Flow](doc/cg.png)](doc/cg.gv)
 
 ## 3. 快速体验
 
@@ -91,7 +93,7 @@ Usage:
 
 一个命令行工具，用于把 Hook DLL 注入到游戏进程。
 
-![Hook game](doc/cgi.png)
+[![Hook game](doc/cgi.png)](doc/cgi.gv)
 
 ```
 Allowed options:

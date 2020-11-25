@@ -1,0 +1,46 @@
+digraph G {
+
+	subgraph cluster_0 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		audio video;
+		label = "game";
+	}
+
+    subgraph cluster_1 {
+		style=filled;
+		color="#F13929";
+		node [style=filled,color="#ADB9CA"];
+		audio_frames video_frames;
+		label = "Shared Memory";
+	}
+	
+	subgraph cluster_2 {
+		style=filled;
+		node [style=filled,color="#ADB9CA"];
+		audio_encoder video_encoder control_replay;
+		label = "cge";
+		color="#3FBFFF"
+	}
+
+    subgraph cluster_3 {
+        style=filled;
+		color="#F13929";
+		node [style=filled,color="#ADB9CA"];
+		label = "net";
+		websocket udp;
+	}
+	
+	subgraph cluster_4 {
+		style=filled;
+		node [style=filled,color="#ADB9CA"];
+		audio_decoder video_decoder player controller;
+		label = "cgc";
+		color="#3FBFFF";
+	}
+	
+	audio -> audio_frames -> audio_encoder -> websocket -> audio_decoder -> player;
+	video -> video_frames -> video_encoder -> websocket -> video_decoder -> player;
+	controller -> udp -> control_replay;
+}

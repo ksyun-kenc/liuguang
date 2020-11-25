@@ -1,0 +1,28 @@
+digraph G {
+
+	subgraph cluster_0 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		easyhook;
+		label = "cgi";
+	}
+	
+	subgraph cluster_1 {
+		style=filled;
+		color="#BFBFBF";
+		node [style=filled,color="#ADB9CA"];
+		d3d9tex d3d9yuv dxgitex dxgiyuv;
+		label = "cgh";
+	}
+
+	subgraph cluster_2 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		d3d9;
+		label = "game";
+	}
+
+    easyhook -> d3d9yuv -> d3d9;
+}
