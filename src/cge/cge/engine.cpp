@@ -18,10 +18,13 @@
 
 #include "engine.h"
 
+#include "app.hpp"
 #include "udp_server.h"
 #include "ws_server.h"
 
 #include "shared_mem_info.h"
+
+extern App g_app;
 
 void Engine::Run(tcp::endpoint ws_endpoint,
                  udp::endpoint udp_endpoint,
@@ -117,4 +120,19 @@ int Engine::WritePacket(void* opaque,
   memcpy(buffer.data() + sizeof(NetPacketHeader), body, body_size);
   ws_server_->Send(std::move(buffer));
   return 0;
+}
+
+void Engine::SetPresentFlag(bool donot_present) {
+  HANDLE ev =
+      CreateEvent(g_app.SA(), TRUE, FALSE, kDoNotPresentEventName.data());
+  if (nullptr == ev) {
+    std::cerr << "CreateEvent() failed with " << GetLastError() << '\n';
+    return;
+  }
+  donot_present_event_.Attach(ev);
+  if (donot_present) {
+    SetEvent(donot_present_event_);
+  } else {
+    ResetEvent(donot_present_event_);
+  }
 }

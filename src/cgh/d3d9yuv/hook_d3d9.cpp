@@ -222,11 +222,12 @@ HRESULT STDMETHODCALLTYPE HookD3D9::MyPresent(IDirect3DDevice9Ex* This,
                                               CONST RECT* pDestRect,
                                               HWND hDestWindowOverride,
                                               CONST RGNDATA* pDirtyRegion) {
+  HRESULT hr = S_OK;
   IDirect3DSurface9* backbuffer = nullptr;
-
-  D3D9Capture::GetInstance().PresentBegin(This, &backbuffer);
-  HRESULT hr = GetInstance().IDirect3DDevice9Ex_Present_(
-      This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+  if (D3D9Capture::GetInstance().PresentBegin(This, &backbuffer)) {
+    hr = GetInstance().IDirect3DDevice9Ex_Present_(
+        This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+  }
   D3D9Capture::GetInstance().PresentEnd(This, backbuffer);
   return hr;
 }
@@ -237,11 +238,13 @@ HRESULT STDMETHODCALLTYPE HookD3D9::MyPresentEx(IDirect3DDevice9Ex* This,
                                                 HWND hDestWindowOverride,
                                                 CONST RGNDATA* pDirtyRegion,
                                                 DWORD dwFlags) {
+  HRESULT hr = S_OK;
   IDirect3DSurface9* backbuffer = nullptr;
-
-  D3D9Capture::GetInstance().PresentBegin(This, &backbuffer);
-  HRESULT hr = GetInstance().IDirect3DDevice9Ex_PresentEx_(
-      This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+  if (D3D9Capture::GetInstance().PresentBegin(This, &backbuffer)) {
+    hr = GetInstance().IDirect3DDevice9Ex_PresentEx_(
+        This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion,
+        dwFlags);
+  }
   D3D9Capture::GetInstance().PresentEnd(This, backbuffer);
   return hr;
 }

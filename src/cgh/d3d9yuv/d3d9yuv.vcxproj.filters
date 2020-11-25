@@ -27,6 +27,9 @@
     <ClInclude Include="hook_d3d9.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="d3d9_capture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

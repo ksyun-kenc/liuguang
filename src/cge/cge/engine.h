@@ -47,6 +47,8 @@ class Engine {
   void EncoderRun();
   void EncoderStop();
 
+  void SetPresentFlag(bool donot_present);
+
  private:
   Engine() = default;
 
@@ -64,4 +66,6 @@ class Engine {
   std::shared_ptr<WsServer> ws_server_;
   std::shared_ptr<UdpServer> udp_server_;
   Encoder encoder_;
+
+  CHandle donot_present_event_;
 };

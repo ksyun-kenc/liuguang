@@ -87,3 +87,6 @@ constexpr std::wstring_view kSharedVideoYuvFramesFileMappingName{
     L"{2A1D2C0C-2D09-4430-AA3E-439E2300E1E5}"};
 constexpr std::wstring_view kSharedVideoTextureFramesFileMappingName{
     L"{8FA0700E-F197-42AF-A3ED-123C2BB08F4A}"};
+
+constexpr std::wstring_view kDoNotPresentEventName{
+    L"{E7E2141B-4312-4609-BDEB-5B722CC01B96}"};

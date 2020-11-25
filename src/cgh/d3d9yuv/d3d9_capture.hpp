@@ -228,17 +228,17 @@ class D3D9Capture {
     }
   }
 
-  inline void PresentBegin(IDirect3DDevice9* device,
+  inline bool PresentBegin(IDirect3DDevice9* device,
                            IDirect3DSurface9** backbuffer) {
     HRESULT hr = GetBackbuffer(device, backbuffer);
-    if (FAILED(hr)) {
+    if (SUCCEEDED(hr)) {
+      Capture(device, *backbuffer);
+    } else {
       // D3DERR_INVALIDCALL = 0x8876086C
       ATLTRACE2(atlTraceException, 0,
                 __FUNCTION__ ": !GetBackbuffer(), #0x%08X\n", hr);
-      return;
     }
-
-    Capture(device, *backbuffer);
+    return !donot_present_;
   }
 
   inline void PresentEnd(IDirect3DDevice9* device,
@@ -289,7 +289,7 @@ class D3D9Capture {
       encoder_started_event_.Attach(ev);
     }
 
-    if (nullptr == encoder_started_event_) {
+    if (nullptr == encoder_stopped_event_) {
       HANDLE ev = CreateEvent(HookD3D9::GetInstance().SA(), TRUE, FALSE,
                               kVideoStoppedEventName.data());
       if (nullptr == ev) {
@@ -298,6 +298,17 @@ class D3D9Capture {
         return false;
       }
       encoder_stopped_event_.Attach(ev);
+    }
+
+    if (nullptr == donot_present_event_) {
+      HANDLE ev = CreateEvent(HookD3D9::GetInstance().SA(), TRUE, FALSE,
+                              kDoNotPresentEventName.data());
+      if (nullptr == ev) {
+        ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
+                  GetLastError());
+        return false;
+      }
+      donot_present_event_.Attach(ev);
     }
 
     if (nullptr == stop_event_) {
@@ -426,9 +437,17 @@ class D3D9Capture {
         return error_code;
       }
 
+      wait = WaitForSingleObject(donot_present_event_, 0);
+      if (WAIT_OBJECT_0 == wait) {
+        donot_present_ = true;
+      } else {
+        donot_present_ = false;
+      }
+
       HANDLE stop_events[] = {stop_event_, encoder_stopped_event_};
       wait = WaitForMultipleObjects(_countof(stop_events), stop_events, FALSE,
                                     INFINITE);
+      donot_present_ = false;
       if (WAIT_OBJECT_0 == wait) {
         ATLTRACE2(atlTraceUtil, 0, "%s: stopping.\n", __func__);
         break;
@@ -451,9 +470,11 @@ class D3D9Capture {
   bool should_update_{false};
 
   std::atomic<bool> is_encoder_started_{false};
+  std::atomic<bool> donot_present_{false};
   std::thread waiting_thread_;
   CHandle encoder_started_event_;
   CHandle encoder_stopped_event_;
+  CHandle donot_present_event_;
   CHandle stop_event_;
 
   IDirect3DDevice9* device_ = nullptr;

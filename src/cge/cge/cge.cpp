@@ -54,6 +54,7 @@ constexpr std::string_view kDefaultAudioCodec{"libopus"};
 constexpr std::array<std::string_view, 3> kValidAudioCodecs = {
     kDefaultAudioCodec, "aac", "opus"};
 constexpr uint16_t kDefaultControlPort = 8080;
+constexpr bool kDefaultDonotPresent = false;
 constexpr std::string_view kDefaultKeyboardReplay{"none"};
 // Should be the same order with KeyboardReplay
 constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
@@ -80,6 +81,7 @@ int main(int argc, char* argv[]) {
   uint64_t audio_bitrate = 0;
   std::string bind_address;
   uint16_t control_port = 0;
+  bool donot_present = false;
   bool enable_nvenc = true;
   KeyboardReplay keyboard_replay;
   uint16_t stream_port = 0;
@@ -107,6 +109,9 @@ int main(int argc, char* argv[]) {
       ("control-port",
         po::value<uint16_t>(&control_port)->default_value(kDefaultControlPort),
         "set the UDP port for control flow")
+      ("donot-present",
+        po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
+        "Tell cgh don't present")
       ("enable-nvenc",
         po::value<bool>(&enable_nvenc)->default_value(true),
         "Enable nvenc")
@@ -188,6 +193,7 @@ int main(int argc, char* argv[]) {
               << "audio-codec: " << audio_codec << '\n'
               << "bind-address: " << bind_address << '\n'
               << "control-port: " << control_port << '\n'
+              << "donot-present: " << std::boolalpha << donot_present << '\n'
               << "enable-nvenc: " << std::boolalpha << enable_nvenc << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
               << "stream-port: " << stream_port << '\n'
@@ -217,6 +223,9 @@ int main(int argc, char* argv[]) {
     std::cerr << "Init Engine failed!\n";
     return EXIT_FAILURE;
   }
+
+  Engine::GetInstance().SetPresentFlag(donot_present);
+
   net::signal_set signals(Engine::GetInstance().GetIoContext(), SIGINT, SIGTERM,
                           SIGBREAK);
   signals.async_wait([&](const boost::system::error_code&, int sig) {

@@ -41,7 +41,7 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason_for_call, LPVOID reserved) {
   return TRUE;
 }
 
-std::once_flag hooked;
+// std::once_flag hooked;
 
 extern "C" HOOK_API void __stdcall NativeInjectionEntryPoint(
     REMOTE_ENTRY_INFO* remote_info) {

@@ -39,6 +39,7 @@ audio-bitrate: 128000
 audio-codec: libopus
 bind-address: ::
 control-port: 8080
+donot-present: false
 enable-nvenc: true
 keyboard-replay: none
 stream-port: 8080
@@ -59,6 +60,7 @@ Usage:
                                  aac}
   --bind-address arg (=::)       set bind address for listening, eg: 0.0.0.0
   --control-port arg (=8080)     set the UDP port for control flow
+  --donot-present arg (=0)       Tell cgh don't present
   --enable-nvenc arg (=1)        Enable nvenc
   --keyboard-replay arg (=none)  keyboard replay method, can be one of {none,
                                  cgvhid}
