@@ -15,7 +15,7 @@ class HookApi {
 
   ~HookApi() noexcept {}
 
-  NTSTATUS Hook(void* proc, void* hook_proc) {
+  NTSTATUS Hook(void* proc, void* hook_proc) noexcept {
     NTSTATUS status = LhInstallHook(proc, hook_proc, (PVOID) nullptr, &hook_);
     if (!NT_SUCCESS(status)) {
       ATLTRACE2(atlTraceException, 0,
@@ -25,7 +25,7 @@ class HookApi {
     return status;
   }
 
-  NTSTATUS Hook(HMODULE dll, LPCSTR proc_name, void* hook_proc) {
+  NTSTATUS Hook(HMODULE dll, LPCSTR proc_name, void* hook_proc) noexcept {
     void* proc = GetProcAddress(dll, proc_name);
     if (nullptr == proc) {
       ATLTRACE2(atlTraceException, 0,
@@ -36,7 +36,7 @@ class HookApi {
     return Hook(proc, hook_proc);
   }
 
-  NTSTATUS Hook(LPCWSTR dll_name, LPCSTR proc, void* hook_proc) {
+  NTSTATUS Hook(LPCWSTR dll_name, LPCSTR proc, void* hook_proc) noexcept {
     HMODULE dll = GetModuleHandle(dll_name);
     if (nullptr == dll) {
       ATLTRACE2(atlTraceException, 0,
@@ -47,7 +47,7 @@ class HookApi {
     return Hook(dll, proc, hook_proc);
   }
 
-  NTSTATUS Unhook() {
+  NTSTATUS Unhook() noexcept {
     NTSTATUS status = LhUninstallHook(&hook_);
     if (NT_SUCCESS(status)) {
       LhWaitForPendingRemovals();
@@ -58,7 +58,7 @@ class HookApi {
     return status;
   }
 
-  NTSTATUS SetExclusiveNone() {
+  NTSTATUS SetExclusiveNone() noexcept {
     ULONG ACLEntries[1] = {0};
     NTSTATUS status = LhSetExclusiveACL(ACLEntries, 0, &hook_);
     if (!NT_SUCCESS(status)) {
@@ -68,7 +68,7 @@ class HookApi {
     return status;
   }
 
-  NTSTATUS SetExclusive(ULONG* thread_id_list, ULONG thread_count) {
+  NTSTATUS SetExclusive(ULONG* thread_id_list, ULONG thread_count) noexcept {
     NTSTATUS status = LhSetExclusiveACL(thread_id_list, thread_count, &hook_);
     if (!NT_SUCCESS(status)) {
       ATLTRACE2(atlTraceException, 0,
@@ -78,7 +78,7 @@ class HookApi {
   }
 
  private:
-  HOOK_TRACE_INFO hook_;
+  HOOK_TRACE_INFO hook_{};
 };
 
 inline NTSTATUS HookAllThread(HookApi& hook, void* proc, void* hook_proc) {
