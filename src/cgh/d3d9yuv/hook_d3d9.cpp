@@ -76,10 +76,11 @@ bool HookD3D9::Hook() {
 }
 
 void HookD3D9::Unhook() {
-  d3d9_module_.Free();
   D3D9Capture::GetInstance().Free();
+  d3d9_module_.Free();
   if (nullptr != sa_.lpSecurityDescriptor) {
     LocalFree(sa_.lpSecurityDescriptor);
+    sa_.lpSecurityDescriptor = nullptr;
   }
 }
 

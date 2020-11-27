@@ -39,7 +39,15 @@ class D3D9Capture {
     return instance;
   }
 
-  void Free() { FreeSharedMemory(); }
+  void Free() {
+    Reset();
+
+    FreeSharedMemory();
+    shared_frame_info_.Unmap();
+    encoder_started_event_.Close();
+    donot_present_event_.Close();
+    shared_frame_ready_event_.Close();
+  }
 
   void Capture(IDirect3DDevice9* device, IDirect3DSurface9* backbuffer) {
     if (!initialized_ || device != device_) {
@@ -65,15 +73,7 @@ class D3D9Capture {
 
     query_->Issue(D3DISSUE_BEGIN);
 
-    HRESULT hr = device_->StretchRect(backbuffer, nullptr, render_target_,
-                                      nullptr, D3DTEXF_NONE);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0,
-                __FUNCTION__ ": !StretchRect(), #0x%08X\n", hr);
-      return;
-    }
-
-    hr = device_->GetRenderTargetData(render_target_, copy_surface_);
+    HRESULT hr = device_->GetRenderTargetData(backbuffer, copy_surface_);
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0,
                 __FUNCTION__ ": !GetRenderTargetData(), #0x%08X\n", hr);
@@ -143,46 +143,11 @@ class D3D9Capture {
     size_t frame_size = mapped_rect.Pitch * desc.Height;
     size_t data_size = sizeof(PackedVideoYuvFrame) + frame_size;
 
-    bool need_create_file_mapping = false;
-    if (nullptr == shared_frames_) {
-      need_create_file_mapping = true;
-    } else if (data_size * 2 > shared_frames_.GetMappingSize()) {
-      shared_frames_.Unmap();
-      need_create_file_mapping = true;
+    if (!CreateSharedMemory(data_size)) {
+      return;
     }
 
-    if (need_create_file_mapping) {
-      HRESULT hr = shared_frames_.MapSharedMem(
-          sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames,
-          kSharedVideoYuvFramesFileMappingName.data(), nullptr,
-          HookD3D9::GetInstance().SA());
-      if (FAILED(hr)) {
-        ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed.\n");
-        return;
-      }
-
-      HANDLE ev = CreateEvent(HookD3D9::GetInstance().SA(), FALSE, FALSE,
-                              kSharedVideoFrameReadyEventName.data());
-      if (nullptr == ev) {
-        ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
-                  GetLastError());
-        return;
-      }
-      shared_frame_ready_event_.Attach(ev);
-
-      ATLTRACE2(
-          atlTraceUtil, 0, "MapSharedMem size = %zu + %zu * 2 = %zu\n",
-          sizeof(SharedVideoYuvFrames), data_size,
-          sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames);
-
-      auto frames =
-          static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
-      frames->data_size = static_cast<uint32_t>(data_size);
-    }
-
-    auto frame = reinterpret_cast<PackedVideoYuvFrame*>(
-        static_cast<char*>(shared_frames_) + sizeof(SharedVideoYuvFrames) +
-        (frame_count_ % kNumberOfSharedFrames) * data_size);
+    auto frame = GetPackedVideoYuvFrame(frame_count_ % kNumberOfSharedFrames);
     const int uv_stride = (desc.Width + 1) / 2;
     uint8_t* y = reinterpret_cast<uint8_t*>(frame->data);
     uint8_t* u = y + pixel_size;
@@ -220,11 +185,13 @@ class D3D9Capture {
   void Reset() {
     initialized_ = false;
     copy_surface_.Release();
-    render_target_.Release();
     query_.Release();
+
     SetEvent(stop_event_);
-    if (waiting_thread_.joinable()) {
-      waiting_thread_.join();
+    if (nullptr != waiting_thread_.native_handle()) {
+      if (waiting_thread_.joinable()) {
+        waiting_thread_.join();
+      }
     }
   }
 
@@ -263,14 +230,7 @@ class D3D9Capture {
                 __FUNCTION__ ": !CreateOffscreenPlainSurface(), #0x%08X\n", hr);
       return false;
     }
-    hr =
-        device_->CreateRenderTarget(cx_, cy_, d3d9_format_, D3DMULTISAMPLE_NONE,
-                                    0, false, &render_target_, nullptr);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0,
-                __FUNCTION__ ": !CreateRenderTarget(), #0x%08X\n", hr);
-      return false;
-    }
+
     hr = device_->CreateQuery(D3DQUERYTYPE_EVENT, &query_);
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0,
@@ -322,11 +282,13 @@ class D3D9Capture {
       stop_event_.Attach(ev);
     }
 
-    waiting_thread_ = std::thread(&D3D9Capture::WaitingThread, this);
     if (nullptr == waiting_thread_.native_handle()) {
-      ATLTRACE2(atlTraceException, 0, "Create thread failed with %u\n",
-                GetLastError());
-      return false;
+      waiting_thread_ = std::thread(&D3D9Capture::WaitingThread, this);
+      if (nullptr == waiting_thread_.native_handle()) {
+        ATLTRACE2(atlTraceException, 0, "Create thread failed with %u\n",
+                  GetLastError());
+        return false;
+      }
     }
 
     if (nullptr == shared_frame_info_) {
@@ -414,9 +376,57 @@ class D3D9Capture {
     return true;
   }
 
-  bool CreateSharedMemory(size_t size) { return true; }
+  bool CreateSharedMemory(size_t data_size) noexcept {
+    bool need_create_file_mapping = false;
+    if (nullptr == shared_frames_) {
+      need_create_file_mapping = true;
+    } else if (data_size * 2 > shared_frames_.GetMappingSize()) {
+      shared_frames_.Unmap();
+      need_create_file_mapping = true;
+    }
 
-  void FreeSharedMemory() {}
+    if (need_create_file_mapping) {
+      HRESULT hr = shared_frames_.MapSharedMem(
+          sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames,
+          kSharedVideoYuvFramesFileMappingName.data(), nullptr,
+          HookD3D9::GetInstance().SA());
+      if (FAILED(hr)) {
+        ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed.\n");
+        return false;
+      }
+
+      HANDLE ev = CreateEvent(HookD3D9::GetInstance().SA(), FALSE, FALSE,
+                              kSharedVideoFrameReadyEventName.data());
+      if (nullptr == ev) {
+        ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
+                  GetLastError());
+        return false;
+      }
+      shared_frame_ready_event_.Attach(ev);
+
+      ATLTRACE2(
+          atlTraceUtil, 0, "MapSharedMem size = %zu + %zu * 2 = %zu\n",
+          sizeof(SharedVideoYuvFrames), data_size,
+          sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames);
+
+      auto shared_frame =
+          static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
+      shared_frame->data_size = static_cast<uint32_t>(data_size);
+    }
+    return true;
+  }
+
+  PackedVideoYuvFrame* GetPackedVideoYuvFrame(size_t index) noexcept {
+    auto shared_frame =
+        static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
+    return reinterpret_cast<PackedVideoYuvFrame*>(
+        static_cast<char*>(shared_frames_) + sizeof(SharedVideoYuvFrames) +
+        index * shared_frame->data_size);
+  }
+
+  void FreeSharedMemory() noexcept {
+    shared_frames_.Unmap();
+  }
 
   int WaitingThread() {
     for (;;) {
@@ -482,7 +492,6 @@ class D3D9Capture {
   uint32_t cx_ = 0;
   uint32_t cy_ = 0;
   CComPtr<IDirect3DSurface9> copy_surface_;
-  CComPtr<IDirect3DSurface9> render_target_;
   CComPtr<IDirect3DQuery9> query_;
 
   size_t frame_count_{0};
