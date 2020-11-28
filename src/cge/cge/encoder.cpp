@@ -26,14 +26,14 @@ bool Encoder::Init(std::string audio_codec,
                    uint64_t audio_bitrate,
                    bool enable_nvenc,
                    uint64_t video_bitrate,
-                   std::string video_codec,
+                   AVCodecID video_codec_id,
                    int video_gop,
                    std::string video_preset,
                    uint32_t video_quality) noexcept {
   bool audio = audio_encoder_.Init(std::move(audio_codec), audio_bitrate);
   bool video =
-      video_encoder_.Init(enable_nvenc, video_bitrate, video_codec, video_gop,
-                          std::move(video_preset), video_quality);
+      video_encoder_.Init(enable_nvenc, video_bitrate, video_codec_id,
+                          video_gop, std::move(video_preset), video_quality);
   if (!audio && !video) {
     return false;
   }

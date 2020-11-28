@@ -38,7 +38,7 @@ class Engine {
            bool enable_nvenc,
            KeyboardReplay keyboard_replay,
            uint64_t video_bitrate,
-           std::string video_codec,
+           AVCodecID video_codec_id,
            int video_gop,
            std::string video_preset,
            uint32_t video_quality);

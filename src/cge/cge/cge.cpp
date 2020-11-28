@@ -62,9 +62,14 @@ constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
 constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
 constexpr std::string_view kDefaultVideoCodec{"h264"};
-constexpr std::array<std::string_view, 2> kValidVideoCodecs = {
-    kDefaultVideoCodec, "h265"};
 constexpr int kDefaultVideoGop = 180;
+constexpr std::array<std::string_view, 19> kValidNvencPreset = {
+    "default", "slow", "medium", "fast",     "hp",         "hq", "bd",
+    "ll",      "llhq", "llhp",   "lossless", "losslesshp", "p1", "p2",
+    "p3",      "p4",   "p5",     "p6",       "p7"};
+constexpr std::array<std::string_view, 10> kValidPreset = {
+    "ultrafast", "superfast", "veryfast", "faster",   "fast",
+    "medium",    "slow",      "slower",   "veryslow", "placebo"};
 constexpr uint32_t kDefaultVideoQuality = 23;
 
 constexpr uint32_t kMinAudioBitrate = 16'000;
@@ -86,13 +91,14 @@ int main(int argc, char* argv[]) {
   KeyboardReplay keyboard_replay;
   uint16_t stream_port = 0;
   uint64_t video_bitrate = 0;
-  std::string video_codec;
+  AVCodecID video_codec_id = AV_CODEC_ID_NONE;
   int video_gop = 0;
   std::string video_preset;
   uint32_t video_quality = 0;
 
   try {
     std::string keyboard_replay_string;
+    std::string video_codec;
 
     po::options_description desc("Usage");
     // clang-format off
@@ -130,7 +136,7 @@ int main(int argc, char* argv[]) {
         "set video bitrate")
       ("video-codec",
         po::value<std::string>(&video_codec)->default_value(kDefaultVideoCodec.data()),
-        "set video codec, can be one of {h264, h265}")
+        "set video codec, can be one of {h264, h265, hevc}, h265 == hevc")
       ("video-gop",
         po::value<int>(&video_gop)->default_value(kDefaultVideoGop),
         "set video gop")
@@ -173,9 +179,11 @@ int main(int argc, char* argv[]) {
     if (video_bitrate < kMinVideoBitrate) {
       throw std::out_of_range("video-bitrate too low!");
     }
-    if (kValidVideoCodecs.cend() == std::find(kValidVideoCodecs.cbegin(),
-                                              kValidVideoCodecs.cend(),
-                                              video_codec)) {
+    if (video_codec == "h264") {
+      video_codec_id = AV_CODEC_ID_H264;
+    } else if (video_codec == "h265" || video_codec == "hevc") {
+      video_codec_id = AV_CODEC_ID_HEVC;
+    } else {
       throw std::invalid_argument("unsupported video-codec!");
     }
     if (video_gop < kMinGop || video_gop > kMaxGop) {
@@ -183,6 +191,20 @@ int main(int argc, char* argv[]) {
     }
     if (video_preset.empty()) {
       video_preset = enable_nvenc ? "llhp" : "ultrafast";
+    } else {
+      if (enable_nvenc) {
+        if (kValidNvencPreset.cend() == std::find(kValidNvencPreset.cbegin(),
+                                                  kValidNvencPreset.cend(),
+                                                  video_preset)) {
+          throw std::invalid_argument("unsupported NvEnc video-preset!");
+        }
+      } else {
+        if (kValidPreset.cend() == std::find(kValidPreset.cbegin(),
+                                             kValidPreset.cend(),
+                                             video_preset)) {
+          throw std::invalid_argument("unsupported NvEnc video-preset!");
+        }
+      }
     }
     if (video_quality > kMaxVideoQuality) {
       throw std::out_of_range("video-quality out of range!");
@@ -235,9 +257,8 @@ int main(int argc, char* argv[]) {
   Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
                             udp::endpoint(kAddress, control_port),
                             std::move(audio_codec), audio_bitrate, enable_nvenc,
-                            keyboard_replay, video_bitrate,
-                            std::move(video_codec), video_gop,
-                            std::move(video_preset), video_quality);
+                            keyboard_replay, video_bitrate, video_codec_id,
+                            video_gop, std::move(video_preset), video_quality);
   Engine::GetInstance().EncoderStop();
   return EXIT_SUCCESS;
 }

@@ -33,13 +33,13 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  bool enable_nvenc,
                  KeyboardReplay keyboard_replay,
                  uint64_t video_bitrate,
-                 std::string video_codec,
+                 AVCodecID video_codec_id,
                  int video_gop,
                  std::string video_preset,
                  uint32_t video_quality) {
   try {
     if (!encoder_.Init(std::move(audio_codec), audio_bitrate, enable_nvenc,
-                       video_bitrate, video_codec, video_gop,
+                       video_bitrate, video_codec_id, video_gop,
                        std::move(video_preset), video_quality)) {
       std::cout << "Initialize engine failed!\n";
       return;
