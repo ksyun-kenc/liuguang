@@ -115,7 +115,7 @@ HRESULT CaptureTexture(_In_ ID3D11DeviceContext* context,
     if (FAILED(hr)) {
       return hr;
     }
-    assert(pTemp);
+    assert(new_texture);
 
     DXGI_FORMAT format = EnsureNotTypeless(desc.Format);
     // ATLTRACE2(atlTraceUtil, 0, "%u -> %u\n", desc.Format, format);
@@ -144,7 +144,7 @@ HRESULT CaptureTexture(_In_ ID3D11DeviceContext* context,
     if (FAILED(hr))
       return hr;
 
-    assert(pStaging);
+    assert(staging);
 
     context->CopyResource(staging, new_texture);
   } else if ((desc.Usage == D3D11_USAGE_STAGING) &&
