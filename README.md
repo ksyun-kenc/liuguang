@@ -189,11 +189,11 @@ Assume you want to test USF4.
 
 - Run `cge --keyboard-replay=cgvhid` on server.
 
-- Run `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\d3d9yuv.dll` on server.
+- Run `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll` on server.
 
 - Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
 
-**Note** that only support D3D9 games now, will support D3D11 games soon.
+**Note** that only support D3D9, D3D11 games now.
 
 ## 6. Contact Us
 

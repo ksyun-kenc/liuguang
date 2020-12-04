@@ -189,11 +189,11 @@ Boost 的编译命令，参考：
 
 - 服务器上运行 `cge --keyboard-replay=cgvhid`。
 
-- 服务器上运行 `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\d3d9yuv.dll`，其中 `-e SSFIV.exe` 处要填好正确的路径名。
+- 服务器上运行 `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll`，其中 `-e SSFIV.exe` 处要填好正确的路径名。
 
 - 客户端上运行 `cgc --server=<server_address>`。
 
-**注意** 目前只支持 D3D9 游戏，很快会支持 D3D11 游戏。
+**注意** 目前只支持 D3D9、D3D11 游戏。（D3D10 游戏没测试过，但可能也支持。）
 
 ## 6. 联系方式
 
