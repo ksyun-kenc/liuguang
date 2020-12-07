@@ -185,7 +185,7 @@ Test with games:
 
 Assume you want to test USF4.
 
-- Install `cgvhid` on server.
+- Install `cgvhid` on server. [Details](src/cgvhid/cgvhid/)
 
 - Run `cge --keyboard-replay=cgvhid` on server.
 

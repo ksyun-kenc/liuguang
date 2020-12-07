@@ -185,7 +185,7 @@ Boost 的编译命令，参考：
 
 假设您要测试 USF4。
 
-- 服务器上安装 `cgvhid`。
+- 服务器上安装 `cgvhid`。 [详情](src/cgvhid/cgvhid/)
 
 - 服务器上运行 `cge --keyboard-replay=cgvhid`。
 
