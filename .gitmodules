@@ -1,0 +1,3 @@
+[submodule "ViGEmClient"]
+	path = src/deps/ViGEmClient
+	url = https://github.com/ViGEm/ViGEmClient.git
