@@ -32,7 +32,7 @@ All the componets listed below, will be open source by time.
 
 ### cge
 
-The `Cloud Gaming Engine`. A precompiled binary is [here](https://ks3-cn-beijing.ksyun.com/liuguang/cge.7z).
+The `Cloud Gaming Engine`.
 
 You can launch `cge` directly, which will apply the following options:
 
@@ -66,6 +66,8 @@ Usage:
   --enable-nvenc arg (=1)        Enable nvenc
   --keyboard-replay arg (=none)  keyboard replay method, can be one of {none,
                                  cgvhid}
+  --gamepad-replay arg (=none)   gamepad replay method, can be one of {none,
+                                 cgvhid, vigem}
   --stream-port arg (=8080)      set the websocket port for streaming, if port
                                  is 0, disable stream out via network. Capture
                                  and encode picture directly at startup but not
@@ -74,7 +76,8 @@ Usage:
                                  as control port, this port is only for media
                                  output.
   --video-bitrate arg (=1000000) set video bitrate
-  --video-codec arg (=h264)      set video codec, can be one of {h264, h265}
+  --video-codec arg (=h264)      set video codec, can be one of {h264, h265,
+                                 hevc}, h265 == hevc
   --video-gop arg (=180)         set video gop
   --video-preset arg
   --video-quality arg (=23)      set video quality, lower is better, available
@@ -86,8 +89,6 @@ You can press `Ctrl+C` to stop it gracefully.
 ### cgh
 
 Some hook dlls for capturing pictures from D3D game.
-
-Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgh.7z)
 
 ### cgi
 
@@ -110,7 +111,7 @@ Allowed options:
 
 ### cgvhid
 
-Cloud gameing Virtual HID driver. For replaying controller event on server. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgvhid.7z)
+Cloud gameing Virtual HID driver. For replaying controller event on server.
 
 ![Hook game](doc/cgvhid.png)
 
@@ -120,7 +121,7 @@ Cloud gameing Virtual Indirect Display Driver. For capturing screen on server.
 
 ### video_source
 
-A tool for testing. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/video_source.7z). Just run it, and it will generate simple pictures and write them as video frames to shared memory, then notify `cge` to fetch. You can use `cgc` to see these pictures.
+A tool for testing. Just run it, and it will generate simple pictures and write them as video frames to shared memory, then notify `cge` to fetch. You can use `cgc` to see these pictures.
 
 ### cgc
 

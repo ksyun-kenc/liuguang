@@ -32,7 +32,7 @@
 
 ### cge
 
-全称为 `Cloud Gaming Engine`。编译好的程序[在这里](https://ks3-cn-beijing.ksyun.com/liuguang/cge.7z).
+全称为 `Cloud Gaming Engine`。
 
 您可以直接运行 `cge`，此时应用的默认参数如下：
 
@@ -66,6 +66,8 @@ Usage:
   --enable-nvenc arg (=1)        Enable nvenc
   --keyboard-replay arg (=none)  keyboard replay method, can be one of {none,
                                  cgvhid}
+  --gamepad-replay arg (=none)   gamepad replay method, can be one of {none,
+                                 cgvhid, vigem}
   --stream-port arg (=8080)      set the websocket port for streaming, if port
                                  is 0, disable stream out via network. Capture
                                  and encode picture directly at startup but not
@@ -74,7 +76,8 @@ Usage:
                                  as control port, this port is only for media
                                  output.
   --video-bitrate arg (=1000000) set video bitrate
-  --video-codec arg (=h264)      set video codec, can be one of {h264, h265}
+  --video-codec arg (=h264)      set video codec, can be one of {h264, h265,
+                                 hevc}, h265 == hevc
   --video-gop arg (=180)         set video gop
   --video-preset arg
   --video-quality arg (=23)      set video quality, lower is better, available
@@ -86,8 +89,6 @@ Usage:
 ### cgh
 
 一些用于捕捉 D3D 游戏画面的 Hook DLL。
-
-[点这里下载](https://ks3-cn-beijing.ksyun.com/liuguang/cgh.7z)
 
 ### cgi
 
@@ -110,7 +111,7 @@ Allowed options:
 
 ### cgvhid
 
-全称为 Cloud gameing Virtual HID driver. 用于在服务端重放键盘灯外设消息。[点这里下载](https://ks3-cn-beijing.ksyun.com/liuguang/cgvhid.7z)
+全称为 Cloud gameing Virtual HID driver. 用于在服务端重放键盘灯外设消息。
 
 ![Hook game](doc/cgvhid.png)
 
@@ -120,7 +121,7 @@ Allowed options:
 
 ### video_source
 
-一个测试工具。[点这里下载](https://ks3-cn-beijing.ksyun.com/liuguang/video_source.7z). 直接跑就行，它会产生简单的图像，并把图像写入共享内存，然后通知 `cge` 来取。用 `cgc` 连接 `cge` 后就可以看到这些图像。
+一个测试工具。直接跑就行，它会产生简单的图像，并把图像写入共享内存，然后通知 `cge` 来取。用 `cgc` 连接 `cge` 后就可以看到这些图像。
 
 ### cgc
 
