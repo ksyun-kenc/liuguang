@@ -37,12 +37,35 @@ struct ControlKeyboard : public ControlBase {
   uint16_t key_code;
 };
 
+struct ControlGamepadAxis : public ControlBase {
+  uint8_t axis_index;
+  uint16_t coordinates;
+};
+
+struct ControlGamepadButton : public ControlBase {
+  uint16_t button;
+};
+
+struct ControlGamepadHat : public ControlBase {
+  uint8_t hat;
+};
+
 union ControlElement {
   ControlBase base;
   ControlPing ping;
   ControlKeyboard keyboard;
+  ControlGamepadAxis gamepad_axis;
+  ControlGamepadButton gamepad_button;
+  ControlGamepadHat gamepad_hat;
 };
 #pragma pack(pop)
 
-constexpr uint8_t ControlKeyboardFlagUp = 0x01;
-constexpr uint8_t ControlKeyboardFlagDown = 0x02;
+constexpr uint8_t kControlKeyboardFlagUp = 0x01;
+constexpr uint8_t kControlKeyboardFlagDown = 0x02;
+
+constexpr uint8_t kControlGamepadFlagNone = 0x00;
+constexpr uint8_t kControlGamepadFlagHat = 0x01;
+constexpr uint8_t kControlGamepadFlagAxis = 0x02;
+constexpr uint8_t kControlGamepadFlagDown = 0x04;
+constexpr uint8_t kControlGamepadFlagUp = 0x08;
+constexpr uint8_t kControlGamepadFlagButton = 0x10;

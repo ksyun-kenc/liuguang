@@ -44,6 +44,7 @@ control-port: 8080
 donot-present: false
 enable-nvenc: true
 keyboard-replay: none
+gamepad-replay: none
 stream-port: 8080
 video-bitrate: 1000000
 video-codec: h264
@@ -186,9 +187,11 @@ Boost 的编译命令，参考：
 
 假设您要测试 USF4。
 
-- 服务器上安装 `cgvhid`。 [详情](src/cgvhid/cgvhid/)
+- 服务器上安装 `cgvhid`。[详情](src/cgvhid/cgvhid/)
 
-- 服务器上运行 `cge --keyboard-replay=cgvhid`。
+- 如果您更喜欢使用手柄而非键盘，请在服务器上安装 `ViGEmBus`。[下载](https://github.com/ViGEm/ViGEmBus/releases)
+
+- 服务器上运行 `cge --keyboard-replay=cgvhid --gamepad-replay=vigem`。
 
 - 服务器上运行 `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll`，其中 `-e SSFIV.exe` 处要填好正确的路径名。
 

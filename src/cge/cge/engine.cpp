@@ -32,6 +32,7 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  uint64_t audio_bitrate,
                  bool enable_nvenc,
                  KeyboardReplay keyboard_replay,
+                 GamepadReplay gamepad_replay,
                  uint64_t video_bitrate,
                  AVCodecID video_codec_id,
                  int video_gop,
@@ -51,7 +52,8 @@ void Engine::Run(tcp::endpoint ws_endpoint,
       ws_server_->Run();
     }
     udp_server_ = std::make_shared<UdpServer>(*this, udp_endpoint,
-                                              std::move(keyboard_replay));
+                                              std::move(keyboard_replay),
+                                              std::move(gamepad_replay));
     std::cout << "UDP Server on: " << udp_endpoint << '\n';
     udp_server_->Run();
   } catch (std::exception& e) {

@@ -16,18 +16,21 @@
 
 #pragma once
 
+#include <Xinput.h>
+
 #include <boost/bind/bind.hpp>
 
 #include "net.hpp"
 
-#include "engine.h"
 #include "cgvhid_client.h"
+#include "engine.h"
 
 class UdpServer : public std::enable_shared_from_this<UdpServer> {
  public:
   UdpServer(Engine& engine,
             udp::endpoint endpoint,
-            KeyboardReplay keyboard_replay);
+            KeyboardReplay keyboard_replay,
+            GamepadReplay gamepad_replay);
   ~UdpServer() = default;
 
   void Run() { Read(); }
@@ -47,11 +50,19 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
   void OnWrite(const boost::system::error_code& ec,
                std::size_t bytes_transferred);
 
+  void OnControlEvent(std::size_t bytes_transferred) noexcept;
+
  private:
   Engine& engine_;
   udp::socket socket_;
   udp::endpoint remote_endpoint_;
   std::array<char, 65536> recv_buffer_{};
+
   KeyboardReplay keyboard_replay_;
   CgvhidClient cgvhid_client_;
+
+  GamepadReplay gamepad_replay_;
+  std::shared_ptr<class ViGEmClient> vigem_client_;
+  std::shared_ptr<class ViGEmTargetX360> vigem_target_x360_;
+  XINPUT_GAMEPAD gamepad_state_{};
 };

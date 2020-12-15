@@ -1,4 +1,4 @@
-# 鎏光云游戏引擎
+# Regame - Cloud Gaming Engine
 
 [简体中文](README.zh-CN.md) | English
 
@@ -44,6 +44,7 @@ control-port: 8080
 donot-present: false
 enable-nvenc: true
 keyboard-replay: none
+gamepad-replay: none
 stream-port: 8080
 video-bitrate: 1000000
 video-codec: h264
@@ -188,7 +189,9 @@ Assume you want to test USF4.
 
 - Install `cgvhid` on server. [Details](src/cgvhid/cgvhid/)
 
-- Run `cge --keyboard-replay=cgvhid` on server.
+- If you prefer gamepad to keyboard, install `ViGEmBus` on server. [Download](https://github.com/ViGEm/ViGEmBus/releases)
+
+- Run `cge --keyboard-replay=cgvhid --gamepad-replay=vigem` on server.
 
 - Run `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll` on server.
 

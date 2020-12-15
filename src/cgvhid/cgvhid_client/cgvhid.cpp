@@ -123,25 +123,31 @@ HANDLE Cgvhid::OpenInterface(HDEVINFO dev_info,
 }
 
 bool Cgvhid::Init() noexcept {
-  HANDLE h = Open(0xff00, 0x0001);
-  if (INVALID_HANDLE_VALUE == h) {
-    return false;
+  if (!control_) {
+    HANDLE h = Open(0xff00, 0x0001);
+    if (INVALID_HANDLE_VALUE == h) {
+      return false;
+    }
+    control_.Attach(h);
   }
-  control_.Attach(h);
-  h = Open(0xff00, 0x0002);
-  if (INVALID_HANDLE_VALUE == h) {
-    return false;
-  }
-  message_.Attach(h);
 
-  //
-  // Set the buffer count to 10 on the message HID
-  //
-  if (!HidD_SetNumInputBuffers(message_, 10)) {
-    Free();
-    ATLTRACE2(atlTraceException, 0, "!HidD_SetNumInputBuffers()\n");
-    return false;
+  if (!message_) {
+    HANDLE h = Open(0xff00, 0x0002);
+    if (INVALID_HANDLE_VALUE == h) {
+      return false;
+    }
+    message_.Attach(h);
+
+    //
+    // Set the buffer count to 10 on the message HID
+    //
+    if (!HidD_SetNumInputBuffers(message_, 10)) {
+      Free();
+      ATLTRACE2(atlTraceException, 0, "!HidD_SetNumInputBuffers()\n");
+      return false;
+    }
   }
+
   return true;
 }
 

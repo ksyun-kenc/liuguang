@@ -90,8 +90,15 @@ void VideoEncoder::Stop() {
 int VideoEncoder::EncodingThread() {
   BOOST_SCOPE_EXIT_ALL(&) { Free(false); };
 
+  const char* format_name = nullptr;
+  if (AV_CODEC_ID_H264 == codec_id_) {
+    format_name = "h264";
+  } else if (AV_CODEC_ID_HEVC == codec_id_) {
+    format_name = "hevc";
+  }
+
   int error_code = avformat_alloc_output_context2(&format_context_, nullptr,
-                                                  "h264", nullptr);
+                                                  format_name, nullptr);
   if (error_code < 0) {
     return error_code;
   }
@@ -282,7 +289,7 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
     av_opt_set(codec_context_->priv_data, "profile", "main", 0);
     av_opt_set(codec_context_->priv_data, "delay", "0", 0);
     if (AV_CODEC_ID_H264 == codec_id_) {
-      av_opt_set(codec_context_->priv_data, "rc", "vbr_hq", 0);
+      av_opt_set(codec_context_->priv_data, "rc", "vbr", 0);
       av_opt_set(codec_context_->priv_data, "cq", quality.data(), 0);
     } else if (AV_CODEC_ID_HEVC == codec_id_) {
       av_opt_set(codec_context_->priv_data, "qp", quality.data(), 0);

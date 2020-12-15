@@ -4,10 +4,9 @@
 
 #include "encoder.h"
 
-class WsServer;
-class UdpServer;
-
 enum class KeyboardReplay { NONE = 0, CGVHID };
+
+enum class GamepadReplay { NONE = 0, CGVHID, VIGEM };
 
 struct NetPacketHeader {
   uint32_t type : 8;
@@ -37,6 +36,7 @@ class Engine {
            uint64_t audio_bitrate,
            bool enable_nvenc,
            KeyboardReplay keyboard_replay,
+           GamepadReplay gamepad_replay,
            uint64_t video_bitrate,
            AVCodecID video_codec_id,
            int video_gop,
@@ -63,8 +63,8 @@ class Engine {
   bool running_ = false;
 
   net::io_context ioc_{2};
-  std::shared_ptr<WsServer> ws_server_;
-  std::shared_ptr<UdpServer> udp_server_;
+  std::shared_ptr<class WsServer> ws_server_;
+  std::shared_ptr<class UdpServer> udp_server_;
   Encoder encoder_;
 
   CHandle donot_present_event_;

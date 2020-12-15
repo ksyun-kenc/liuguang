@@ -55,10 +55,17 @@ constexpr std::array<std::string_view, 3> kValidAudioCodecs = {
     kDefaultAudioCodec, "aac", "opus"};
 constexpr uint16_t kDefaultControlPort = 8080;
 constexpr bool kDefaultDonotPresent = false;
+
 constexpr std::string_view kDefaultKeyboardReplay{"none"};
 // Should be the same order with KeyboardReplay
 constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
     kDefaultKeyboardReplay, "cgvhid"};
+
+constexpr std::string_view kDefaultGamepadReplay{"none"};
+// Should be the same order with GamepadReplay
+constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods = {
+    kDefaultGamepadReplay, "cgvhid", "vigem"};
+
 constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
 constexpr std::string_view kDefaultVideoCodec{"h264"};
@@ -89,6 +96,7 @@ int main(int argc, char* argv[]) {
   bool donot_present = false;
   bool enable_nvenc = true;
   KeyboardReplay keyboard_replay;
+  GamepadReplay gamepad_replay;
   uint16_t stream_port = 0;
   uint64_t video_bitrate = 0;
   AVCodecID video_codec_id = AV_CODEC_ID_NONE;
@@ -98,6 +106,7 @@ int main(int argc, char* argv[]) {
 
   try {
     std::string keyboard_replay_string;
+    std::string gamepad_replay_string;
     std::string video_codec;
 
     po::options_description desc("Usage");
@@ -124,6 +133,9 @@ int main(int argc, char* argv[]) {
       ("keyboard-replay",
         po::value<std::string>(&keyboard_replay_string)->default_value(kDefaultKeyboardReplay.data()),
         "keyboard replay method, can be one of {none, cgvhid}")
+      ("gamepad-replay",
+        po::value<std::string>(&gamepad_replay_string)->default_value(kDefaultGamepadReplay.data()),
+        "gamepad replay method, can be one of {none, cgvhid, vigem}")
       ("stream-port",
         po::value<uint16_t>(&stream_port)->default_value(kDefaultStreamPort),
         "set the websocket port for streaming, if port is 0, disable stream "
@@ -168,6 +180,7 @@ int main(int argc, char* argv[]) {
     if (0 == control_port) {
       control_port = kDefaultControlPort;
     }
+
     auto keyboard_replay_pos =
         std::find(kValidKeyboardReplayMethods.cbegin(),
                   kValidKeyboardReplayMethods.cend(), keyboard_replay_string);
@@ -176,6 +189,16 @@ int main(int argc, char* argv[]) {
     }
     keyboard_replay = static_cast<KeyboardReplay>(std::distance(
         kValidKeyboardReplayMethods.cbegin(), keyboard_replay_pos));
+
+    auto gamepad_replay_pos =
+        std::find(kValidGamepadReplayMethods.cbegin(),
+                  kValidGamepadReplayMethods.cend(), gamepad_replay_string);
+    if (kValidGamepadReplayMethods.cend() == gamepad_replay_pos) {
+      throw std::invalid_argument("unsupported gamepad-replay!");
+    }
+    gamepad_replay = static_cast<GamepadReplay>(
+        std::distance(kValidGamepadReplayMethods.cbegin(), gamepad_replay_pos));
+
     if (video_bitrate < kMinVideoBitrate) {
       throw std::out_of_range("video-bitrate too low!");
     }
@@ -218,6 +241,7 @@ int main(int argc, char* argv[]) {
               << "donot-present: " << std::boolalpha << donot_present << '\n'
               << "enable-nvenc: " << std::boolalpha << enable_nvenc << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
+              << "gamepad-replay: " << gamepad_replay_string << '\n'
               << "stream-port: " << stream_port << '\n'
               << "video-bitrate: " << video_bitrate << '\n'
               << "video-codec: " << video_codec << '\n'
@@ -257,8 +281,9 @@ int main(int argc, char* argv[]) {
   Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
                             udp::endpoint(kAddress, control_port),
                             std::move(audio_codec), audio_bitrate, enable_nvenc,
-                            keyboard_replay, video_bitrate, video_codec_id,
-                            video_gop, std::move(video_preset), video_quality);
+                            keyboard_replay, gamepad_replay, video_bitrate,
+                            video_codec_id, video_gop, std::move(video_preset),
+                            video_quality);
   Engine::GetInstance().EncoderStop();
   return EXIT_SUCCESS;
 }

@@ -16,6 +16,9 @@
     <Filter Include="Source Files\cgvhid_client">
       <UniqueIdentifier>{c769d11b-4cba-400d-b2d6-9b77a26f3966}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ViGEmClient">
+      <UniqueIdentifier>{7e2b5123-8702-4ca2-a9ec-80552fa09b12}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cge.cpp">
@@ -53,6 +56,12 @@
     </ClCompile>
     <ClCompile Include="..\..\cgvhid\cgvhid_client\cgvhid_client.cpp">
       <Filter>Source Files\cgvhid_client</Filter>
+    </ClCompile>
+    <ClCompile Include="vigem_client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deps\ViGEmClient\src\ViGEmClient.cpp">
+      <Filter>Source Files\ViGEmClient</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -96,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\control.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vigem_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
