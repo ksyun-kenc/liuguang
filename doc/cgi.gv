@@ -12,7 +12,7 @@ digraph G {
 		style=filled;
 		color="#BFBFBF";
 		node [style=filled,color="#ADB9CA"];
-		d3d9tex d3d9yuv dxgitex dxgiyuv;
+		capturetex captureyuv;
 		label = "cgh";
 	}
 
@@ -20,9 +20,9 @@ digraph G {
 		style=filled;
 		color="#3FBFFF";
 		node [style=filled,color="#ADB9CA"];
-		d3d9;
+		d3d;
 		label = "game";
 	}
 
-	easyhook -> d3d9yuv -> d3d9;
+	easyhook -> captureyuv -> d3d;
 }
