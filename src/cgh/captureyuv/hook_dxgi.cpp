@@ -19,6 +19,7 @@
 #include "hook_dxgi.h"
 
 #include <d3d11.h>
+#include <d3d11on12.h>
 #include <d3d12.h>
 
 #include "captureyuv.h"
@@ -201,8 +202,7 @@ class CaptureD3d11 {
     D3D11_TEXTURE2D_DESC desc;
     CComPtr<ID3D11Texture2D> new_texture;
     HRESULT hr = CaptureTexture(GetInstance().device_, GetInstance().context_,
-                                acquired_texture, desc,
-                                new_texture);
+                                acquired_texture, desc, new_texture);
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0, "!CaptureTexture(), #0x%08X\n", hr);
       return;
@@ -249,12 +249,12 @@ class CaptureD3d11 {
       ATLTRACE2(atlTraceException, 0, "%p->Map() failed with 0x%08X.\n",
                 surface, hr);
       if (DXGI_ERROR_DEVICE_REMOVED == hr || DXGI_ERROR_DEVICE_RESET == hr) {
-        Reset();
+        Free();
       }
       return;
     }
     BOOST_SCOPE_EXIT_ALL(&) {
-      //ATLTRACE2(atlTraceUtil, 0, "%p->Unmap()\n", surface);
+      // ATLTRACE2(atlTraceUtil, 0, "%p->Unmap()\n", surface);
       surface->Unmap();
     };
 
@@ -286,9 +286,9 @@ class CaptureD3d11 {
         ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
       }
     }
-    ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu, \n",
-        CaptureYuv::GetInstance().GetFrameCount(),
-              stats.elapsed.yuv_convert);
+    ATLTRACE2(
+        atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu, \n",
+        CaptureYuv::GetInstance().GetFrameCount(), stats.elapsed.yuv_convert);
 
     stats.elapsed.total = umu::TimeMeasure::Delta(stats.timestamp);
 
@@ -303,7 +303,7 @@ class CaptureD3d11 {
     CaptureYuv::GetInstance().SetSharedFrameReadyEvent();
   }
 
-  static void Reset() { GetInstance().initialized_ = false; }
+  static void Free() { GetInstance().initialized_ = false; }
 
  private:
   HRESULT Initialize(IDXGISwapChain* swap) {
@@ -311,7 +311,7 @@ class CaptureD3d11 {
                                  reinterpret_cast<void**>(&device_));
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0,
-                "Failed to get device from swap, #0x%08X\n", hr);
+                "%s: Failed to get device from swap, #0x%08X\n", __func__, hr);
       return hr;
     }
 
@@ -331,16 +331,309 @@ class CaptureD3d11 {
   UINT height_ = 0;
 };
 
-class CaptureDxgi {
+class CaptureD3d11On12 {
  public:
-  inline const IDXGISwapChain* GetSwapChain() const noexcept {
-    return swap_;
+  static CaptureD3d11On12& GetInstance() {
+    static CaptureD3d11On12 instance;
+    return instance;
   }
 
-  inline void Free() noexcept {
+  static void Capture(void* swap, void*) {
+    bool should_update = false;
+    if (!GetInstance().initialized_) {
+      HRESULT hr = GetInstance().Initialize(static_cast<IDXGISwapChain*>(swap));
+      if (FAILED(hr)) {
+        return;
+      }
+      GetInstance().initialized_ = true;
+      should_update = true;
+    }
+
+    LARGE_INTEGER tick;
+    QueryPerformanceCounter(&tick);
+
+    size_t index = GetInstance().current_backbuffer_;
+    if (GetInstance().is_dxgi_1_4_) {
+      IDXGISwapChain3* swap3 = reinterpret_cast<IDXGISwapChain3*>(swap);
+      index = swap3->GetCurrentBackBufferIndex();
+      if (++GetInstance().current_backbuffer_ >=
+          GetInstance().backbuffer_count_) {
+        index = 0;
+      }
+    }
+
+    ID3D11Resource* backbuffer = GetInstance().backbuffer11_[index];
+    GetInstance().device11on12_->AcquireWrappedResources(&backbuffer, 1);
+
+    D3D11_TEXTURE2D_DESC desc;
+    CComPtr<ID3D11Texture2D> new_texture;
+    HRESULT hr =
+        CaptureTexture(GetInstance().device11_, GetInstance().context11_,
+                       backbuffer, desc, new_texture);
+    GetInstance().device11on12_->ReleaseWrappedResources(&backbuffer, 1);
+    GetInstance().context11_->Flush();
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!CaptureTexture(), #0x%08X\n", hr);
+      return;
+    }
+
+    if (should_update) {
+      SharedVideoFrameInfo* svfi =
+          CaptureYuv::GetInstance().GetSharedVideoFrameInfo();
+      svfi->timestamp = tick.QuadPart;
+      svfi->type = VideoFrameType::YUV;
+      svfi->width = desc.Width;
+      svfi->height = desc.Height;
+      svfi->format = desc.Format;
+    }
+
+    CComPtr<IDXGISurface> surface;
+    hr = new_texture->QueryInterface(IID_PPV_ARGS(&surface));
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!QueryInterface(IDXGISurface)\n");
+      return;
+    }
+
+    VideoFrameStats stats = {};
+    stats.timestamp = tick.QuadPart;
+    stats.elapsed.preprocess = umu::TimeMeasure::Delta(tick.QuadPart);
+
+    DXGI_SURFACE_DESC sd = {};
+    hr = surface->GetDesc(&sd);
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "%p->GetDesc() failed with 0x%08X.\n",
+                surface, hr);
+      return;
+    }
+
+    DXGI_MAPPED_RECT mapped_rect = {};
+    {
+      umu::TimeMeasure tm(stats.elapsed.rgb_mapping);
+      hr = surface->Map(&mapped_rect, DXGI_MAP_READ);
+    }
+    ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.rgb_mapping = %llu.\n",
+              CaptureYuv::GetInstance().GetFrameCount(),
+              stats.elapsed.rgb_mapping);
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "%p->Map() failed with 0x%08X.\n",
+                surface, hr);
+      if (DXGI_ERROR_DEVICE_REMOVED == hr || DXGI_ERROR_DEVICE_RESET == hr) {
+        Free();
+      }
+      return;
+    }
+    BOOST_SCOPE_EXIT_ALL(&) {
+      // ATLTRACE2(atlTraceUtil, 0, "%p->Unmap()\n", surface);
+      surface->Unmap();
+    };
+
+    size_t pixel_size = sd.Width * sd.Height;
+    size_t frame_size = 4 * pixel_size;
+    size_t data_size = sizeof(PackedVideoYuvFrame) + frame_size;
+    ATLTRACE2(atlTraceUtil, 0, "Frame[%zu] %u * %u, %zu + %zu = %zu\n",
+              CaptureYuv::GetInstance().GetFrameCount(), desc.Width,
+              desc.Height, sizeof(PackedVideoYuvFrame), frame_size, data_size);
+    if (!CaptureYuv::GetInstance().CreateSharedVideoYuvFrames(data_size)) {
+      return;
+    }
+
+    auto frame = CaptureYuv::GetInstance().GetAvailablePackedVideoYuvFrame();
+    const int uv_stride = (desc.Width + 1) / 2;
+    uint8_t* y = reinterpret_cast<uint8_t*>(frame->data);
+    uint8_t* u = y + pixel_size;
+    uint8_t* v = u + (pixel_size / 4);
+
+    {
+      umu::TimeMeasure tm(stats.elapsed.yuv_convert);
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
+        ABGRToI420(mapped_rect.pBits, desc.Width * 4, y, desc.Width, u,
+                   uv_stride, v, uv_stride, desc.Width, desc.Height);
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
+        ARGBToI420(mapped_rect.pBits, desc.Width * 4, y, desc.Width, u,
+                   uv_stride, v, uv_stride, desc.Width, desc.Height);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+      }
+    }
+    ATLTRACE2(
+        atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu, \n",
+        CaptureYuv::GetInstance().GetFrameCount(), stats.elapsed.yuv_convert);
+
+    stats.elapsed.total = umu::TimeMeasure::Delta(stats.timestamp);
+
+    frame->stats.timestamp = stats.timestamp;
+    frame->stats.elapsed.preprocess = stats.elapsed.preprocess;
+    frame->stats.elapsed.nvenc = 0;
+    frame->stats.elapsed.wait_rgb_mapping = stats.elapsed.wait_rgb_mapping;
+    frame->stats.elapsed.rgb_mapping = stats.elapsed.rgb_mapping;
+    frame->stats.elapsed.yuv_convert = stats.elapsed.yuv_convert;
+    frame->stats.elapsed.total = stats.elapsed.total;
+
+    CaptureYuv::GetInstance().SetSharedFrameReadyEvent();
+  }
+
+  static void Free() {
+    GetInstance().initialized_ = false;
+    GetInstance().FreeResource();
+  }
+
+ private:
+  HRESULT Initialize(IDXGISwapChain* swap) {
+    HRESULT hr = swap->GetDevice(__uuidof(ID3D12Device),
+                                 reinterpret_cast<void**>(&device_));
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0,
+                "%s: Failed to get device from swap, #0x%08X\n", __func__, hr);
+      return hr;
+    }
+    device_->Release();
+
+    if (nullptr == D3D11On12CreateDevice_) {
+      D3D11On12CreateDevice_ =
+          reinterpret_cast<PFN_D3D11ON12_CREATE_DEVICE>(GetProcAddress(
+              GetModuleHandle(_T("d3d11.dll")), "D3D11On12CreateDevice"));
+      if (nullptr == D3D11On12CreateDevice_) {
+        ATLTRACE2(atlTraceException, 0,
+                  "!GetProcAddress(D3D11On12CreateDevice), #%d\n",
+                  GetLastError());
+        return E_NOINTERFACE;
+      }
+      ATLTRACE2(atlTraceUtil, 0, "D3D11On12CreateDevice = 0x%p\n",
+                D3D11On12CreateDevice_);
+    }
+
+    hr = D3D11On12CreateDevice_(device_, 0, nullptr, 0, nullptr, 0, 0,
+                                        &device11_, &context11_, nullptr);
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!D3D11On12CreateDevice(), #0x%08X\n",
+                hr);
+      return hr;
+    }
+
+    hr = device11_->QueryInterface(IID_PPV_ARGS(&device11on12_));
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0,
+                "!QueryInterface(ID3D11On12Device), #0x%08X\n", hr);
+      return hr;
+    }
+
+    hr = InitFormat(swap);
+    return hr;
+  }
+
+  HRESULT InitFormat(IDXGISwapChain* swap) {
+    CComPtr<IDXGISwapChain3> swap3;
+    HRESULT hr = swap->QueryInterface(IID_PPV_ARGS(&swap3));
+    if (SUCCEEDED(hr)) {
+      is_dxgi_1_4_ = true;
+      swap3.Release();
+    } else {
+      is_dxgi_1_4_ = false;
+    }
+
+    DXGI_SWAP_CHAIN_DESC desc;
+    hr = swap->GetDesc(&desc);
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!GetDesc(), #0x%08X\n", hr);
+      return hr;
+    }
+
+    format_ = desc.BufferDesc.Format;
+    width_ = desc.BufferDesc.Width;
+    height_ = desc.BufferDesc.Height;
+    multisampled_ = desc.SampleDesc.Count > 1;
+    ATLTRACE2(atlTraceUtil, 0, "Format %u, %u * %u, Count = %u\n", format_,
+              width_, height_, desc.SampleDesc.Count);
+
+    backbuffer_count_ =
+        desc.SwapEffect == DXGI_SWAP_EFFECT_DISCARD ? 1 : desc.BufferCount;
+    if (1 == backbuffer_count_) {
+      is_dxgi_1_4_ = false;
+    }
+
+    if (kMaxBackbuffers < backbuffer_count_) {
+      ATLTRACE2(atlTraceException, 0, "BackbufferCount = %u\n",
+                backbuffer_count_);
+      backbuffer_count_ = 1;
+      is_dxgi_1_4_ = false;
+    }
+
+    ID3D12Resource* backbuffer12[kMaxBackbuffers]{};
+    D3D11_RESOURCE_FLAGS resource_flags = {};
+    for (UINT i = 0; i < backbuffer_count_; ++i) {
+      hr = swap->GetBuffer(i, IID_PPV_ARGS(&backbuffer12[i]));
+      if (FAILED(hr)) {
+        ATLTRACE2(atlTraceException, 0, "!GetBuffer(), #0x%08x\n", hr);
+        return hr;
+      }
+      hr = device11on12_->CreateWrappedResource(
+          backbuffer12[i], &resource_flags, D3D12_RESOURCE_STATE_COPY_SOURCE,
+          D3D12_RESOURCE_STATE_PRESENT, IID_PPV_ARGS(&backbuffer11_[i]));
+      backbuffer12[i]->Release();
+      if (FAILED(hr)) {
+        ATLTRACE2(atlTraceException, 0, "!CreateWrappedResource(), #0x%08x\n", hr);
+        return hr;
+      }
+      device11on12_->ReleaseWrappedResources(&backbuffer11_[i], 1);
+    }
+
+    return hr;
+  }
+
+  void FreeResource() {
+    for (size_t i = 0; i < backbuffer_count_; ++i) {
+      if (nullptr != backbuffer11_[i]) {
+        backbuffer11_[i]->Release();
+      }
+    }
+    backbuffer_count_ = 0;
+
+    if (nullptr != device11_) {
+      device11_->Release();
+      device11_ = nullptr;
+    }
+    if (nullptr != context11_) {
+      context11_->Release();
+      context11_ = nullptr;
+    }
+    if (nullptr != device11on12_) {
+      device11on12_->Release();
+      device11on12_ = nullptr;
+    }
+  }
+
+ private:
+  static constexpr size_t kMaxBackbuffers = 8;
+
+  bool initialized_ = false;
+  bool is_dxgi_1_4_ = false;
+
+  ID3D12Device* device_ = nullptr;
+  PFN_D3D11ON12_CREATE_DEVICE D3D11On12CreateDevice_ = nullptr;
+
+  ID3D11Device* device11_ = nullptr;
+  ID3D11DeviceContext* context11_ = nullptr;
+  ID3D11On12Device* device11on12_ = nullptr;
+
+  ID3D11Resource* backbuffer11_[kMaxBackbuffers]{};
+  size_t backbuffer_count_;
+  size_t current_backbuffer_;
+
+  
+  DXGI_FORMAT format_;
+  UINT width_ = 0;
+  UINT height_ = 0;
+  bool multisampled_ = false;
+};
+
+class CaptureDxgi {
+ public:
+  inline const IDXGISwapChain* GetSwapChain() const noexcept { return swap_; }
+
+  inline void Reset() noexcept {
     swap_ = nullptr;
     capture_ = nullptr;
-    reset_ = nullptr;
+    free_ = nullptr;
   }
 
   bool Setup(IDXGISwapChain* swap) noexcept {
@@ -351,14 +644,13 @@ class CaptureDxgi {
       if (level >= D3D_FEATURE_LEVEL_11_0) {
         swap_ = swap;
         capture_ = CaptureD3d11::Capture;
-        reset_ = CaptureD3d11::Reset;
-        ATLTRACE2(
-            atlTraceUtil, 0,
-            __FUNCTION__ ": level(0x%x) >= D3D_FEATURE_LEVEL_11_0(0x%x)\n",
-            level, D3D_FEATURE_LEVEL_11_0);
+        free_ = CaptureD3d11::Free;
+        ATLTRACE2(atlTraceUtil, 0,
+                  "%s: level(0x%x) >= D3D_FEATURE_LEVEL_11_0(0x%x)\n", __func__,
+                  level, D3D_FEATURE_LEVEL_11_0);
         return true;
       }
-      ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": level = 0x%x\n", level);
+      ATLTRACE2(atlTraceUtil, 0, "%s: level = 0x%x\n", __func__, level);
     }
 
     CComPtr<IUnknown> device;
@@ -366,15 +658,15 @@ class CaptureDxgi {
                                  reinterpret_cast<void**>(&device));
     if (SUCCEEDED(hr)) {
       swap_ = swap;
-      ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": ID3D10Device\n");
+      ATLTRACE2(atlTraceUtil, 0, "%s: ID3D10Device\n", __func__);
       return true;
     }
 
     if (SUCCEEDED(hr11)) {
       swap_ = swap;
       capture_ = CaptureD3d11::Capture;
-      reset_ = CaptureD3d11::Reset;
-      ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": ID3D11Device\n");
+      free_ = CaptureD3d11::Free;
+      ATLTRACE2(atlTraceUtil, 0, "%s: ID3D11Device\n", __func__);
       return true;
     }
 
@@ -383,40 +675,40 @@ class CaptureDxgi {
                          reinterpret_cast<void**>(&device));
     if (SUCCEEDED(hr)) {
       swap_ = swap;
-      ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": ID3D12Device\n");
+      capture_ = CaptureD3d11On12::Capture;
+      free_ = CaptureD3d11On12::Free;
+      ATLTRACE2(atlTraceUtil, 0, "%s: ID3D12Device\n", __func__);
       return true;
     }
 
     return false;
   }
 
-  inline bool CanCapture() const noexcept {
-    return nullptr != capture_;
-  }
+  inline bool CanCapture() const noexcept { return nullptr != capture_; }
 
   inline void Capture(IDXGISwapChain* swap) const noexcept {
     assert(nullptr != capture_);
     CComPtr<IDXGIResource> backbuffer;
 
-    HRESULT hr = swap->GetBuffer(0, IID_PPV_ARGS(&backbuffer));
+    HRESULT hr = swap->GetBuffer(0, __uuidof(IUnknown),
+                                 reinterpret_cast<void**>(&backbuffer));
     if (SUCCEEDED(hr)) {
       capture_(swap, backbuffer);
     } else {
       ATLTRACE2(atlTraceException, 0, "!GetBuffer(), #0x%08x\n", hr);
     }
-    
   }
 
-  inline void Reset() const noexcept {
-    if (nullptr != reset_) {
-      reset_();
+  inline void Free() const noexcept {
+    if (nullptr != free_) {
+      free_();
     }
   }
 
  private:
   IDXGISwapChain* swap_ = nullptr;
   void (*capture_)(void*, void*) = nullptr;
-  void (*reset_)() = nullptr;
+  void (*free_)() = nullptr;
 };
 
 CaptureDxgi capture;
@@ -564,8 +856,8 @@ HRESULT STDMETHODCALLTYPE HookDxgi::MyPresent(IDXGISwapChain* swap,
                                               /* [in] */ UINT flags) {
   if (resize_buffers_called_) {
     resize_buffers_called_ = false;
-    capture.Free();
-    ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ "(0x%p, %u, %u)\n", swap,
+    capture.Reset();
+    ATLTRACE2(atlTraceUtil, 0, "%s(0x%p, %u, %u)\n", __func__, swap,
               sync_interval, flags);
   }
 
@@ -573,9 +865,9 @@ HRESULT STDMETHODCALLTYPE HookDxgi::MyPresent(IDXGISwapChain* swap,
     if (nullptr == capture.GetSwapChain()) {
       capture.Setup(swap);
     } else if (swap != capture.GetSwapChain()) {
-      capture.Reset();
+      capture.Free();
       capture.Setup(swap);
-      ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": swap changed.\n");
+      ATLTRACE2(atlTraceUtil, 0, "%s: swap changed.\n", __func__);
     }
 
     if (capture.CanCapture()) {
@@ -583,11 +875,6 @@ HRESULT STDMETHODCALLTYPE HookDxgi::MyPresent(IDXGISwapChain* swap,
     }
   }
 
-  //HRESULT hr = S_OK;
-  //if (CaptureYuv::GetInstance().IsPresentEnabled()) {
-  //  hr = IDXGISwapChain_Present_(swap, sync_interval, flags);
-  //}
-  //return hr;
   if (!CaptureYuv::GetInstance().IsPresentEnabled()) {
     flags |= DXGI_PRESENT_TEST;
   }
@@ -601,10 +888,10 @@ HookDxgi::MyResizeBuffers(IDXGISwapChain* This,
                           /* [in] */ UINT Height,
                           /* [in] */ DXGI_FORMAT NewFormat,
                           /* [in] */ UINT SwapChainFlags) {
-  ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ "(0x%p, %u, %u, %u, %d, %u)\n", This,
+  ATLTRACE2(atlTraceUtil, 0, "%s(0x%p, %u, %u, %u, %d, %u)\n", __func__, This,
             BufferCount, Width, Height, NewFormat, SwapChainFlags);
 
-  capture.Reset();
+  capture.Free();
 
   HRESULT hr = IDXGISwapChain_ResizeBuffers_(This, BufferCount, Width, Height,
                                              NewFormat, SwapChainFlags);
@@ -619,8 +906,8 @@ HookDxgi::MyPresent1(IDXGISwapChain1* swap,
                      _In_ const DXGI_PRESENT_PARAMETERS* present_parameters) {
   if (resize_buffers_called_) {
     resize_buffers_called_ = false;
-    capture.Free();
-    ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ "(0x%p, %u, %u, 0x%p)\n", swap,
+    capture.Reset();
+    ATLTRACE2(atlTraceUtil, 0, "%s(0x%p, %u, %u, 0x%p)\n", __func__, swap,
               sync_interval, flags, present_parameters);
   }
 
@@ -632,12 +919,6 @@ HookDxgi::MyPresent1(IDXGISwapChain1* swap,
     }
   }
 
-  //HRESULT hr = S_OK;
-  //if (CaptureYuv::GetInstance().IsPresentEnabled()) {
-  //  hr = IDXGISwapChain1_Present1_(swap, sync_interval, flags,
-  //                                 present_parameters);
-  //}
-  //return hr;
   if (!CaptureYuv::GetInstance().IsPresentEnabled()) {
     flags |= DXGI_PRESENT_TEST;
   }

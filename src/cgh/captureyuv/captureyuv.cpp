@@ -119,21 +119,22 @@ bool CaptureYuv::AttemptToHook() noexcept {
   ATLTRACE2(atlTraceUtil, 0, "%s: + id = %u\n", __func__,
             hook_thread_.get_id());
 
+  bool hooked = false;
   if (!is_d3d9_hooked_) {
     if (hook_d3d9_.Hook()) {
       is_d3d9_hooked_ = true;
-      return true;
+      hooked = true;
     }
   }
 
   if (!is_dxgi_hooked_) {
     if (hook_dxgi_.Hook()) {
       is_dxgi_hooked_ = true;
-      return true;
+      hooked = true;
     }
   }
 
-  return false;
+  return hooked;
 }
 
 int CaptureYuv::HookThread() noexcept {
