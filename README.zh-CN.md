@@ -173,6 +173,12 @@ Boost 的编译命令，参考：
 
 ## 5. 编译和测试
 
+```
+git clone https://github.com/ksyun-kenc/liuguang
+cd liuguang
+git submodule update --init
+```
+
 用 VS 打开解决方案文件，按 F7 编译即可。
 
 测试步骤：

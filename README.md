@@ -173,6 +173,12 @@ Required by cgvhid, cgvidd.
 
 ## 5. Building and Testing
 
+```
+git clone https://github.com/ksyun-kenc/liuguang
+cd liuguang
+git submodule update --init
+```
+
 Open each solution file with VS, and press F7.
 
 Testing steps:
