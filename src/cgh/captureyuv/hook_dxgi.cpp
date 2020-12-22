@@ -727,28 +727,32 @@ bool HookDxgi::Hook() noexcept {
   }
 
   // d3d10.dll and d3d10_1.dll load d3d11.dll
-  bool hook_d3d11 = false;
+  bool hooked = false;
   HMODULE d3d11_module = GetModuleHandle(_T("d3d11.dll"));
   if (nullptr != d3d11_module) {
     ATLTRACE2(atlTraceUtil, 0, "d3d11.dll loaded.\n");
-    hook_d3d11 = HookD3d11(d3d11_module);
-  }
-
-  bool hook_d3d12 = false;
-  HMODULE d3d12_module = GetModuleHandle(_T("d3d12.dll"));
-  if (nullptr != d3d12_module) {
+    hooked = HookD3D(d3d11_module);
+  } else if (nullptr != GetModuleHandle(_T("d3d12.dll"))) {
     ATLTRACE2(atlTraceUtil, 0, "d3d12.dll loaded.\n");
-    hook_d3d12 = HookD3d12(d3d12_module);
+    loaded_d3d11_module_ = LoadLibrary(_T("d3d11.dll"));
+    if (nullptr != loaded_d3d11_module_) {
+      hooked = HookD3D(loaded_d3d11_module_);
+    }
   }
 
-  return hook_d3d11 || hook_d3d12;
+  return hooked;
 }
 
 void HookDxgi::Unhook() noexcept {
-  // not necessary
+  if (nullptr != loaded_d3d11_module_) {
+    FreeLibrary(loaded_d3d11_module_);
+    loaded_d3d11_module_ = nullptr;
+  }
 }
 
-bool HookDxgi::HookD3d11(HMODULE d3d11_module) noexcept {
+bool HookDxgi::HookD3D(HMODULE d3d11_module) noexcept {
+  assert(nullptr != d3d11_module);
+
   const auto d3d11_create_device_and_swap_chain =
       reinterpret_cast<PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN>(
           GetProcAddress(d3d11_module, "D3D11CreateDeviceAndSwapChain"));
@@ -844,11 +848,6 @@ bool HookDxgi::HookD3d11(HMODULE d3d11_module) noexcept {
   }
 
   return true;
-}
-
-bool HookDxgi::HookD3d12(HMODULE d3d12_module) noexcept {
-  // not yet
-  return false;
 }
 
 HRESULT STDMETHODCALLTYPE HookDxgi::MyPresent(IDXGISwapChain* swap,

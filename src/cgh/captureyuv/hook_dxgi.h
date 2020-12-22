@@ -48,8 +48,7 @@ class HookDxgi {
   void Unhook() noexcept;
 
  private:
-  bool HookD3d11(HMODULE d3d11_module) noexcept;
-  bool HookD3d12(HMODULE d3d12_module) noexcept;
+  bool HookD3D(HMODULE d3d11_module) noexcept;
 
  private:
   static HRESULT STDMETHODCALLTYPE MyPresent(IDXGISwapChain* This,
@@ -76,4 +75,5 @@ class HookDxgi {
   umu::HookApi hook_IDXGISwapChain1_Present1_;
 
   static bool resize_buffers_called_;
+  HMODULE loaded_d3d11_module_ = nullptr;
 };
