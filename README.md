@@ -2,6 +2,20 @@
 
 [简体中文](README.zh-CN.md) | English
 
+`Regame - Cloud Gaming Engine` is a set of technologies developed by Edge computing team of [Ksyun](https://www.ksyun.com/) to serve the cloud game scene.
+
+Cloud gaming is a method of playing video games that is done using remote hardware. You don't have to download or install games locally, just begin playing the game immediately because it is being run on remote servers. 
+
+Cloud gaming engine is a core technology to host ordinary games on remote server and start cloud gaming service.
+
+`Regame` is still under development. It would be great if you could help.
+
+Demo videos (Chinese):
+
+- [Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - 知乎
+
+- [Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - 西瓜视频
+
 ## 1. Requirements
 
 ### Server
