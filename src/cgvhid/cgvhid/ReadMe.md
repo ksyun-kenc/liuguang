@@ -20,7 +20,7 @@ bcdedit.exe -set testsigning on
 
 - Restart Windows.
 
-- Install driver via `devmgmt.msc`.
+- Install driver via `devmgmt.msc` or [cgvhid_setup](../cgvhid_setup).
 
 ![devmgmt.msc](../../../doc/devmgmt.png)
 

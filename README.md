@@ -195,7 +195,7 @@ git submodule update --init
 
 Open each solution file with VS, and press F7.
 
-Testing steps:
+Test steps:
 
 - Run `cge` on server.
 
@@ -217,7 +217,13 @@ Assume you want to test USF4.
 
 - Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
 
-**Note** that only support D3D9, D3D11 games now.
+**Note** that only support D3D9, D3D11, D3D12 games now.
+
+Video Reference (Chinese):
+
+- [Regame Cloud Gaming Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - 知乎
+
+- [Regame Cloud Gaming Test Steps](https://www.ixigua.com/6909415761098310158) - 西瓜视频
 
 ## 6. Contact Us
 

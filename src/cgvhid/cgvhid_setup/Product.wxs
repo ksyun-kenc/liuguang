@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<?if $(var.Platform) = x64 ?>
+	<?define Win64 = "yes" ?>
+	<?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
+	<?define ArchDir = "x64" ?>
+	<?define WixQuietExec="WixQuietExec64"?>
+	<?else ?>
+	<?define Win64 = "no" ?>
+	<?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
+	<?define ArchDir = "x86" ?>
+	<?define WixQuietExec="WixQuietExec"?>
+	<?endif ?>
+	<?define ProductName = "Cloud Gaming Virtual HID Driver" ?>
+	<?define UpgradeCode = "4f1d433d-9e2b-49d1-8b57-4cfa6752dfdd" ?>
+
+	<!-- use driver file version for installer -->
+	<?define VERSION = "!(bind.FileVersion.cgvhid.sys)" ?>
+	
+	<Product Id="*" Name="$(var.ProductName)" Language="1033" Version="$(var.VERSION)" Manufacturer="Ksyun" UpgradeCode="$(var.UpgradeCode)">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+		<!-- set setup icon and uninstall options -->
+		<Icon Id="cloud_gaming.ico" SourceFile="cloud_gaming.ico" />
+		<Property Id="ARPPRODUCTICON" Value="cloud_gaming.ico" />
+		<Property Id="ARPURLINFOABOUT" Value="https://github.com/ksyun-kenc/liuguang" />
+		<Property Id="ARPNOREPAIR" Value="yes" Secure="yes" />
+
+		<!-- always perform major upgrade and remove previous versions -->
+		<Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+		<Upgrade Id="$(var.UpgradeCode)">
+			<UpgradeVersion
+				Minimum="1.0.0.0" Maximum="$(var.VERSION)"
+				Property="PREVIOUSVERSIONSINSTALLED"
+				IncludeMinimum="yes" IncludeMaximum="no" />
+		</Upgrade>
+			
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate EmbedCab="yes" />
+
+		<!-- https://stackoverflow.com/a/31991006 -->
+		<Property Id="WIN10FOUND">
+			<DirectorySearch Id="searchSystem" Path="[SystemFolder]" Depth="0">
+				<FileSearch Id="searchFile" Name="advapi32.dll" MinVersion="6.3.10000.0"/>
+			</DirectorySearch>
+		</Property>
+
+		<!-- https://stackoverflow.com/a/23061358 -->
+		<Condition Message="This application can only be installed on Windows 10.">
+			<![CDATA[WIN10FOUND]]>
+		</Condition>
+
+		<Feature Id="ProductFeature" Title="$(var.ProductName) Setup" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+
+		<!-- build installation command -->
+		<CustomAction Id="DevconInstallPropertyAssign"
+					  Property="DevconInstallQuiet"
+					  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; install &quot;[INSTALLFOLDER]cgvhid.inf&quot; Root\cgvhid"
+					  Execute="immediate" />
+
+		<!-- execute installation with suppressed UI -->
+		<CustomAction Id="DevconInstallQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
+					  Execute="deferred" Return="check" Impersonate="no" />
+
+		<!-- build removal command -->
+		<CustomAction Id="DevconRemovePropertyAssign"
+					  Property="DevconRemoveQuiet"
+					  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; /r remove &quot;Root\cgvhid&quot;"
+					  Execute="immediate" />
+
+		<!-- execute removal with suppressed UI -->
+		<CustomAction Id="DevconRemoveQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
+					  Execute="deferred" Return="ignore" Impersonate="no" />
+
+		<!-- custom installation and removal actions -->
+		<InstallExecuteSequence>
+			<Custom Action="DevconInstallPropertyAssign" Before="DevconInstallQuiet">NOT Installed AND NOT REMOVE</Custom>
+			<Custom Action="DevconRemovePropertyAssign" Before="DevconRemoveQuiet">REMOVE="ALL"</Custom>
+			<Custom Action="DevconInstallQuiet" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
+			<Custom Action='DevconRemoveQuiet' After='InstallInitialize'>REMOVE="ALL"</Custom>
+		</InstallExecuteSequence>
+
+		<!-- use LICENSE as EULA, not technically an EULA but for now it has to do -->
+		<WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)LICENSE.rtf" />
+
+		<!-- use minimalistic UI with EULA approval -->
+		<UIRef Id="WixUI_Minimal" />
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="$(var.PlatformProgramFilesFolder)">
+				<!-- the "e.U." is butchered so omitted -->
+				<Directory Id="Ksyun" Name="Ksyun">
+					<Directory Id="INSTALLFOLDER" Name="$(var.ProductName)" />
+				</Directory>
+			</Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<Component Id="ProductComponent" Guid="636509EE-0C5C-4A0E-A4F3-2C5DE67D955E" Win64="$(var.Win64)">
+				<File Name="cgvhid.sys" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvhid\cgvhid.sys" />
+				<File Name="cgvhid.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvhid\cgvhid.inf" />
+				<File Name="cgvhid.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvhid\cgvhid.cat" />
+				<File Name="devcon.exe" Source="$(var.ProjectDir)third_party\$(var.ArchDir)\devcon.exe" />
+				<File Name="devcon-LICENSE" Source="$(var.ProjectDir)third_party\devcon-LICENSE" />
+				<File Name="LICENSE.rtf" Source="$(var.ProjectDir)LICENSE.rtf" />
+			</Component>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
