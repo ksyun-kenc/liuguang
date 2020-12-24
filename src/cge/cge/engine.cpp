@@ -22,8 +22,6 @@
 #include "udp_server.h"
 #include "ws_server.h"
 
-#include "shared_mem_info.h"
-
 extern App g_app;
 
 void Engine::Run(tcp::endpoint ws_endpoint,

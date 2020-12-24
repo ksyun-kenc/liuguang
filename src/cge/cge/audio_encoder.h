@@ -19,7 +19,7 @@
 #include "encoder_internal.h"
 #include "sound_capturer.h"
 
-#include "shared_mem_info.h"
+#include "regame/shared_mem_info.h"
 
 class AudioEncoder : public EncoderInterface {
  public:

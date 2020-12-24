@@ -28,7 +28,7 @@ _CRT_END_C_HEADER
 
 #include "audio_resampler.h"
 
-#include "shared_mem_info.h"
+#include "regame/shared_mem_info.h"
 
 struct AudioInfo {
   int sample_rate;

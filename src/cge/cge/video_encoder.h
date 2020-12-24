@@ -22,7 +22,7 @@
 
 #include "encoder_internal.h"
 
-#include "shared_mem_info.h"
+#include "regame/shared_mem_info.h"
 
 class VideoEncoder : public EncoderInterface {
  public:

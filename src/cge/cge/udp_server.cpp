@@ -18,7 +18,7 @@
 
 #include "udp_server.h"
 
-#include "control.h"
+#include "regame/control.h"
 #include "vigem_client.h"
 
 namespace {

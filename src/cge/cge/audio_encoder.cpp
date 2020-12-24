@@ -22,8 +22,6 @@
 #include "engine.h"
 #include "sound_capturer.h"
 
-#include "shared_mem_info.h"
-
 extern App g_app;
 
 const int kTargetChannels = 2;

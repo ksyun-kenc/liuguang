@@ -104,9 +104,6 @@
     <ClInclude Include="app.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\control.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vigem_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
