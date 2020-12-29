@@ -158,6 +158,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     SDL_RendererInfo info = {};
     SDL_GetRendererInfo(renderer, &info);
     title.Append(info.name);
+    MessageBox(nullptr,
+               _T("Only support direct3d11.\r\n")
+               _T("Please compile SDL2 with SDL_VIDEO_RENDER_D3D11=1."),
+               nullptr, MB_ICONERROR);
   }
   SDL_SetWindowTitle(sdl_win, title);
 

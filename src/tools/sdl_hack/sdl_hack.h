@@ -25,7 +25,7 @@
 
 #include <thread>
 
-#include "shared_mem_info.h"
+#include "regame/shared_mem_info.h"
 
 struct PooledSurface {
   VideoFrameStats stats;
