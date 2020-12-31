@@ -102,43 +102,43 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SDL2_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(SDL2_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SDL2_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(SDL2_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MTRelease|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SDL2_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(SDL2_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SDL2_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(SDL2_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SDL2_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(SDL2_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MTRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SDL2_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(SDL2_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

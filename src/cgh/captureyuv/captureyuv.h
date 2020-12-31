@@ -25,7 +25,7 @@
 #include "hook_d3d9.h"
 #include "hook_dxgi.h"
 
-#include "shared_mem_info.h"
+#include "regame/shared_mem_info.h"
 
 class CaptureYuv {
  public:

@@ -30,6 +30,7 @@
 #include <string>
 #include <thread>
 
+#include <boost/asio.hpp>
 #include <boost/scope_exit.hpp>
 
 #include "ffmpeg.h"

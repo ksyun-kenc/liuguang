@@ -173,13 +173,42 @@ Boost compile command:
 
 ### 4.3 FFmpeg
 
-Put [FFmpeg](https://www.ffmpeg.org/download.html) header files in `deps\include`, and the libs in `deps\lib`.
+Set `FFMPEG_ROOT` environment variable to the path of your [FFmpeg](https://www.ffmpeg.org/download.html) directory. 
+
+The folder tree should be like:
+
+```
+├─bin
+├─include
+│  ├─libavcodec
+│  ├─libavdevice
+│  ├─libavfilter
+│  ├─libavformat
+│  ├─libavutil
+│  ├─libpostproc
+│  ├─libswresample
+│  └─libswscale
+└─lib
+    ├─x64
+    └─x86
+```
 
 ### 4.4 SDL
 
-Put [SDL2](https://www.libsdl.org/) header files in `deps\include`, and the libs in `deps\lib`.
+Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory. eg:
 
 The same as [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) and [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/).
+
+The folder tree should be like:
+
+```
+├─bin
+├─include
+│  └─SDL2
+└─lib
+    ├─x64
+    └─x86
+```
 
 ### 4.5 WDK
 

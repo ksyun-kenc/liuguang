@@ -169,13 +169,42 @@ Boost 的编译命令，参考：
 
 ### 4.3 FFmpeg
 
-把 [FFmpeg](https://www.ffmpeg.org/download.html) 的头文件放到 `deps\include`，把 libs 放到 `deps\lib`。
+设置 `FFMPEG_ROOT` 环境变量，值为您的 [FFmpeg](https://www.ffmpeg.org/download.html) 目录的全路径名。
+
+目录树应该类似这样：
+
+```
+├─bin
+├─include
+│  ├─libavcodec
+│  ├─libavdevice
+│  ├─libavfilter
+│  ├─libavformat
+│  ├─libavutil
+│  ├─libpostproc
+│  ├─libswresample
+│  └─libswscale
+└─lib
+    ├─x64
+    └─x86
+```
 
 ### 4.4 SDL
 
-把 [SDL2](https://www.libsdl.org/) 的头文件放到 `deps\include`，把 libs 放到 `deps\lib`。
+设置 `SDL2_ROOT` 环境变量，值为您的 [SDL2](https://www.libsdl.org/) 目录的全路径名。
 
 [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) 和 [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/) 也同样操作。
+
+目录树应该类似这样：
+
+```
+├─bin
+├─include
+│  └─SDL2
+└─lib
+    ├─x64
+    └─x86
+```
 
 ### 4.5 WDK
 

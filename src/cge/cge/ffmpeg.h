@@ -20,21 +20,21 @@
 #pragma warning(disable : 4819)
 _CRT_BEGIN_C_HEADER
 
-#include "libavformat/avformat.h"
-#include "libavformat/avio.h"
+#include <libavformat/avformat.h>
+#include <libavformat/avio.h>
 
-#include "libavcodec/avcodec.h"
+#include <libavcodec/avcodec.h>
 
-#include "libavutil/audio_fifo.h"
-#include "libavutil/avassert.h"
-#include "libavutil/avstring.h"
-#include "libavutil/frame.h"
-#include "libavutil/imgutils.h"
-#include "libavutil/opt.h"
+#include <libavutil/audio_fifo.h>
+#include <libavutil/avassert.h>
+#include <libavutil/avstring.h>
+#include <libavutil/frame.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
 
-#include "libswresample/swresample.h"
+#include <libswresample/swresample.h>
 
-#include "libswscale/swscale.h"
+#include <libswscale/swscale.h>
 
 _CRT_END_C_HEADER
 #pragma warning(pop)

@@ -102,8 +102,8 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(FFMPEG_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(FFMPEG_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <ClangTidyChecks>
     </ClangTidyChecks>
@@ -114,8 +114,8 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(FFMPEG_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(FFMPEG_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <ClangTidyChecks>
     </ClangTidyChecks>
@@ -126,8 +126,8 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(FFMPEG_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(FFMPEG_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <ClangTidyChecks>
     </ClangTidyChecks>
@@ -138,8 +138,8 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(FFMPEG_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(FFMPEG_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
@@ -148,8 +148,8 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(FFMPEG_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(FFMPEG_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
@@ -158,8 +158,8 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(BOOST_ROOT);$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(FFMPEG_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(FFMPEG_ROOT)\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
