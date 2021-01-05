@@ -131,9 +131,9 @@ void WsServer::OnAccept(beast::error_code ec, tcp::socket socket) {
 
 #pragma region "WsSession"
 void WsSession::OnRun() {
+  ws_.binary(true);
   ws_.set_option(
       websocket::stream_base::timeout::suggested(beast::role_type::server));
-
   ws_.set_option(
       websocket::stream_base::decorator([](websocket::response_type& res) {
         res.set(http::field::sec_websocket_protocol, "webgame");
