@@ -87,7 +87,7 @@ bool WsServer::Join(std::shared_ptr<WsSession> session) noexcept {
     engine_.EncoderRun();
   } else {
     // Only one websocket client
-    session->Stop();
+    session->Stop(true);
   }
   return inserted;
 }
@@ -127,6 +127,17 @@ void WsServer::OnAccept(beast::error_code ec, tcp::socket socket) {
 
   Accept();
 }
+
+void WsServer::Stop(bool restart) {
+  beast::error_code ec;
+  acceptor_.cancel(ec);
+  acceptor_.close(ec);
+  for (const auto& session : sessions_) {
+    // Only one websocket client
+    session->Stop(restart);
+    return;
+  }
+}
 #pragma endregion
 
 #pragma region "WsSession"
@@ -143,13 +154,20 @@ void WsSession::OnRun() {
       beast::bind_front_handler(&WsSession::OnAccept, shared_from_this()));
 }
 
-void WsSession::Stop() {
+void WsSession::Stop(bool restart) {
   if (ws_.is_open()) {
     std::cout << "Closing " << ws_.next_layer().socket().remote_endpoint()
               << '\n';
-    ws_.async_close(
-        websocket::close_reason(websocket::close_code::try_again_later),
-        beast::bind_front_handler(&WsSession::OnAccept, shared_from_this()));
+
+    if (restart) {
+      ws_.async_close(
+          websocket::close_reason(websocket::close_code::try_again_later),
+          beast::bind_front_handler(&WsSession::OnAccept, shared_from_this()));
+    } else {
+      ws_.control_callback();
+      beast::error_code ec;
+      ws_.close(websocket::close_code::going_away, ec);
+    }
   }
 }
 

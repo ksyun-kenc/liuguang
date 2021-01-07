@@ -38,7 +38,7 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
         beast::bind_front_handler(&WsSession::OnRun, shared_from_this()));
   }
 
-  void Stop();
+  void Stop(bool restart);
 
   void Read() {
     ws_.async_read(read_buffer_, beast::bind_front_handler(&WsSession::OnRead,
@@ -69,6 +69,7 @@ class WsServer : public std::enable_shared_from_this<WsServer> {
   WsServer(Engine& engine, const tcp::endpoint& endpoint) noexcept;
   ~WsServer() = default;
   void Run() { Accept(); }
+  void Stop(bool restart);
   size_t Send(std::string&& buffer);
 
  private:

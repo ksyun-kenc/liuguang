@@ -72,7 +72,11 @@ void Engine::Loop() noexcept {
       ioc_.run();
       break;
     } catch (std::exception& e) {
-      std::cerr << e.what() << '\n';
+#if _DEBUG
+      std::cerr << "# " << e.what() << '\n';
+#else
+      boost::ignore_unused(e);
+#endif
     }
   }
 }
@@ -81,11 +85,16 @@ void Engine::Stop() {
   if (!running_) {
     return;
   }
+  ws_server_->Stop(false);
   try {
     ioc_.stop();
     running_ = false;
   } catch (std::exception& e) {
+#if _DEBUG
     std::cerr << e.what() << '\n';
+#else
+    boost::ignore_unused(e);
+#endif
   }
 }
 
