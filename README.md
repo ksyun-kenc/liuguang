@@ -38,6 +38,8 @@ Demo videos (Chinese):
 
 ## 2. Basic
 
+Use Hook technology to capture image, support most of DirectX games, such as Cyberpunk 2077, Street Fighter.
+
 [![Data Flow](doc/cg.png)](doc/cg.gv)
 
 ## 3. QuickStart
@@ -257,3 +259,7 @@ Video Reference (Chinese):
 ## 6. Contact Us
 
 WeChat: UMUTech
+
+## 7. Buy Me a Coffee?
+
+![WeChat](doc/UMUTech.jpg)

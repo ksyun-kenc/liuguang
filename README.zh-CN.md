@@ -34,6 +34,8 @@
 
 ## 2. 基本信息
 
+使用 Hook 技术捕获游戏画面，支持大多数 DirectX 游戏，比如赛博朋克 2077、街头霸王。
+
 [![Data Flow](doc/cg.png)](doc/cg.gv)
 
 ## 3. 快速体验
@@ -253,3 +255,7 @@ git submodule update --init
 ## 6. 联系方式
 
 微信：UMUTech
+
+## 7. 请喝咖啡？
+
+![微信](doc/UMUTech.jpg)
