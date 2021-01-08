@@ -56,8 +56,8 @@ class CaptureD3d9 {
 
     HRESULT hr = device_->GetRenderTargetData(backbuffer, copy_surface_);
     if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0,
-                __FUNCTION__ ": !GetRenderTargetData(), #0x%08X\n", hr);
+      ATLTRACE2(atlTraceException, 0, "%s: !GetRenderTargetData(), #0x%08X\n",
+                __func__, hr);
       Reset();
       return;
     }
@@ -65,20 +65,18 @@ class CaptureD3d9 {
     D3DSURFACE_DESC desc = {};
     hr = copy_surface_->GetDesc(&desc);
     if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0,
-                __FUNCTION__ ": %p->GetDesc() failed with 0x%08X.\n",
-                copy_surface_, hr);
+      ATLTRACE2(atlTraceException, 0, "%s: %p->GetDesc() failed with 0x%08X.\n",
+                __func__, copy_surface_, hr);
       return;
     }
     if (desc.Type != D3DRTYPE_SURFACE && desc.Type != D3DRTYPE_TEXTURE) {
-      ATLTRACE2(atlTraceException, 0, __FUNCTION__ ": %p->Desc.Type = %d.\n",
+      ATLTRACE2(atlTraceException, 0, "%s: %p->Desc.Type = %d.\n", __func__,
                 copy_surface_, desc.Type);
       return;
     }
     if (desc.MultiSampleType != D3DMULTISAMPLE_NONE) {
-      ATLTRACE2(atlTraceException, 0,
-                __FUNCTION__ ": %p->Desc.MultiSampleType = %d.\n",
-                copy_surface_, desc.MultiSampleType);
+      ATLTRACE2(atlTraceException, 0, "%s: %p->Desc.MultiSampleType = %d.\n",
+                __func__, copy_surface_, desc.MultiSampleType);
       return;
     }
 
@@ -95,7 +93,7 @@ class CaptureD3d9 {
     VideoFrameStats stats = {};
     stats.timestamp = tick.QuadPart;
     stats.elapsed.preprocess = umu::TimeMeasure::Delta(tick.QuadPart);
-    ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": stats.elapsed.prepare = %llu.\n",
+    ATLTRACE2(atlTraceUtil, 0, "%s: stats.elapsed.prepare = %llu.\n", __func__,
               stats.elapsed.preprocess);
 
     // wait_rgb_mapping = 0
@@ -103,16 +101,16 @@ class CaptureD3d9 {
     {
       umu::TimeMeasure tm(stats.elapsed.rgb_mapping);
       // LockRect may spend long time
-      // ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": LockRect +\n");
+      // ATLTRACE2(atlTraceUtil, 0, "%s: LockRect +\n", __func__);
       hr = copy_surface_->LockRect(&mapped_rect, nullptr, D3DLOCK_READONLY);
-      // ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": LockRect -, 0x%08X\n", hr);
+      // ATLTRACE2(atlTraceUtil, 0, "%s: LockRect -, 0x%08X\n", __func__, hr);
     }
     ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.rgb_mapping = %llu.\n",
               CaptureYuv::GetInstance().GetFrameCount(),
               stats.elapsed.rgb_mapping);
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0,
-                __FUNCTION__ ": %p->LockRect() failed with 0x%08X.\n",
+                "%s: %p->LockRect() failed with 0x%08X.\n", __func__,
                 copy_surface_, hr);
       return;
     }
@@ -138,12 +136,12 @@ class CaptureD3d9 {
                    y, desc.Width, u, uv_stride, v, uv_stride, desc.Width,
                    desc.Height);
       } else {
-        ATLTRACE2(atlTraceUtil, 0, __FUNCTION__ ": Format = %d\n", desc.Format);
+        ATLTRACE2(atlTraceUtil, 0, "%s: Format = %d\n", __func__, desc.Format);
       }
     }
-    ATLTRACE2(
-        atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu, \n",
-        CaptureYuv::GetInstance().GetFrameCount(), stats.elapsed.yuv_convert);
+    ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu\n",
+              CaptureYuv::GetInstance().GetFrameCount(),
+              stats.elapsed.yuv_convert);
 
     stats.elapsed.total = umu::TimeMeasure::Delta(stats.timestamp);
 
