@@ -113,6 +113,9 @@ UdpServer::UdpServer(Engine& engine,
 void UdpServer::OnRead(const boost::system::error_code& ec,
                        std::size_t bytes_transferred) {
   if (ec) {
+    if (net::error::operation_aborted == ec) {
+      return;
+    }
     return Fail(ec, "receive_from");
   }
 

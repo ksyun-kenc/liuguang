@@ -86,6 +86,7 @@ void Engine::Stop() {
     return;
   }
   ws_server_->Stop(false);
+  udp_server_->Stop();
   try {
     ioc_.stop();
     running_ = false;

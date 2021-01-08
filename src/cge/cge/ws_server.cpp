@@ -130,7 +130,7 @@ void WsServer::OnAccept(beast::error_code ec, tcp::socket socket) {
 
 void WsServer::Stop(bool restart) {
   beast::error_code ec;
-  acceptor_.cancel(ec);
+  //acceptor_.cancel(ec);
   acceptor_.close(ec);
   for (const auto& session : sessions_) {
     // Only one websocket client

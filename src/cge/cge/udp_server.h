@@ -35,6 +35,12 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
 
   void Run() { Read(); }
 
+  void Stop() noexcept {
+    boost::system::error_code ec;
+    //socket_.cancel(ec);
+    socket_.close(ec);
+  }
+
  private:
   void Read() {
     socket_.async_receive_from(
