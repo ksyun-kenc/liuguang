@@ -12,9 +12,11 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 Demo videos (Chinese):
 
-- [Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - 知乎
+- [Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
 
-- [Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - 西瓜视频
+- [Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - ixigua
+
+- [Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - zhihu
 
 ## 1. Requirements
 
@@ -252,9 +254,11 @@ Assume you want to test USF4.
 
 Video Reference (Chinese):
 
-- [Regame Cloud Gaming Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - 知乎
+- [Regame Cloud Gaming Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
 
-- [Regame Cloud Gaming Test Steps](https://www.ixigua.com/6909415761098310158) - 西瓜视频
+- [Regame Cloud Gaming Test Steps](https://www.ixigua.com/6909415761098310158) - ixigua
+
+- [Regame Cloud Gaming Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - zhihu
 
 ## 6. Contact Us
 
