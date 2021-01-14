@@ -39,8 +39,14 @@ _CRT_BEGIN_C_HEADER
 _CRT_END_C_HEADER
 #pragma warning(pop)
 
-inline const char* GetAvErrorText(const int error) {
+inline const char* GetAvErrorText(const int ec) {
   static char error_buffer[255];
-  av_strerror(error, error_buffer, sizeof(error_buffer));
+  if (av_strerror(ec, error_buffer, sizeof(error_buffer)) < 0) {
+#if _WIN32
+    strerror_s(error_buffer, ec);
+#else
+    return strerror(AVUNERROR(ec));
+#endif
+  }
   return error_buffer;
 }
