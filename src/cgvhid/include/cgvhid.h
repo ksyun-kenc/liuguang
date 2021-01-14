@@ -314,6 +314,20 @@
 
 #endif  // USB_HID_KEYS
 
+// clockwise
+enum VhidGamepadHat : uint8_t {
+  CENTERED = 0,
+  UP = GAMEPAD_HAT_LOGICAL_MIN,
+  RIGHTUP,
+  RIGHT,
+  RIGHTDOWN,
+  DOWN,
+  LEFTDOWN,
+  LEFT,
+  LEFTUP,
+  MAX
+};
+
 class Cgvhid {
  public:
   Cgvhid() = default;

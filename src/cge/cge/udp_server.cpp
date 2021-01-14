@@ -55,23 +55,23 @@ uint16_t GamepadButtonMap(uint16_t button) {
   }
 }
 
-uint16_t GamepadHatMap(uint16_t button) {
+uint16_t GamepadHatMap(uint8_t button) {
   switch (button) {
-    case 1:
+    case VhidGamepadHat::UP:
       return XINPUT_GAMEPAD_DPAD_UP;
-    case 2:
+    case VhidGamepadHat::RIGHTUP:
       return XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
-    case 3:
+    case VhidGamepadHat::RIGHT:
       return XINPUT_GAMEPAD_DPAD_RIGHT;
-    case 4:
+    case VhidGamepadHat::RIGHTDOWN:
       return XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
-    case 5:
+    case VhidGamepadHat::DOWN:
       return XINPUT_GAMEPAD_DPAD_DOWN;
-    case 6:
+    case VhidGamepadHat::LEFTDOWN:
       return XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
-    case 7:
+    case VhidGamepadHat::LEFT:
       return XINPUT_GAMEPAD_DPAD_LEFT;
-    case 8:
+    case VhidGamepadHat::LEFTUP:
       return XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
     default:
       return 0;

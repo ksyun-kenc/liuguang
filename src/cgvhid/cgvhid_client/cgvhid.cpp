@@ -161,8 +161,6 @@ int Cgvhid::KeyboardUpdate(uint8_t modifiers,
   static_assert(CONTROL_REPORT_SIZE >
                     sizeof(VhidControlReport) + sizeof(VhidKeyboardReport),
                 "CONTROL_REPORT_SIZE is too small");
-  static_assert(sizeof(key_codes) >= KEYBD_MAX_KEY_COUNT,
-                "invalid key_codes size");
 
   auto control_report = GetControlReport();
   control_report->id = REPORT_ID_CONTROL;

@@ -31,8 +31,8 @@ struct KeyboardState {
   uint8_t key_codes[KEYBD_MAX_KEY_COUNT];
 };
 
+// VhidGamepadInReport without id
 struct GamepadState {
-  uint16_t buttons;
   uint16_t x;
   uint16_t y;
   uint16_t z;
@@ -40,6 +40,7 @@ struct GamepadState {
   uint16_t ry;
   uint16_t rz;
   uint8_t hat;
+  uint16_t buttons;
 };
 
 class CgvhidClient {
