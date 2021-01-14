@@ -197,6 +197,12 @@ The folder tree should be like:
     └─x86
 ```
 
+Video Reference (Chinese):
+
+- [Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
+
+- [Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.ixigua.com/6917303228136849933) - ixigua
+
 ### 4.4 SDL
 
 Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory. eg:
@@ -254,11 +260,11 @@ Assume you want to test USF4.
 
 Video Reference (Chinese):
 
-- [Regame Cloud Gaming Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
+- [Regame Cloud Gaming Engine Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
 
-- [Regame Cloud Gaming Test Steps](https://www.ixigua.com/6909415761098310158) - ixigua
+- [Regame Cloud Gaming Engine Test Steps](https://www.ixigua.com/6909415761098310158) - ixigua
 
-- [Regame Cloud Gaming Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - zhihu
+- [Regame Cloud Gaming Engine Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - zhihu
 
 ## 6. Contact Us
 

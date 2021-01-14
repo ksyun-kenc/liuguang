@@ -193,6 +193,12 @@ Boost 的编译命令，参考：
     └─x86
 ```
 
+参考视频：
+
+- [04-鎏光云游戏引擎 FAQ：FFmpeg 配置](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
+
+- [04-鎏光云游戏引擎 FAQ：FFmpeg 配置](https://www.ixigua.com/6917303228136849933) - ixigua
+
 ### 4.4 SDL
 
 设置 `SDL2_ROOT` 环境变量，值为您的 [SDL2](https://www.libsdl.org/) 目录的全路径名。
