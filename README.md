@@ -172,6 +172,7 @@ Install [Boost](https://www.boost.org/) and set `BOOST_ROOT` environment variabl
 Boost compile command:
 
 ```
+# For MTRelease configuration
 .\b2 --address-model=64 runtime-link=static
 ```
 
@@ -232,7 +233,7 @@ cd liuguang
 git submodule update --init
 ```
 
-Open each solution file with VS, and press F7.
+Open each solution file with VS, prefer to select MTRelease configuration, then build.
 
 Test steps:
 

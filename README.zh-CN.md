@@ -168,6 +168,7 @@ WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 Boost 的编译命令，参考：
 
 ```
+# For MTRelease configuration
 .\b2 --address-model=64 runtime-link=static
 ```
 
@@ -228,7 +229,7 @@ cd liuguang
 git submodule update --init
 ```
 
-用 VS 打开解决方案文件，按 F7 编译即可。
+用 VS 打开解决方案文件，最好选择 MTRelease 配置，再编译。
 
 测试步骤：
 
