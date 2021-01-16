@@ -138,6 +138,14 @@ Allowed options:
 
 一个测试工具。直接跑就行，它会产生简单的图像，并把图像写入共享内存，然后通知 `cge` 来取。用 `cgc` 连接 `cge` 后就可以看到这些图像。
 
+它也可以用来测试延迟。
+
+参考视频：
+
+- [05-国产开源项目【鎏光云游戏引擎】延迟测试](https://www.bilibili.com/video/BV1KU4y147ks/) - bilibili
+
+- [05-国产开源项目【鎏光云游戏引擎】延迟测试](https://www.ixigua.com/6918363287298146823) - ixigua
+
 ### cgc
 
 和 `cge` 配套的客户端，目前是测试版，尚未开源。默认使用 [h264 版本](https://ks3-cn-beijing.ksyun.com/liuguang/cgc.7z)，如果您在服务端选择使用 h265，则应该使用 [h265 版本](https://ks3-cn-beijing.ksyun.com/liuguang/cgc-h265.7z)。
