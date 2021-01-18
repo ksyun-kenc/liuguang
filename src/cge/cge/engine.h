@@ -8,13 +8,6 @@ enum class KeyboardReplay { NONE = 0, CGVHID };
 
 enum class GamepadReplay { NONE = 0, CGVHID, VIGEM };
 
-struct NetPacketHeader {
-  uint32_t type : 8;
-  uint32_t ts : 24;
-  uint32_t size;
-  float elapsed;
-};
-
 class Engine {
  public:
   ~Engine() = default;

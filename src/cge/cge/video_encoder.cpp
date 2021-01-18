@@ -174,6 +174,8 @@ int VideoEncoder::EncodingThread() {
   BOOST_SCOPE_EXIT_ALL(&) { av_frame_free(&frame); };
 
   for (;;) {
+    error_code = EncodeFrame(frame);
+
     wait = WaitForMultipleObjects(_countof(events), events, FALSE, INFINITE);
     if (WAIT_OBJECT_0 == wait) {
       ATLTRACE2(atlTraceUtil, 0, "%s: stopping.\n", __func__);
@@ -183,8 +185,6 @@ int VideoEncoder::EncodingThread() {
                 << ".\n";
       return -1;
     }
-
-    error_code = EncodeFrame(frame);
   }
 
   return 0;
@@ -207,8 +207,8 @@ void VideoEncoder::Free(bool wait_thread) {
 
   avcodec_free_context(&codec_context_);
   if (nullptr != format_context_) {
-    //int error = av_write_trailer(format_context_);
-    //if (error < 0) {
+    // int error = av_write_trailer(format_context_);
+    // if (error < 0) {
     //  ATLTRACE2(atlTraceException, 0, "!av_write_trailer(), #%d, %s\n", error,
     //            GetAvErrorText(error));
     //}
@@ -374,8 +374,7 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
         reinterpret_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
     auto yuv_frame = reinterpret_cast<PackedVideoYuvFrame*>(yuv_frames->data);
     auto yuv_frame1 = reinterpret_cast<PackedVideoYuvFrame*>(
-        yuv_frames->data +
-                                                         yuv_frames->data_size);
+        yuv_frames->data + yuv_frames->data_size);
 
     if (yuv_frame->stats.timestamp < yuv_frame1->stats.timestamp) {
       yuv_frame = yuv_frame1;
@@ -389,8 +388,7 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
   return error_code;
 }
 
-int VideoEncoder::EncodeYuvFrame(AVFrame* frame,
-                                 const uint8_t* yuv) noexcept {
+int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
   av_image_fill_arrays(frame->data, frame->linesize, yuv,
                        static_cast<AVPixelFormat>(frame->format), frame->width,
                        frame->height, 1);
@@ -405,7 +403,7 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame,
         std::chrono::duration<float, std::chrono::seconds::period>;
     static_assert(std::chrono::treat_as_floating_point<FpSeconds::rep>::value,
                   "Rep required to be floating point");
- 
+
     pts = static_cast<int64_t>(
         duration_cast<FpSeconds>(now - startup_time_).count() /
         av_q2d(stream_->time_base));

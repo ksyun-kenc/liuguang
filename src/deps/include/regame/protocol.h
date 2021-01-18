@@ -16,16 +16,13 @@
 
 #pragma once
 
-#include "ffmpeg.h"
+enum class NetPacketType : uint8_t { Video = 1, Audio, Ping, Pong };
 
-#include "regame/protocol.h"
-
-constexpr int kH264TimeBase = 90000;
-constexpr size_t kInitialBufferSize = 0x100000;  // 1MB
-
-class EncoderInterface {
- public:
-  EncoderInterface() = default;
-  ~EncoderInterface() = default;
-  virtual NetPacketType GetType() const noexcept = 0;
+#pragma pack(push, 2)
+struct NetPacketHeader {
+  uint32_t type : 8;
+  uint32_t ts : 24;
+  uint32_t size;
+  float elapsed;
 };
+#pragma pack(pop)

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #pragma pack(push, 1)
 enum class ControlType : uint8_t {
   KEYBOARD = 1,

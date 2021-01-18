@@ -18,13 +18,6 @@
 
 #include "ws_server.h"
 
-struct ProtocolHeader {
-  uint32_t type : 8;
-  uint32_t ts : 24;
-  uint32_t size;
-  float elapsed;
-};
-
 namespace {
 
 inline void ListenerFail(beast::error_code ec, std::string_view what) {
