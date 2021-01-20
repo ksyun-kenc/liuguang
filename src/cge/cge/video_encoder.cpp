@@ -278,6 +278,7 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
   codec_context_->gop_size = gop_;
   codec_context_->pix_fmt = AV_PIX_FMT_YUV420P;
   codec_context_->codec_id = codec_id_;
+  codec_context_->flags |= AV_CODEC_FLAG_LOW_DELAY;
   if (format_context_->oformat->flags & AVFMT_GLOBALHEADER) {
     codec_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
   }
@@ -330,8 +331,8 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
   format_context_->opaque = buffer;
   format_context_->pb =
       avio_alloc_context(reinterpret_cast<uint8_t*>(buffer), kInitialBufferSize,
-                         AVIO_FLAG_WRITE, static_cast<EncoderInterface*>(this),
-                         nullptr, Engine::OnWritePacket, nullptr);
+                         1, static_cast<EncoderInterface*>(this), nullptr,
+                         Engine::OnWritePacket, nullptr);
 
   error = avformat_write_header(format_context_, opts);
   return error;

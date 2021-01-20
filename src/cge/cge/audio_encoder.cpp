@@ -297,8 +297,8 @@ int AudioEncoder::Open(AVCodec* codec, AVDictionary** opts) {
   format_context_->opaque = buffer;
   format_context_->pb =
       avio_alloc_context(reinterpret_cast<uint8_t*>(buffer), kInitialBufferSize,
-                         AVIO_FLAG_WRITE, static_cast<EncoderInterface*>(this),
-                         nullptr, Engine::OnWritePacket, nullptr);
+                         1, static_cast<EncoderInterface*>(this), nullptr,
+                         Engine::OnWritePacket, nullptr);
 
   error = avformat_write_header(format_context_, opts);
   return error;
