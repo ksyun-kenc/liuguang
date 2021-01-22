@@ -20,6 +20,10 @@ bcdedit.exe -set testsigning on
 
 - Restart Windows.
 
+You should see 'Test Mode' watermark at the bottom right corner of desktop.
+
+![Test Mode](../../../doc/test-mode.png)
+
 - Install driver via `devmgmt.msc` or [cgvhid_setup](../cgvhid_setup).
 
 ![devmgmt.msc](../../../doc/devmgmt.png)
