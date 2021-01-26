@@ -12,11 +12,11 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 Demo videos (Chinese):
 
-- [Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
+- [01-Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
 
-- [Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - ixigua
+- [01-Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - ixigua
 
-- [Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - zhihu
+- [01-Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - zhihu
 
 ## 1. Requirements
 
@@ -146,9 +146,9 @@ It also can be used to test latency.
 
 Video Reference (Chinese):
 
-- [Regame Cloud Gaming Engine: Latency Test](https://www.bilibili.com/video/BV1KU4y147ks/) - bilibili
+- [05-Regame Cloud Gaming Engine: Latency Test](https://www.bilibili.com/video/BV1KU4y147ks/) - bilibili
 
-- [Regame Cloud Gaming Engine: Latency Test](https://www.ixigua.com/6918363287298146823) - ixigua
+- [05-Regame Cloud Gaming Engine: Latency Test](https://www.ixigua.com/6918363287298146823) - ixigua
 
 ### cgc
 
@@ -184,6 +184,12 @@ Boost compile command:
 .\b2 --address-model=64 runtime-link=static
 ```
 
+Video Reference (Chinese):
+
+- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.bilibili.com/video/BV1P5411J7L8/) - bilibili
+
+- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.ixigua.com/6922104314932986376) - ixigua
+
 ### 4.3 FFmpeg
 
 Set `FFMPEG_ROOT` environment variable to the path of your [FFmpeg](https://www.ffmpeg.org/download.html) directory. 
@@ -208,9 +214,9 @@ The folder tree should be like:
 
 Video Reference (Chinese):
 
-- [Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
+- [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
 
-- [Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.ixigua.com/6917303228136849933) - ixigua
+- [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.ixigua.com/6917303228136849933) - ixigua
 
 ### 4.4 SDL
 
@@ -269,11 +275,11 @@ Assume you want to test USF4.
 
 Video Reference (Chinese):
 
-- [Regame Cloud Gaming Engine Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
+- [02-Regame Cloud Gaming Engine Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
 
-- [Regame Cloud Gaming Engine Test Steps](https://www.ixigua.com/6909415761098310158) - ixigua
+- [02-Regame Cloud Gaming Engine Test Steps](https://www.ixigua.com/6909415761098310158) - ixigua
 
-- [Regame Cloud Gaming Engine Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - zhihu
+- [02-Regame Cloud Gaming Engine Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - zhihu
 
 ## 6. Contact Us
 

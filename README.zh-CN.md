@@ -10,9 +10,9 @@
 
 - [01-国产开源项目【鎏光云游戏引擎】试玩街霸](https://www.bilibili.com/video/bv1jt4y1r7GT) - 哔哩哔哩
 
-- [国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.ixigua.com/6898563893564703239) - 西瓜视频
+- [01-国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.ixigua.com/6898563893564703239) - 西瓜视频
 
-- [国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.zhihu.com/zvideo/1314567244832530432) - 知乎
+- [01-国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.zhihu.com/zvideo/1314567244832530432) - 知乎
 
 ## 1. 配置要求
 
@@ -180,6 +180,12 @@ Boost 的编译命令，参考：
 .\b2 --address-model=64 runtime-link=static
 ```
 
+参考视频：
+
+- [06-鎏光云游戏引擎 FAQ：编译 Boost](https://www.bilibili.com/video/BV1P5411J7L8/) - bilibili
+
+- [06-鎏光云游戏引擎 FAQ：编译 Boost](https://www.ixigua.com/6922104314932986376) - ixigua
+
 ### 4.3 FFmpeg
 
 设置 `FFMPEG_ROOT` 环境变量，值为您的 [FFmpeg](https://www.ffmpeg.org/download.html) 目录的全路径名。
@@ -267,9 +273,9 @@ git submodule update --init
 
 - [02-国产开源项目【鎏光云游戏引擎】测试流程](https://www.bilibili.com/video/BV17T4y1N7bk/) - 哔哩哔哩
 
-- [国产开源项目【鎏光云游戏引擎】测试流程](https://www.ixigua.com/6909415761098310158) - 西瓜视频
+- [02-国产开源项目【鎏光云游戏引擎】测试流程](https://www.ixigua.com/6909415761098310158) - 西瓜视频
 
-- [国产开源项目【鎏光云游戏引擎】测试流程](https://www.zhihu.com/zvideo/1325164569828806656) - 知乎
+- [02-国产开源项目【鎏光云游戏引擎】测试流程](https://www.zhihu.com/zvideo/1325164569828806656) - 知乎
 
 ## 6. 联系方式
 
