@@ -88,6 +88,14 @@ constexpr uint32_t kMaxVideoQuality = 51;
 
 App g_app;
 
+namespace {
+const auto io_sync = []() {
+  std::ios::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+  return false;
+}();
+}
+
 int main(int argc, char* argv[]) {
   std::string audio_codec;
   uint64_t audio_bitrate = 0;
