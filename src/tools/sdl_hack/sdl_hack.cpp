@@ -16,6 +16,7 @@
 
 #include "sdl_hack.h"
 
+#include <atlstr.h>
 #include <sddl.h>
 
 #include <boost/scope_exit.hpp>
@@ -184,6 +185,29 @@ SdlHack::~SdlHack() {
 }
 
 bool SdlHack::Init() noexcept {
+  SDL_version compiled;
+  SDL_VERSION(&compiled);
+  matched_version_ =
+      2 == compiled.major && 0 == compiled.minor && 14 == compiled.patch;
+  if (matched_version_) {
+    SDL_version linked;
+    SDL_GetVersion(&linked);
+    matched_version_ = linked.major == compiled.major &&
+                       linked.minor == compiled.minor &&
+                       linked.patch == compiled.patch;
+    if (!matched_version_) {
+      CString error_text;
+      error_text.Format(
+          _T("Compiled with SDL %u.%u.%u\nLinked to SDL %u.%u.%u"),
+          compiled.major, compiled.minor, compiled.patch, linked.major,
+          linked.minor, linked.patch);
+      MessageBox(nullptr, error_text, _T("Warning"), MB_ICONWARNING);
+    }
+  } else {
+    MessageBox(nullptr, _T("sdl_internal.h is only for SDL 2.0.14!"), nullptr,
+               MB_ICONERROR);
+  }
+
   auto sec_desc = _T("D:P(A;;GA;;;WD)");
   if (!ConvertStringSecurityDescriptorToSecurityDescriptor(
           sec_desc, SDDL_REVISION_1, &sa_.lpSecurityDescriptor, nullptr)) {
@@ -244,6 +268,9 @@ bool SdlHack::IsStarted() const noexcept {
 }
 
 void SdlHack::GetTexture(SDL_Renderer* renderer) {
+  if (!matched_version_) {
+    return;
+  }
   auto render_data = static_cast<D3D11_RenderData*>(renderer->driverdata);
   if (nullptr == render_data) {
     ATLTRACE2(atlTraceException, 0, "!render_data\n");

@@ -174,9 +174,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
       if (SDL_QUIT == sdl_event.type) {
         break;
       } else if (SDL_KEYDOWN == sdl_event.type) {
-        if (SDLK_ESCAPE == sdl_event.key.keysym.sym) {
-          break;
-        }
+        // if (SDLK_ESCAPE == sdl_event.key.keysym.sym) {
+        //  break;
+        //}
         refresh(sdl_event.key);
       }
     }

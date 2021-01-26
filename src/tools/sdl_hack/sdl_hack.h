@@ -56,4 +56,5 @@ class SdlHack {
   CAtlFileMapping<SharedVideoFrameInfo> shared_frame_info_;
   CAtlFileMapping<char> shared_frames_;
   CHandle shared_frame_ready_event_;
+  bool matched_version_ = false;
 };

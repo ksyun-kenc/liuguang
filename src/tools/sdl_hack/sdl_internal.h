@@ -34,6 +34,8 @@ freely, subject to the following restrictions:
  * limitations under the License.
  */
 
+// Note: Only for SDL 2.0.14
+
 #pragma once
 
 #ifdef _WIN32
@@ -316,6 +318,13 @@ struct SDL_Renderer {
 
   /* The pixel to point coordinate scale */
   SDL_FPoint dpi_scale;
+
+  /* Whether or not to scale relative mouse motion */
+  SDL_bool relative_scaling;
+
+  /* Remainder from scaled relative motion */
+  float xrel;
+  float yrel;
 
   /* The list of textures */
   SDL_Texture* textures;
