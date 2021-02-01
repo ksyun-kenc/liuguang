@@ -281,6 +281,16 @@ git submodule update --init
 
 微信：UMUTech
 
-## 7. 请喝咖啡？
+- 请在好友请求里包含 regame、liuguang 或者鎏光。
+
+- 如果您愿意告诉我们，您的公司名，沟通会更高效。
+
+- 同样欢迎个人开发者。
+
+## 7. 已知用户
+
+<https://github.com/ksyun-kenc/liuguang/wiki/known-users>
+
+## 8. 请喝咖啡？
 
 ![微信](doc/UMUTech.jpg)

@@ -285,6 +285,16 @@ Video Reference (Chinese):
 
 WeChat: UMUTech
 
-## 7. Buy Me a Coffee?
+- Please have "regame" or "liuguang" included in friend request.
+
+- Will be more efficient if you could tell me the name of your company.
+
+- Individual develops are also welcome.
+
+## 7. Known Users
+
+<https://github.com/ksyun-kenc/liuguang/wiki/known-users>
+
+## 8. Buy Me a Coffee?
 
 ![WeChat](doc/UMUTech.jpg)
