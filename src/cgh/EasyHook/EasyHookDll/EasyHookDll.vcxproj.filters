@@ -163,6 +163,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="EasyHookDll_64.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
     <ResourceCompile Include="EasyHookDll_32.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>

@@ -155,7 +155,7 @@ void WsSession::Stop(bool restart) {
     if (restart) {
       ws_.async_close(
           websocket::close_reason(websocket::close_code::try_again_later),
-          beast::bind_front_handler(&WsSession::OnAccept, shared_from_this()));
+          beast::bind_front_handler(&WsSession::OnStop, shared_from_this()));
     } else {
       ws_.control_callback();
       beast::error_code ec;
