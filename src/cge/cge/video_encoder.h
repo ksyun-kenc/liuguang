@@ -20,17 +20,17 @@
 
 #include <chrono>
 
-#include "encoder_internal.h"
+#include "encoder.h"
 
 #include "regame/shared_mem_info.h"
 
-class VideoEncoder : public EncoderInterface {
+class VideoEncoder : public Encoder {
  public:
   VideoEncoder() noexcept = default;
   ~VideoEncoder() noexcept = default;
 
-  NetPacketType GetType() const noexcept override {
-    return NetPacketType::Video;
+  regame::NetPacketType GetType() const noexcept override {
+    return regame::NetPacketType::Video;
   }
 
   bool Init(bool enable_nvenc,

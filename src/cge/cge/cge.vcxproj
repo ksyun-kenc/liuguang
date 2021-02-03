@@ -312,7 +312,6 @@
     <ClCompile Include="audio_encoder.cpp" />
     <ClCompile Include="audio_resampler.cpp" />
     <ClCompile Include="cge.cpp" />
-    <ClCompile Include="encoder.cpp" />
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -333,7 +332,6 @@
     <ClInclude Include="audio_encoder.h" />
     <ClInclude Include="audio_resampler.h" />
     <ClInclude Include="encoder.h" />
-    <ClInclude Include="encoder_internal.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="ffmpeg.h" />
     <ClInclude Include="net.hpp" />

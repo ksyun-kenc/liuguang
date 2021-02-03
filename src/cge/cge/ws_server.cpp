@@ -18,6 +18,8 @@
 
 #include "ws_server.h"
 
+#include "regame/protocol.h"
+
 namespace {
 
 inline void ListenerFail(beast::error_code ec, std::string_view what) {
@@ -38,6 +40,8 @@ inline void SessionFail(beast::error_code ec,
 }
 
 }  // namespace
+
+constexpr size_t kMaxClientCount = 8;
 
 #pragma region "WsServer"
 WsServer::WsServer(Engine& engine, const tcp::endpoint& endpoint) noexcept
@@ -71,15 +75,16 @@ bool WsServer::Join(std::shared_ptr<WsSession> session) noexcept {
   {
     std::lock_guard<std::mutex> lock(session_mutex_);
     first = sessions_.size() == 0;
-    if (first) {
+    if (sessions_.size() < kMaxClientCount) {
       sessions_.insert(session);
       inserted = true;
     }
   }
-  if (first) {
-    engine_.EncoderRun();
+  if (inserted) {
+    if (first) {
+      engine_.EncoderRun();
+    }
   } else {
-    // Only one websocket client
     session->Stop(true);
   }
   return inserted;
@@ -98,14 +103,19 @@ void WsServer::Leave(std::shared_ptr<WsSession> session) noexcept {
   }
 }
 
-size_t WsServer::Send(std::string&& buffer) {
+size_t WsServer::Send(std::string buffer) {
   std::lock_guard<std::mutex> lock(session_mutex_);
-  for (const auto& session : sessions_) {
-    // Only one websocket client
-    session->Write(std::move(buffer));
-    return 1;
+  size_t count = sessions_.size();
+  if (1 == count) {
+    // can move when only one
+    sessions_.begin()->get()->Write(std::move(buffer));
+  } else {
+    // must copy when > 1
+    for (const auto& session : sessions_) {
+      session->Write(buffer);
+    }
   }
-  return 0;
+  return count;
 }
 
 void WsServer::OnAccept(beast::error_code ec, tcp::socket socket) {
@@ -123,12 +133,10 @@ void WsServer::OnAccept(beast::error_code ec, tcp::socket socket) {
 
 void WsServer::Stop(bool restart) {
   beast::error_code ec;
-  //acceptor_.cancel(ec);
+  // acceptor_.cancel(ec);
   acceptor_.close(ec);
   for (const auto& session : sessions_) {
-    // Only one websocket client
     session->Stop(restart);
-    return;
   }
 }
 #pragma endregion
@@ -157,15 +165,35 @@ void WsSession::Stop(bool restart) {
           websocket::close_reason(websocket::close_code::try_again_later),
           beast::bind_front_handler(&WsSession::OnStop, shared_from_this()));
     } else {
+      server_->Leave(shared_from_this());
       ws_.control_callback();
       beast::error_code ec;
       ws_.close(websocket::close_code::going_away, ec);
     }
+  } else {
+    server_->Leave(shared_from_this());
   }
 }
 
-void WsSession::Write(std::string&& buffer) {
+void WsSession::Write(std::string buffer) {
   std::lock_guard<std::mutex> lock(queue_mutex_);
+  const auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
+  switch (header->type) {
+    case regame::NetPacketType::Audio:
+      if (!is_audio_header_sent_) {
+        is_audio_header_sent_ = true;
+        buffer = Engine::GetInstance().GetAudioHeader() + buffer;
+      }
+      break;
+    case regame::NetPacketType::Video:
+      if (!is_video_header_sent_) {
+        is_video_header_sent_ = true;
+        buffer = Engine::GetInstance().GetVideoHeader() + buffer;
+      }
+      break;
+    default:
+      break;
+  }
   write_queue_.emplace(buffer);
 
   if (write_queue_.size() > 1) {
@@ -189,6 +217,7 @@ void WsSession::OnAccept(beast::error_code ec) {
   }
 
   if (!server_->Join(shared_from_this())) {
+    Stop(true);
     return;
   }
 
@@ -206,7 +235,7 @@ void WsSession::OnStop(beast::error_code ec) {
 
 void WsSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
   if (ec) {
-    server_->Leave(shared_from_this());
+    Stop(true);
 
     if (ec == websocket::error::closed) {
       return;
@@ -222,7 +251,7 @@ void WsSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 
 void WsSession::OnWrite(beast::error_code ec, std::size_t bytes_transferred) {
   if (ec) {
-    server_->Leave(shared_from_this());
+    Stop(true);
     return SessionFail(ec, ws_.next_layer().socket().remote_endpoint(),
                        "write");
   }

@@ -23,6 +23,8 @@
 #include "engine.h"
 #include "sound_capturer.h"
 
+#include "umu/string.h"
+
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "avrt.lib")
 
@@ -46,29 +48,30 @@ boost::asio::detail::winsock_init<>::manual g_manual_winsock_init;
 
 namespace po = boost::program_options;
 
-constexpr std::string_view kProgramInfo{
-    "KSYUN Edge Cloud Gaming Engine v1.0 Beta"};
-constexpr std::string_view kDefaultBindAddress{"::"};
+using namespace std::literals::string_view_literals;
+
+constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.2 Beta"sv};
+constexpr auto kDefaultBindAddress{"::"sv};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
-constexpr std::string_view kDefaultAudioCodec{"libopus"};
+constexpr auto kDefaultAudioCodec{"libopus"sv};
 constexpr std::array<std::string_view, 3> kValidAudioCodecs = {
     kDefaultAudioCodec, "aac", "opus"};
 constexpr uint16_t kDefaultControlPort = 8080;
 constexpr bool kDefaultDonotPresent = false;
 
-constexpr std::string_view kDefaultKeyboardReplay{"none"};
+constexpr auto kDefaultKeyboardReplay{"none"sv};
 // Should be the same order with KeyboardReplay
 constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
     kDefaultKeyboardReplay, "cgvhid"};
 
-constexpr std::string_view kDefaultGamepadReplay{"none"};
+constexpr auto kDefaultGamepadReplay{"none"sv};
 // Should be the same order with GamepadReplay
 constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods = {
     kDefaultGamepadReplay, "cgvhid", "vigem"};
 
 constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
-constexpr std::string_view kDefaultVideoCodec{"h264"};
+constexpr auto kDefaultVideoCodec{"h264"sv};
 constexpr int kDefaultVideoGop = 180;
 constexpr std::array<std::string_view, 19> kValidNvencPreset = {
     "default", "slow", "medium", "fast",     "hp",         "hq", "bd",
@@ -119,19 +122,20 @@ int main(int argc, char* argv[]) {
 
     po::options_description desc("Usage");
     // clang-format off
-    desc.add_options()("help,h", "produce help message")
+    desc.add_options()("help,h", "Produce help message")
       ("audio-bitrate",
         po::value<uint64_t>(&audio_bitrate)->default_value(kDefaultAudioBitrate),
-        "set audio bitrate")
+        "Set audio bitrate")
       ("audio-codec",
         po::value<std::string>(&audio_codec)->default_value(kDefaultAudioCodec.data()),
-        "set audio codec, can be one of {libopus, opus, aac}")
+        std::string("Set audio codec. Select one of ")
+       .append(umu::string::ArrayJoin(kValidAudioCodecs)).data())
       ("bind-address",
         po::value<std::string>(&bind_address)->default_value(kDefaultBindAddress.data()),
-        "set bind address for listening, eg: 0.0.0.0")
+        "Set bind address for listening. eg: 0.0.0.0")
       ("control-port",
         po::value<uint16_t>(&control_port)->default_value(kDefaultControlPort),
-        "set the UDP port for control flow")
+        "Set the UDP port for control flow")
       ("donot-present",
         po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
         "Tell cgh don't present")
@@ -140,32 +144,37 @@ int main(int argc, char* argv[]) {
         "Enable nvenc")
       ("keyboard-replay",
         po::value<std::string>(&keyboard_replay_string)->default_value(kDefaultKeyboardReplay.data()),
-        "keyboard replay method, can be one of {none, cgvhid}")
+        std::string("Set keyboard replay method. Select one of ")
+        .append(umu::string::ArrayJoin(kValidKeyboardReplayMethods)).data())
       ("gamepad-replay",
         po::value<std::string>(&gamepad_replay_string)->default_value(kDefaultGamepadReplay.data()),
-        "gamepad replay method, can be one of {none, cgvhid, vigem}")
+        std::string("Set gamepad replay method. Select one of ")
+       .append(umu::string::ArrayJoin(kValidGamepadReplayMethods)).data())
       ("stream-port",
         po::value<uint16_t>(&stream_port)->default_value(kDefaultStreamPort),
-        "set the websocket port for streaming, if port is 0, disable stream "
+        "Set the websocket port for streaming, if port is 0, disable stream "
         "out via network. Capture and encode picture directly at startup but "
         "not on connection establishing, and never stop this until cge exit. "
         "stream port is not same as control port, this port is only for media "
         "output.")
       ("video-bitrate",
         po::value<uint64_t>(&video_bitrate)->default_value(kDefaultVideoBitrate),
-        "set video bitrate")
+        "Set video bitrate")
       ("video-codec",
         po::value<std::string>(&video_codec)->default_value(kDefaultVideoCodec.data()),
-        "set video codec, can be one of {h264, h265, hevc}, h265 == hevc")
+        "Set video codec. Select one of {h264, h265, hevc}, h265 == hevc")
       ("video-gop",
         po::value<int>(&video_gop)->default_value(kDefaultVideoGop),
-        "set video gop")
+        "Set video gop. [1, 500]")
       ("video-preset",
-        po::value<std::string>(&video_preset))
+        po::value<std::string>(&video_preset),
+        std::string("Set preset for video encoder. When enable nvenc, select one of ")
+       .append(umu::string::ArrayJoin(kValidNvencPreset))
+       .append("; otherwise, select one of ")
+       .append(umu::string::ArrayJoin(kValidPreset)).data())
       ("video-quality",
         po::value<uint32_t>(&video_quality)->default_value(kDefaultVideoQuality),
-        "set video quality, lower is better, available range is 0-51, 0 is "
-        "lossless");
+        "Set video quality. [0, 51], lower is better, 0 is lossless");
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -257,11 +266,17 @@ int main(int argc, char* argv[]) {
               << "video-preset: " << video_preset << '\n'
               << "video-quality: " << video_quality << '\n';
 #endif
-  } catch (std::exception& e) {
-    std::cerr << "Invalid argument: " << e.what() << "\n";
+  } catch (const std::invalid_argument& e) {
+    std::cerr << "Invalid argument: " << e.what() << '\n';
+    return EXIT_FAILURE;
+  } catch (const std::out_of_range& e) {
+    std::cerr << "Out of range: " << e.what() << '\n';
+    return EXIT_FAILURE;
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << '\n';
     return EXIT_FAILURE;
   } catch (...) {
-    std::cerr << "Invalid argument: unknown exception!\n";
+    std::cerr << "Error: unknown exception!\n";
     return EXIT_FAILURE;
   }
 

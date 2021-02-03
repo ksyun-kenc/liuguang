@@ -110,7 +110,6 @@ exe cge : pch deps
   audio_encoder.cpp
   audio_resampler.cpp
   cge.cpp
-  encoder.cpp
   engine.cpp
   sound_capturer.cpp
   udp_server.cpp

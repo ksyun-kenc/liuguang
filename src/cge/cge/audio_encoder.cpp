@@ -140,6 +140,7 @@ int AudioEncoder::EncodingThread() {
 }
 
 void AudioEncoder::Free(bool wait_thread) {
+  FreeHeader();
   sound_capturer_.Stop();
 
   if (nullptr != started_event_) {
@@ -295,12 +296,16 @@ int AudioEncoder::Open(AVCodec* codec, AVDictionary** opts) {
     return AVERROR(ENOMEM);
   }
   format_context_->opaque = buffer;
-  format_context_->pb =
-      avio_alloc_context(reinterpret_cast<uint8_t*>(buffer), kInitialBufferSize,
-                         1, static_cast<EncoderInterface*>(this), nullptr,
-                         Engine::OnWritePacket, nullptr);
-
+  format_context_->pb = avio_alloc_context(
+      reinterpret_cast<uint8_t*>(buffer), kInitialBufferSize, 1,
+      static_cast<Encoder*>(this), nullptr, Engine::OnWriteHeader, nullptr);
   error = avformat_write_header(format_context_, opts);
+  if (error < 0) {
+    ATLTRACE2(atlTraceException, 0, "!avformat_write_header(), #%d, %s\n",
+              error, GetAvErrorText(error));
+    return error;
+  }
+  format_context_->pb->write_packet = Engine::OnWritePacket;
   return error;
 }
 
