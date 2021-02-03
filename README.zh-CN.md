@@ -290,7 +290,3 @@ git submodule update --init
 ## 7. 已知用户
 
 <https://github.com/ksyun-kenc/liuguang/wiki/known-users>
-
-## 8. 请喝咖啡？
-
-![微信](doc/UMUTech.jpg)

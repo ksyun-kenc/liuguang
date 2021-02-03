@@ -294,7 +294,3 @@ WeChat: UMUTech
 ## 7. Known Users
 
 <https://github.com/ksyun-kenc/liuguang/wiki/known-users>
-
-## 8. Buy Me a Coffee?
-
-![WeChat](doc/UMUTech.jpg)
