@@ -18,7 +18,7 @@
 
 #include "udp_server.h"
 
-#include "regame/control.h"
+#include "control_mapping.h"
 #include "vigem_client.h"
 
 namespace {
@@ -132,16 +132,10 @@ void UdpServer::OnControlEvent(std::size_t bytes_transferred) noexcept {
   auto control_element = reinterpret_cast<ControlElement*>(recv_buffer_.data());
   switch (static_cast<ControlType>(control_element->base.type)) {
     case ControlType::KEYBOARD:
-      if (bytes_transferred < sizeof(ControlKeyboard)) {
-        break;
-      }
-      if (KeyboardReplay::CGVHID == keyboard_replay_) {
-        if (kControlKeyboardFlagUp & control_element->keyboard.flags) {
-          cgvhid_client_.KeyboardRelease(control_element->keyboard.key_code);
-        } else if (kControlKeyboardFlagDown & control_element->keyboard.flags) {
-          cgvhid_client_.KeyboardPress(control_element->keyboard.key_code);
-        }
-      }
+      OnKeyboardEvent(bytes_transferred, control_element);
+      break;
+    case ControlType::KEYBOARD_VK:
+      OnKeyboardVkEvent(bytes_transferred, control_element);
       break;
     case ControlType::GAMEPAD:
       if (GamepadReplay::VIGEM == gamepad_replay_) {
@@ -207,5 +201,47 @@ void UdpServer::OnControlEvent(std::size_t bytes_transferred) noexcept {
       }
 
       break;
+  }
+}
+
+void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
+                                ControlElement* control_element) noexcept {
+  assert(nullptr != control_element);
+
+  if (bytes_transferred < sizeof(ControlKeyboard)) {
+    return;
+  }
+  if (KeyboardReplay::CGVHID == keyboard_replay_) {
+    uint16_t key_code = ntohs(control_element->keyboard.key_code);
+    if (key_code & 0xFF00) {
+      std::cout << "Unknown key code: " << key_code;
+      return;
+    }
+    if (kControlKeyboardFlagUp & control_element->base.flags) {
+      cgvhid_client_.KeyboardRelease(static_cast<uint8_t>(key_code));
+    } else if (kControlKeyboardFlagDown & control_element->base.flags) {
+      cgvhid_client_.KeyboardPress(static_cast<uint8_t>(key_code));
+    }
+  }
+}
+
+void UdpServer::OnKeyboardVkEvent(std::size_t bytes_transferred,
+                                  ControlElement* control_element) noexcept {
+  assert(nullptr != control_element);
+
+  if (bytes_transferred < sizeof(ControlKeyboard)) {
+    return;
+  }
+  if (KeyboardReplay::CGVHID == keyboard_replay_) {
+    uint16_t key_code = ntohs(control_element->keyboard.key_code);
+    if (key_code & 0xFF00) {
+      std::cout << "Unknown key code: " << key_code;
+      return;
+    }
+    if (kControlKeyboardFlagUp & control_element->base.flags) {
+      cgvhid_client_.KeyboardVkRelease(static_cast<uint8_t>(key_code));
+    } else if (kControlKeyboardFlagDown & control_element->base.flags) {
+      cgvhid_client_.KeyboardVkPress(static_cast<uint8_t>(key_code));
+    }
   }
 }

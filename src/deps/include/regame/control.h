@@ -18,18 +18,18 @@
 
 #pragma pack(push, 1)
 enum class ControlType : uint8_t {
-  KEYBOARD = 1,
+  KEYBOARD = 0,
+  KEYBOARD_VK,
   MOUSE,
-  JOYSTICK,
   GAMEPAD,
   PING,
   PONG
 };
 
 struct ControlBase {
-  uint32_t type : 8;
-  uint32_t ts : 24;
+  ControlType type;
   uint8_t flags;
+  uint32_t timestamp;
 };
 
 struct ControlPing : public ControlBase {

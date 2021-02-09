@@ -27,74 +27,74 @@ void TestKeyboard(CgvhidClient& cgvhid_client) {
     std::cout << "KeyboardReset() = " << ec << '\n';
   }
 
-  ec = cgvhid_client.KeyboardPress(VK_LWIN);
+  ec = cgvhid_client.KeyboardVkPress(VK_LWIN);
   if (0 != ec) {
-    std::cout << "KeyboardPress() = " << ec << '\n';
+    std::cout << "KeyboardVkPress() = " << ec << '\n';
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  ec = cgvhid_client.KeyboardPress('R');
+  ec = cgvhid_client.KeyboardVkPress('R');
   if (0 != ec) {
-    std::cout << "KeyboardPress() = " << ec << '\n';
+    std::cout << "KeyboardVkPress() = " << ec << '\n';
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  ec = cgvhid_client.KeyboardRelease('R');
+  ec = cgvhid_client.KeyboardVkRelease('R');
   if (0 != ec) {
-    std::cout << "KeyboardRelease() = " << ec << '\n';
+    std::cout << "KeyboardVkRelease() = " << ec << '\n';
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  ec = cgvhid_client.KeyboardRelease(VK_LWIN);
+  ec = cgvhid_client.KeyboardVkRelease(VK_LWIN);
   if (0 != ec) {
-    std::cout << "KeyboardRelease() = " << ec << '\n';
+    std::cout << "KeyboardVkRelease() = " << ec << '\n';
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   for (int i = 'A'; i <= 'Z'; ++i) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    ec = cgvhid_client.KeyboardPress(i);
+    ec = cgvhid_client.KeyboardVkPress(i);
     if (0 != ec) {
-      std::cout << "KeyboardPress() = " << ec << '\n';
+      std::cout << "KeyboardVkPress() = " << ec << '\n';
       break;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    ec = cgvhid_client.KeyboardRelease(i);
+    ec = cgvhid_client.KeyboardVkRelease(i);
     if (0 != ec) {
-      std::cout << "KeyboardRelease() = " << ec << '\n';
+      std::cout << "KeyboardVkRelease() = " << ec << '\n';
       break;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  ec = cgvhid_client.KeyboardPress(VK_SHIFT);
+  ec = cgvhid_client.KeyboardVkPress(VK_LSHIFT);
   if (0 != ec) {
-    std::cout << "KeyboardPress() = " << ec << '\n';
+    std::cout << "KeyboardVkPress() = " << ec << '\n';
   }
 
   for (int i = 'A'; i <= 'Z'; ++i) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    ec = cgvhid_client.KeyboardPress(i);
+    ec = cgvhid_client.KeyboardVkPress(i);
     if (0 != ec) {
-      std::cout << "KeyboardPress() = " << ec << '\n';
+      std::cout << "KeyboardVkPress() = " << ec << '\n';
       break;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    ec = cgvhid_client.KeyboardRelease(i);
+    ec = cgvhid_client.KeyboardVkRelease(i);
     if (0 != ec) {
-      std::cout << "KeyboardRelease() = " << ec << '\n';
+      std::cout << "KeyboardVkRelease() = " << ec << '\n';
       break;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  ec = cgvhid_client.KeyboardRelease(VK_SHIFT);
+  ec = cgvhid_client.KeyboardVkRelease(VK_LSHIFT);
   if (0 != ec) {
-    std::cout << "KeyboardRelease() = " << ec << '\n';
+    std::cout << "KeyboardVkRelease() = " << ec << '\n';
   }
 
   ec = cgvhid_client.KeyboardReset();

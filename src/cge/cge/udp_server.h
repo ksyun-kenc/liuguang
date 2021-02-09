@@ -24,6 +24,7 @@
 
 #include "cgvhid_client.h"
 #include "engine.h"
+#include "regame/control.h"
 
 class UdpServer : public std::enable_shared_from_this<UdpServer> {
  public:
@@ -37,7 +38,7 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
 
   void Stop() noexcept {
     boost::system::error_code ec;
-    //socket_.cancel(ec);
+    // socket_.cancel(ec);
     socket_.close(ec);
   }
 
@@ -57,6 +58,11 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
                std::size_t bytes_transferred);
 
   void OnControlEvent(std::size_t bytes_transferred) noexcept;
+
+  void OnKeyboardEvent(std::size_t bytes_transferred,
+                       ControlElement* control_element) noexcept;
+  void OnKeyboardVkEvent(std::size_t bytes_transferred,
+                         ControlElement* control_element) noexcept;
 
  private:
   Engine& engine_;

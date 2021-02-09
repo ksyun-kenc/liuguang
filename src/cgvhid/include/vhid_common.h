@@ -91,7 +91,7 @@ typedef unsigned long long uint64_t;
 
 #define MESSAGE_REPORT_COUNT 0x10
 
-#pragma pack(1)
+#include <pshpack1.h>
 typedef struct VHID_GPAD_IN_REPORT {
   uint8_t id;   // Report ID = REPORT_ID_GAMEPAD_IN
                 // Collection: CA:GamePad CP:Pointer
@@ -205,7 +205,7 @@ typedef struct VHID_KEYBD_REPORT {
   uint8_t id;
   uint8_t modifiers;
   uint8_t reserved;
-  // See http://www.usb.org/developers/devclass_docs/Hut1_11.pdf
+  // See https://www.usb.org/sites/default/files/hut1_21_0.pdf
   // for a list of key codes
   uint8_t key_codes[KEYBD_MAX_KEY_COUNT];
 } VhidKeyboardReport;
@@ -216,13 +216,13 @@ typedef struct VHID_MSG_REPORT {
 } VhidMessageReport;
 
 typedef struct VHID_FEATURE_REPORT {
-  uint8_t report_id;
+  uint8_t id;
   uint8_t dev_mode;
   uint8_t dev_id;
 } VhidFeatureReport;
 
 typedef struct VHID_MAXCOUNT_REPORT {
-  uint8_t report_id;
+  uint8_t id;
   uint8_t max_count;
 } VhidMaxCountReport;
 
@@ -235,4 +235,4 @@ typedef union {
   VhidKeyboardReport keyboard;
   VhidMessageReport message;
 } SubReport;
-#pragma pack()
+#include <poppack.h>

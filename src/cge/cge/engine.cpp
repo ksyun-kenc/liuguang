@@ -117,6 +117,9 @@ void Engine::EncoderStop() {
 int Engine::OnWriteHeader(void* opaque,
                           uint8_t* buffer,
                           int buffer_size) noexcept {
+#if _DEBUG
+  std::cout << __func__ << ": " << buffer_size << "\n";
+#endif
   auto ei = static_cast<Encoder*>(opaque);
   ei->SaveHeader(buffer, buffer_size);
   return 0;
