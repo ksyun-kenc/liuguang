@@ -18,7 +18,6 @@
 
 #include "udp_server.h"
 
-#include "control_mapping.h"
 #include "vigem_client.h"
 
 namespace {
@@ -138,13 +137,15 @@ void UdpServer::OnControlEvent(std::size_t bytes_transferred) noexcept {
       OnKeyboardVkEvent(bytes_transferred, control_element);
       break;
     case ControlType::GAMEPAD:
+      break;
+    case ControlType::JOYSTICK:
       if (GamepadReplay::VIGEM == gamepad_replay_) {
-        if (kControlGamepadFlagHat & control_element->base.flags) {
-          if (bytes_transferred < sizeof(ControlGamepadHat)) {
+        if (kControlJoystickFlagHat & control_element->base.flags) {
+          if (bytes_transferred < sizeof(ControlJoystickHat)) {
             break;
           }
           auto hat =
-              reinterpret_cast<const ControlGamepadHat*>(control_element);
+              reinterpret_cast<const ControlJoystickHat*>(control_element);
           gamepad_state_.wButtons &=
               ~(XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN |
                 XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_RIGHT);
@@ -154,12 +155,12 @@ void UdpServer::OnControlEvent(std::size_t bytes_transferred) noexcept {
           vigem_target_x360_->SetState(gamepad_state_);
         }
 
-        if (kControlGamepadFlagAxis & control_element->base.flags) {
-          if (bytes_transferred < sizeof(ControlGamepadAxis)) {
+        if (kControlJoystickFlagAxis & control_element->base.flags) {
+          if (bytes_transferred < sizeof(ControlJoystickAxis)) {
             break;
           }
           auto axis =
-              reinterpret_cast<const ControlGamepadAxis*>(control_element);
+              reinterpret_cast<const ControlJoystickAxis*>(control_element);
           switch (axis->axis_index) {
             case 0:
               gamepad_state_.sThumbLX = axis->coordinates - 0x8000;
@@ -183,15 +184,15 @@ void UdpServer::OnControlEvent(std::size_t bytes_transferred) noexcept {
           vigem_target_x360_->SetState(gamepad_state_);
         }
 
-        if (kControlGamepadFlagButton & control_element->base.flags) {
-          if (bytes_transferred < sizeof(ControlGamepadButton)) {
+        if (kControlJoystickFlagButton & control_element->base.flags) {
+          if (bytes_transferred < sizeof(ControlJoystickButton)) {
             break;
           }
           auto button =
-              reinterpret_cast<const ControlGamepadButton*>(control_element);
-          if (kControlGamepadFlagDown & control_element->base.flags) {
+              reinterpret_cast<const ControlJoystickButton*>(control_element);
+          if (kControlJoystickFlagDown & control_element->base.flags) {
             gamepad_state_.wButtons |= GamepadButtonMap(button->button);
-          } else if (kControlGamepadFlagUp & control_element->base.flags) {
+          } else if (kControlJoystickFlagUp & control_element->base.flags) {
             gamepad_state_.wButtons &= ~GamepadButtonMap(button->button);
           } else {
             break;

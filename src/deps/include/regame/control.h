@@ -22,6 +22,7 @@ enum class ControlType : uint8_t {
   KEYBOARD_VK,
   MOUSE,
   GAMEPAD,
+  JOYSTICK, // use GAMEPAD instead
   PING,
   PONG
 };
@@ -39,16 +40,16 @@ struct ControlKeyboard : public ControlBase {
   uint16_t key_code;
 };
 
-struct ControlGamepadAxis : public ControlBase {
+struct ControlJoystickAxis : public ControlBase {
   uint8_t axis_index;
   uint16_t coordinates;
 };
 
-struct ControlGamepadButton : public ControlBase {
+struct ControlJoystickButton : public ControlBase {
   uint16_t button;
 };
 
-struct ControlGamepadHat : public ControlBase {
+struct ControlJoystickHat : public ControlBase {
   uint8_t hat;
 };
 
@@ -56,18 +57,18 @@ union ControlElement {
   ControlBase base;
   ControlPing ping;
   ControlKeyboard keyboard;
-  ControlGamepadAxis gamepad_axis;
-  ControlGamepadButton gamepad_button;
-  ControlGamepadHat gamepad_hat;
+  ControlJoystickAxis gamepad_axis;
+  ControlJoystickButton gamepad_button;
+  ControlJoystickHat gamepad_hat;
 };
 #pragma pack(pop)
 
 constexpr uint8_t kControlKeyboardFlagUp = 0x01;
 constexpr uint8_t kControlKeyboardFlagDown = 0x02;
 
-constexpr uint8_t kControlGamepadFlagNone = 0x00;
-constexpr uint8_t kControlGamepadFlagHat = 0x01;
-constexpr uint8_t kControlGamepadFlagAxis = 0x02;
-constexpr uint8_t kControlGamepadFlagDown = 0x04;
-constexpr uint8_t kControlGamepadFlagUp = 0x08;
-constexpr uint8_t kControlGamepadFlagButton = 0x10;
+constexpr uint8_t kControlJoystickFlagNone = 0x00;
+constexpr uint8_t kControlJoystickFlagHat = 0x01;
+constexpr uint8_t kControlJoystickFlagAxis = 0x02;
+constexpr uint8_t kControlJoystickFlagDown = 0x04;
+constexpr uint8_t kControlJoystickFlagUp = 0x08;
+constexpr uint8_t kControlJoystickFlagButton = 0x10;
