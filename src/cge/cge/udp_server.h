@@ -63,6 +63,16 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
                        ControlElement* control_element) noexcept;
   void OnKeyboardVkEvent(std::size_t bytes_transferred,
                          ControlElement* control_element) noexcept;
+  void OnJoystickAxisEvent(std::size_t bytes_transferred,
+                           ControlElement* control_element) noexcept;
+  void OnJoystickButtonEvent(std::size_t bytes_transferred,
+                             ControlElement* control_element) noexcept;
+  void OnJoystickHatEvent(std::size_t bytes_transferred,
+                          ControlElement* control_element) noexcept;
+  void OnGamepadAxisEvent(std::size_t bytes_transferred,
+                          ControlElement* control_element) noexcept;
+  void OnGamepadButtonEvent(std::size_t bytes_transferred,
+                            ControlElement* control_element) noexcept;
 
  private:
   Engine& engine_;

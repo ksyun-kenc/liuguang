@@ -20,55 +20,72 @@
 enum class ControlType : uint8_t {
   KEYBOARD = 0,
   KEYBOARD_VK,
-  MOUSE,
-  GAMEPAD,
-  JOYSTICK, // use GAMEPAD instead
-  PING,
+
+  MOUSE = 10,
+
+  GAMEPAD_AXIS = 20,
+  GAMEPAD_BUTTON,
+
+  // use GAMEPAD instead of JOYSTICK
+  JOYSTICK_AXIS = 30,
+  JOYSTICK_BALL,
+  JOYSTICK_BUTTON,
+  JOYSTICK_HAT,
+
+  PING = 40,
   PONG
 };
 
+enum class ControlButtonState : uint8_t { Released = 0, Pressed = 1 };
+
 struct ControlBase {
   ControlType type;
-  uint8_t flags;
   uint32_t timestamp;
 };
 
-struct ControlPing : public ControlBase {
-};
+struct ControlPing : public ControlBase {};
 
 struct ControlKeyboard : public ControlBase {
   uint16_t key_code;
+  ControlButtonState state;
 };
 
 struct ControlJoystickAxis : public ControlBase {
-  uint8_t axis_index;
-  uint16_t coordinates;
+  int32_t which;
+  uint8_t axis;
+  uint16_t value; // -32768(0x8000) to 32767(0x7fff)
+};
+
+struct ControlJoystickBall : public ControlBase {
+  int32_t which;
+  uint8_t ball;
+  int16_t x;
+  int16_t y;
 };
 
 struct ControlJoystickButton : public ControlBase {
-  uint16_t button;
+  int32_t which;
+  uint8_t button;
+  ControlButtonState state;
 };
 
 struct ControlJoystickHat : public ControlBase {
+  int32_t which;
   uint8_t hat;
 };
+
+struct ControlGamepadAxis : public ControlJoystickAxis {};
+
+struct ControlGamepadButton : public ControlJoystickButton {};
 
 union ControlElement {
   ControlBase base;
   ControlPing ping;
   ControlKeyboard keyboard;
-  ControlJoystickAxis gamepad_axis;
-  ControlJoystickButton gamepad_button;
-  ControlJoystickHat gamepad_hat;
+  ControlJoystickAxis joystick_axis;
+  ControlJoystickButton joystick_button;
+  ControlJoystickHat joystick_hat;
+  ControlGamepadAxis gamepad_axis;
+  ControlGamepadButton gamepad_button;
 };
 #pragma pack(pop)
-
-constexpr uint8_t kControlKeyboardFlagUp = 0x01;
-constexpr uint8_t kControlKeyboardFlagDown = 0x02;
-
-constexpr uint8_t kControlJoystickFlagNone = 0x00;
-constexpr uint8_t kControlJoystickFlagHat = 0x01;
-constexpr uint8_t kControlJoystickFlagAxis = 0x02;
-constexpr uint8_t kControlJoystickFlagDown = 0x04;
-constexpr uint8_t kControlJoystickFlagUp = 0x08;
-constexpr uint8_t kControlJoystickFlagButton = 0x10;

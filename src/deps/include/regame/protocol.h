@@ -17,7 +17,7 @@
 #pragma once
 
 namespace regame {
-enum class NetPacketType : uint8_t { Audio = 0, Video, Ping, Pong };
+enum class NetPacketType : uint8_t { Login = 0, Audio, Video, Ping, Pong };
 constexpr uint8_t kNetPacketCurrentVersion = 0;
 
 #pragma pack(push, 2)
