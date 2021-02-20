@@ -48,11 +48,16 @@ class CgvhidClient {
   CgvhidClient() = default;
   ~CgvhidClient() = default;
 
+  static uint8_t VkToScancode(uint8_t vk) noexcept;
+
   void Init(int display_width, int display_height) noexcept;
 
   int KeyboardReset() noexcept;
-  int KeyboardPress(uint64_t vk) noexcept;
-  int KeyboardRelease(uint64_t vk) noexcept;
+  int KeyboardPress(uint8_t scancode) noexcept;
+  int KeyboardRelease(uint8_t scancode) noexcept;
+
+  int KeyboardVkPress(uint8_t vk) noexcept;
+  int KeyboardVkRelease(uint8_t vk) noexcept;
 
  private:
   int KeyboardModifierPress(uint8_t key) noexcept;

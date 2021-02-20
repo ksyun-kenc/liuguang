@@ -33,9 +33,6 @@
     <ClCompile Include="udp_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="encoder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="audio_encoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -65,9 +62,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="engine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ws_server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -75,9 +69,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="udp_server.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="encoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="audio_encoder.h">
@@ -98,13 +89,16 @@
     <ClInclude Include="audio_resampler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="encoder_internal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="app.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vigem_client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="encoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

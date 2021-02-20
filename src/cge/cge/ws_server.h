@@ -45,7 +45,7 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
                                                            shared_from_this()));
   }
 
-  void Write(std::string&& buffer);
+  void Write(std::string buffer);
 
  private:
   void OnRun();
@@ -62,6 +62,8 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
 
   std::mutex queue_mutex_;
   std::queue<std::string> write_queue_;
+  bool is_audio_header_sent_ = false;
+  bool is_video_header_sent_ = false;
 };
 
 class WsServer : public std::enable_shared_from_this<WsServer> {
@@ -70,7 +72,7 @@ class WsServer : public std::enable_shared_from_this<WsServer> {
   ~WsServer() = default;
   void Run() { Accept(); }
   void Stop(bool restart);
-  size_t Send(std::string&& buffer);
+  size_t Send(std::string buffer);
 
  private:
   void Accept() {

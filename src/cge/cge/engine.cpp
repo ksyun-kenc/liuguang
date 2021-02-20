@@ -37,10 +37,15 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  std::string video_preset,
                  uint32_t video_quality) {
   try {
-    if (!encoder_.Init(std::move(audio_codec), audio_bitrate, enable_nvenc,
-                       video_bitrate, video_codec_id, video_gop,
-                       std::move(video_preset), video_quality)) {
-      std::cout << "Initialize engine failed!\n";
+    if (!audio_encoder_.Init(std::move(audio_codec), audio_bitrate)) {
+      std::cout << "Initialize audio encoder failed!\n";
+      return;
+    }
+
+    if (!video_encoder_.Init(enable_nvenc, video_bitrate, video_codec_id,
+                             video_gop, std::move(video_preset),
+                             video_quality)) {
+      std::cout << "Initialize video encoder failed!\n";
       return;
     }
 
@@ -100,11 +105,24 @@ void Engine::Stop() {
 }
 
 void Engine::EncoderRun() {
-  encoder_.Run();
+  audio_encoder_.Run();
+  video_encoder_.Run();
 }
 
 void Engine::EncoderStop() {
-  encoder_.Stop();
+  audio_encoder_.Stop();
+  video_encoder_.Stop();
+}
+
+int Engine::OnWriteHeader(void* opaque,
+                          uint8_t* buffer,
+                          int buffer_size) noexcept {
+#if _DEBUG
+  std::cout << __func__ << ": " << buffer_size << "\n";
+#endif
+  auto ei = static_cast<Encoder*>(opaque);
+  ei->SaveHeader(buffer, buffer_size);
+  return 0;
 }
 
 int Engine::OnWritePacket(void* opaque,
@@ -113,21 +131,18 @@ int Engine::OnWritePacket(void* opaque,
 #if _DEBUG
   // std::cout << __func__ << ": " << buffer_size << "\n";
 #endif
-  return Engine::GetInstance().WritePacket(opaque, 0, buffer, buffer_size);
+  return Engine::GetInstance().WritePacket(opaque, buffer, buffer_size);
 }
 
-int Engine::WritePacket(void* opaque,
-                        uint32_t timestamp,
-                        uint8_t* body,
-                        int body_size) noexcept {
-  auto ei = static_cast<EncoderInterface*>(opaque);
+int Engine::WritePacket(void* opaque, uint8_t* body, int body_size) noexcept {
+  auto ei = static_cast<Encoder*>(opaque);
   std::string buffer;
-  buffer.resize(sizeof(NetPacketHeader) + body_size);
-  NetPacketHeader* header = reinterpret_cast<NetPacketHeader*>(buffer.data());
-  header->type = static_cast<uint32_t>(ei->GetType());
-  header->ts = htonl(timestamp) >> 8;
+  buffer.resize(sizeof(regame::NetPacketHeader) + body_size);
+  auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
+  header->version = regame::kNetPacketCurrentVersion;
+  header->type = ei->GetType();
   header->size = htonl(body_size);
-  memcpy(buffer.data() + sizeof(NetPacketHeader), body, body_size);
+  memcpy(buffer.data() + sizeof(regame::NetPacketHeader), body, body_size);
   ws_server_->Send(std::move(buffer));
   return 0;
 }

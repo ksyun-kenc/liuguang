@@ -16,13 +16,15 @@
 
 #pragma once
 
-enum class NetPacketType : uint8_t { Video = 1, Audio, Ping, Pong };
+namespace regame {
+enum class NetPacketType : uint8_t { Login = 0, Audio, Video, Ping, Pong };
+constexpr uint8_t kNetPacketCurrentVersion = 0;
 
 #pragma pack(push, 2)
 struct NetPacketHeader {
-  uint32_t type : 8;
-  uint32_t ts : 24;
+  uint8_t version;
+  NetPacketType type;
   uint32_t size;
-  float elapsed;
 };
 #pragma pack(pop)
+}  // namespace regame

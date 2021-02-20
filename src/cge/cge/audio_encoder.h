@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include "encoder_internal.h"
+#include "encoder.h"
 #include "sound_capturer.h"
 
 #include "regame/shared_mem_info.h"
 
-class AudioEncoder : public EncoderInterface {
+class AudioEncoder : public Encoder {
  public:
   AudioEncoder() = default;
   ~AudioEncoder() = default;
 
-  NetPacketType GetType() const noexcept override {
-    return NetPacketType::Audio;
+  regame::NetPacketType GetType() const noexcept override {
+    return regame::NetPacketType::Audio;
   }
 
   bool Init(std::string codec_name, uint64_t bitrate) noexcept;

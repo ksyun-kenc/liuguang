@@ -46,8 +46,6 @@ Use Hook technology to capture image, support most of DirectX games, such as Cyb
 
 ## 3. QuickStart
 
-All the componets listed below, will be open source by time.
-
 ### cge
 
 The `Cloud Gaming Engine`.
@@ -74,33 +72,41 @@ video-quality: 23
 Run `cge --help` to see all options:
 
 ```
+KSYUN Edge Cloud Gaming Engine v0.2 Beta
+
 Usage:
-  -h [ --help ]                  produce help message
-  --audio-bitrate arg (=128000)  set audio bitrate
-  --audio-codec arg (=libopus)   set audio codec, can be one of {libopus, opus,
-                                 aac}
-  --bind-address arg (=::)       set bind address for listening, eg: 0.0.0.0
-  --control-port arg (=8080)     set the UDP port for control flow
+  -h [ --help ]                  Produce help message
+  --audio-bitrate arg (=128000)  Set audio bitrate
+  --audio-codec arg (=libopus)   Set audio codec. Select one of {libopus, aac,
+                                 opus}
+  --bind-address arg (=::)       Set bind address for listening. eg: 0.0.0.0
+  --control-port arg (=8080)     Set the UDP port for control flow
   --donot-present arg (=0)       Tell cgh don't present
   --enable-nvenc arg (=1)        Enable nvenc
-  --keyboard-replay arg (=none)  keyboard replay method, can be one of {none,
-                                 cgvhid}
-  --gamepad-replay arg (=none)   gamepad replay method, can be one of {none,
-                                 cgvhid, vigem}
-  --stream-port arg (=8080)      set the websocket port for streaming, if port
+  --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
+                                 {none, cgvhid}
+  --gamepad-replay arg (=none)   Set gamepad replay method. Select one of
+                                 {none, cgvhid, vigem}
+  --stream-port arg (=8080)      Set the websocket port for streaming, if port
                                  is 0, disable stream out via network. Capture
                                  and encode picture directly at startup but not
                                  on connection establishing, and never stop
                                  this until cge exit. stream port is not same
                                  as control port, this port is only for media
                                  output.
-  --video-bitrate arg (=1000000) set video bitrate
-  --video-codec arg (=h264)      set video codec, can be one of {h264, h265,
+  --video-bitrate arg (=1000000) Set video bitrate
+  --video-codec arg (=h264)      Set video codec. Select one of {h264, h265,
                                  hevc}, h265 == hevc
-  --video-gop arg (=180)         set video gop
-  --video-preset arg
-  --video-quality arg (=23)      set video quality, lower is better, available
-                                 range is 0-51, 0 is lossless
+  --video-gop arg (=180)         Set video gop. [1, 500]
+  --video-preset arg             Set preset for video encoder. When enable
+                                 nvenc, select one of {default, slow, medium,
+                                 fast, hp, hq, bd, ll, llhq, llhp, lossless,
+                                 losslesshp, p1, p2, p3, p4, p5, p6, p7};
+                                 otherwise, select one of {ultrafast,
+                                 superfast, veryfast, faster, fast, medium,
+                                 slow, slower, veryslow, placebo}
+  --video-quality arg (=23)      Set video quality. [0, 51], lower is better, 0
+                                 is lossless
 ```
 
 You can press `Ctrl+C` to stop it gracefully.
@@ -152,13 +158,23 @@ Video Reference (Chinese):
 
 ### cgc
 
-A testing version client to work with `cge`. Download h264 version [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc.7z) and h265 version [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc-h265.7z).
+A simple client to work with `cge`. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc_v0.2.7z).
 
 ```
+Ksyun Edge Cloud Gaming Client v0.2 Beta
+
 Usage:
-  --server (=127.0.0.1) set server address
-  --port (=8080)        set server port
-  --hw_decode           hardware decoder, only support d3d11va now.
+  -h [ --help ]                         Produce help message
+  --audio-frame-delay arg (=2)          Set audio frame max delay, [0, 8]
+  -f [ --fullscreen-state ] arg (=none) Set fullscreen state, can be one of
+                                        {none, real, fake}
+  -l [ --list-hardware-decoder ]        List hardware decoder
+  -d [ --hardware-decoder ] arg         Set hardware decoder
+  -r [ --remote-host ] arg (=127.0.0.1) Set remote host
+  -c [ --control-port ] arg (=8080)     Set remote control port
+  -s [ --stream-port ] arg (=8080)      Set remote stream port
+  --top-most arg                        Keep the main window always on top
+  --volume arg (=100)                   Set volume, [0, 100]
 ```
 
 ### cgs

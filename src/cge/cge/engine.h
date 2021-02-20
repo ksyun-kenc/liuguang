@@ -2,7 +2,8 @@
 
 #include "net.hpp"
 
-#include "encoder.h"
+#include "audio_encoder.h"
+#include "video_encoder.h"
 
 enum class KeyboardReplay { NONE = 0, CGVHID };
 
@@ -17,6 +18,9 @@ class Engine {
     return instance;
   }
 
+  static int OnWriteHeader(void* opaque,
+                           uint8_t* buffer,
+                           int buffer_size) noexcept;
   static int OnWritePacket(void* opaque,
                            uint8_t* buffer,
                            int buffer_size) noexcept;
@@ -42,13 +46,17 @@ class Engine {
 
   void SetPresentFlag(bool donot_present);
 
+  const std::string& GetAudioHeader() const noexcept {
+    return audio_encoder_.GetHeader();
+  }
+  const std::string& GetVideoHeader() const noexcept {
+    return video_encoder_.GetHeader();
+  }
+
  private:
   Engine() = default;
 
-  int WritePacket(void* opaque,
-                  uint32_t timestamp,
-                  uint8_t* buffer,
-                  int buffer_size) noexcept;
+  int WritePacket(void* opaque, uint8_t* buffer, int buffer_size) noexcept;
 
   void Loop() noexcept;
 
@@ -58,7 +66,9 @@ class Engine {
   net::io_context ioc_{2};
   std::shared_ptr<class WsServer> ws_server_;
   std::shared_ptr<class UdpServer> udp_server_;
-  Encoder encoder_;
+
+  AudioEncoder audio_encoder_;
+  VideoEncoder video_encoder_;
 
   CHandle donot_present_event_;
 };

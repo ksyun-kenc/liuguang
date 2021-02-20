@@ -8,16 +8,12 @@
 
 namespace umu {
 namespace string {
-#if UNICODE
-#define tstring std::wstring
-#else
-#define tstring std::string
-#endif
-#pragma endregion
-
 #pragma region "Join"
 template <size_t N>
-constexpr std::string ArrayJoin(
+#if _HAS_CXX20
+constexpr
+#endif
+std::string ArrayJoin(
     const std::array<std::string_view, N>& array) {
   auto buffer = std::string("{").append(array.at(0));
   for (size_t i = 1; i < N; ++i) {
@@ -172,165 +168,6 @@ inline StringType Trim(StringType& str) {
     }
   }
   return str;
-}
-#pragma endregion
-
-#pragma region "Hex helper function"
-template <typename CharType, bool uppercase_hex_chars = false>
-inline ::std::basic_string<CharType,
-                           ::std::char_traits<CharType>,
-                           ::std::allocator<CharType>>
-HexEncodeT(_In_bytecount_(size) const void* data, size_t size) {
-  static const CharType HEX_CHARS[16] = {'0', '1', '2', '3', '4', '5',
-                                         '6', '7', '8', '9', 'A', 'B',
-                                         'C', 'D', 'E', 'F'};
-  static const CharType hex_chars[16] = {'0', '1', '2', '3', '4', '5',
-                                         '6', '7', '8', '9', 'a', 'b',
-                                         'c', 'd', 'e', 'f'};
-  static const CharType* hex_chars_t =
-      uppercase_hex_chars ? HEX_CHARS : hex_chars;
-
-  ::std::basic_string<CharType, ::std::char_traits<CharType>,
-                      ::std::allocator<CharType>>
-      result;
-  if (!data || 0 == size) {
-    return result;
-  }
-
-  result.resize(size * 2);
-  CharType* buffer = const_cast<CharType*>(result.c_str());
-  size_t read = 0;
-  size_t written = 0;
-  while (read < size) {
-    uint8_t ch = static_cast<const uint8_t*>(data)[read];
-    ++read;
-    *buffer++ = hex_chars_t[(ch >> 4) & 0x0F];
-    *buffer++ = hex_chars_t[ch & 0x0F];
-    written += 2;
-  }
-
-  return result;
-}
-
-#define HexEncodeW HexEncodeT<wchar_t>
-#define HexEncodeUppercaseW HexEncodeT<wchar_t, true>
-
-#define HexEncodeA HexEncodeT<char>
-#define HexEncodeUppercaseA HexEncodeT<char, true>
-
-#if UNICODE
-#define HexEncode HexEncodeW
-#define HexEncodeUppercase HexEncodeUppercaseW
-#else
-#define HexEncode HexEncodeA
-#define HexEncodeUppercase HexEncodeUppercaseA
-#endif
-#pragma endregion
-
-#pragma region "version helper function"
-inline uint64_t StringVersionToBinary(const char* string_version) {
-  uint64_t v = 0;
-
-  if (nullptr == string_version) {
-    return v;
-  }
-
-  // 去空格
-  const char* p(string_version);
-  while (isspace(*p)) {
-    ++p;
-  }
-  size_t length = strlen(p);
-  while (isspace(p[length - 1])) {
-    --length;
-  }
-
-  ::std::string s(p, length);
-  ::std::vector<::std::string> parts;
-  Split(&parts, s, ".");
-  int i = 0;
-  for (const auto& e : parts) {
-    if (!e.empty()) {
-      v <<= 16;
-      v |= uint16_t(atoi(e.c_str()));
-      ++i;
-    }
-  }
-  // UMU: 1.2 表示 1.2.0.0，所以下面语句块是必要的
-  for (; i < 4; ++i) {
-    v <<= 16;
-  }
-
-  return v;
-}
-
-inline ::std::string StringVersionFromBinaryA(uint64_t version) {
-  // MAX uint16_t = 65535
-  char buffer[5 * 4 + 3 + 1];
-
-  sprintf_s(buffer, "%hu.%hu.%hu.%hu",
-            reinterpret_cast<const uint16_t*>(&version)[3],
-            reinterpret_cast<const uint16_t*>(&version)[2],
-            reinterpret_cast<const uint16_t*>(&version)[1],
-            reinterpret_cast<const uint16_t*>(&version)[0]);
-  return ::std::string(buffer);
-}
-
-inline ::std::wstring StringVersionFromBinaryW(uint64_t version) {
-  wchar_t buffer[5 * 4 + 3 + 1];
-
-  swprintf_s(buffer, L"%hu.%hu.%hu.%hu",
-             reinterpret_cast<const uint16_t*>(&version)[3],
-             reinterpret_cast<const uint16_t*>(&version)[2],
-             reinterpret_cast<const uint16_t*>(&version)[1],
-             reinterpret_cast<const uint16_t*>(&version)[0]);
-  return ::std::wstring(buffer);
-}
-
-#if UNICODE
-#define StringVersionFromBinary StringVersionFromBinaryW
-#else
-#define StringVersionFromBinary StringVersionFromBinaryA
-#endif
-#pragma endregion
-
-#pragma region "compare function"
-// 1, true, yes
-inline bool IsTrue(const char* str) {
-  return 0 == strcmp(str, "1") || 0 == _stricmp(str, "TRUE") ||
-         0 == _stricmp(str, "YES");
-}
-
-// 0, false, no
-inline bool IsFalse(const char* str) {
-  return 0 == strcmp(str, "0") || 0 == _stricmp(str, "FALSE") ||
-         0 == _stricmp(str, "NO");
-}
-
-inline bool IsEndWith(const char* str,
-                      const char* tail,
-                      bool case_sensitive = true) {
-  size_t string_length = strlen(str);
-  size_t tail_length = strlen(tail);
-  if (string_length >= tail_length) {
-    return 0 == (case_sensitive ? strncmp(str + string_length - tail_length,
-                                          tail, tail_length)
-                                : _strnicmp(str + string_length - tail_length,
-                                            tail, tail_length));
-  }
-  return false;
-}
-
-inline bool IsStartWith(const char* str,
-                        const char* header,
-                        bool case_sensitive = true) {
-  size_t string_length = strlen(str);
-  size_t header_length = strlen(header);
-  if (string_length >= header_length) {
-    return 0 == (case_sensitive ? strncmp(str, header, header_length)
-                                : _strnicmp(str, header, header_length));
-  }
-  return false;
 }
 #pragma endregion
 }  // end of namespace string

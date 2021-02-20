@@ -16,26 +16,39 @@
 
 #pragma once
 
-#include "audio_encoder.h"
-#include "video_encoder.h"
+#include "ffmpeg.h"
+
+#include "regame/protocol.h"
+
+constexpr int kH264TimeBase = 90000;
+constexpr size_t kInitialBufferSize = 0x100000;  // 1MB
 
 class Encoder {
  public:
+  virtual regame::NetPacketType GetType() const noexcept = 0;
+
+  const std::string& GetHeader() const noexcept { return header_; }
+
+  void SaveHeader(const uint8_t* buffer, int size) noexcept {
+    if (header_.empty()) {
+      header_.resize(sizeof(regame::NetPacketHeader));
+      auto header = reinterpret_cast<regame::NetPacketHeader*>(header_.data());
+      header->version = regame::kNetPacketCurrentVersion;
+      header->type = GetType();
+      header->size = htonl(size);
+    } else {
+      auto header = reinterpret_cast<regame::NetPacketHeader*>(header_.data());
+      header->size = htonl(ntohl(header->size) + size);
+    }
+    header_.append(reinterpret_cast<const char*>(buffer), size);
+  }
+
+ protected:
   Encoder() = default;
   ~Encoder() = default;
 
-  bool Init(std::string audio_codec,
-            uint64_t audio_bitrate,
-            bool enable_nvenc,
-            uint64_t video_bitrate,
-            AVCodecID video_codec_id,
-            int video_gop,
-            std::string video_preset,
-            uint32_t video_quality) noexcept;
-  void Run();
-  void Stop();
+  void FreeHeader() noexcept { header_.clear(); }
 
  private:
-  AudioEncoder audio_encoder_;
-  VideoEncoder video_encoder_;
+  std::string header_;
 };
