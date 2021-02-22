@@ -21,7 +21,7 @@
 | 目标 | 最小化 | 建议 |
 | --- | --- | --- |
 | 操作系统 | Windows 7, 8, 8.1, 10 | Windows 10 |
-| GPU | NVIDIA GPU | 已测试 RTX 1080Ti, GTX 2070S |
+| GPU | NVIDIA GPU | 已测试 GTX 1080Ti, RTX 2070S |
 | 软件 | GeForce Experience | 最新的 GeForce Experience |
 | 驱动 | GeForce Game Ready Driver | 最新的 GeForce Game Ready Driver |
 

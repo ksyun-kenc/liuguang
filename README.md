@@ -25,7 +25,7 @@ Demo videos (Chinese):
 | Target | Minimum | Recommended |
 | --- | --- | --- |
 | System | Windows 7, 8, 8.1, 10 | Windows 10 |
-| GPU | NVIDIA GPU | RTX 1080Ti, GTX 2070S tested |
+| GPU | NVIDIA GPU | GTX 1080Ti, RTX 2070S tested |
 | Software | GeForce Experience | latest GeForce Experience |
 | Driver | GeForce Game Ready Driver | latest GeForce Game Ready Driver |
 
