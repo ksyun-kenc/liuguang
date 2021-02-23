@@ -27,6 +27,7 @@ class Encoder {
  public:
   virtual regame::NetPacketType GetType() const noexcept = 0;
 
+  AVCodecID GetCodecID() const noexcept { return codec_id_; }
   const std::string& GetHeader() const noexcept { return header_; }
 
   void SaveHeader(const uint8_t* buffer, int size) noexcept {
@@ -48,7 +49,9 @@ class Encoder {
   ~Encoder() = default;
 
   void FreeHeader() noexcept { header_.clear(); }
+  void SetCodecID(AVCodecID codec_id) noexcept { codec_id_ = codec_id; }
 
  private:
+  AVCodecID codec_id_ = AV_CODEC_ID_NONE;
   std::string header_;
 };

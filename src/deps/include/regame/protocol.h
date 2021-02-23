@@ -18,6 +18,7 @@
 
 namespace regame {
 enum class NetPacketType : uint8_t { Login = 0, Audio, Video, Ping, Pong };
+enum class VerificationType : uint8_t { Code = 0, SM3 };
 constexpr uint8_t kNetPacketCurrentVersion = 0;
 
 #pragma pack(push, 2)
@@ -25,6 +26,29 @@ struct NetPacketHeader {
   uint8_t version;
   NetPacketType type;
   uint32_t size;
+};
+
+struct Login {
+  char username[32];  // Mobile phone or Email(max 256, but why that long?)
+  VerificationType verification_type;
+  uint8_t verification_size;  // <= 32
+  char verification_data[32];
+};
+
+struct NetPacketLogin {
+  NetPacketHeader header;
+  Login login;
+};
+
+struct LoginResult {
+  int error_code;
+  uint32_t audio_codec;
+  uint32_t video_codec;
+};
+
+struct NetPacketLoginResult {
+  NetPacketHeader header;
+  LoginResult login_result;
 };
 #pragma pack(pop)
 }  // namespace regame

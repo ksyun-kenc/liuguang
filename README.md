@@ -10,6 +10,8 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 `Regame` is still under development. It would be great if you could help.
 
+[Download Regame v0.3 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+
 Demo videos (Chinese):
 
 - [01-Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
@@ -158,7 +160,7 @@ Video Reference (Chinese):
 
 ### cgc
 
-A simple client to work with `cge`. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc_v0.2.7z).
+A simple client to work with `cge`.
 
 ```
 Ksyun Edge Cloud Gaming Client v0.2 Beta
@@ -208,7 +210,7 @@ Video Reference (Chinese):
 
 ### 4.3 FFmpeg
 
-Set `FFMPEG_ROOT` environment variable to the path of your [FFmpeg](https://www.ffmpeg.org/download.html) directory. 
+Set `FFMPEG_ROOT` environment variable to the path of your [FFmpeg](https://www.ffmpeg.org/download.html) directory. [LGPL shared is recommended.](https://github.com/BtbN/FFmpeg-Builds/releases)
 
 The folder tree should be like:
 

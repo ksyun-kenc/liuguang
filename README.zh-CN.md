@@ -6,6 +6,8 @@
 
 云游戏引擎是一种将普通游戏云化的技术，分为服务端引擎和客户端引擎两部分，其中服务端最为复杂。鎏光还处于开发期，目前已经开源最为复杂的服务端引擎部分，客户端完善之后也将开源。
 
+[按这里下载鎏光 v0.3](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+
 演示视频：
 
 - [01-国产开源项目【鎏光云游戏引擎】试玩街霸](https://www.bilibili.com/video/bv1jt4y1r7GT) - 哔哩哔哩
@@ -206,7 +208,7 @@ Boost 的编译命令，参考：
 
 ### 4.3 FFmpeg
 
-设置 `FFMPEG_ROOT` 环境变量，值为您的 [FFmpeg](https://www.ffmpeg.org/download.html) 目录的全路径名。
+设置 `FFMPEG_ROOT` 环境变量，值为您的 [FFmpeg](https://www.ffmpeg.org/download.html) 目录的全路径名。[建议采用 LGPL shared。](https://github.com/BtbN/FFmpeg-Builds/releases)
 
 目录树应该类似这样：
 

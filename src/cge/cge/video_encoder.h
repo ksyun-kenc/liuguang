@@ -54,7 +54,6 @@ class VideoEncoder : public Encoder {
  private:
   bool enable_nvenc_;
   uint64_t bitrate_;
-  AVCodecID codec_id_;
   int gop_;
   std::string video_preset_;
   uint32_t quality_;

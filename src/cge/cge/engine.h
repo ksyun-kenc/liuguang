@@ -53,6 +53,13 @@ class Engine {
     return video_encoder_.GetHeader();
   }
 
+  AVCodecID GetAudioCodecID() const noexcept {
+    return audio_encoder_.GetCodecID();
+  }
+  AVCodecID GetVideoCodecID() const noexcept {
+    return video_encoder_.GetCodecID();
+  }
+
  private:
   Engine() = default;
 

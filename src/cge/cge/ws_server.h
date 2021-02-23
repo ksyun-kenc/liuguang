@@ -53,6 +53,7 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
   void OnStop(beast::error_code ec);
   void OnRead(beast::error_code ec, std::size_t bytes_transferred);
   void OnWrite(beast::error_code ec, std::size_t bytes_transferred);
+  bool ServeClient();
 
  private:
   std::shared_ptr<WsServer> server_;
@@ -86,6 +87,8 @@ class WsServer : public std::enable_shared_from_this<WsServer> {
   bool Join(std::shared_ptr<WsSession> session) noexcept;
   void Leave(std::shared_ptr<WsSession> session) noexcept;
 
+  bool AddAuthorized(std::shared_ptr<WsSession> session) noexcept;
+
   friend class WsSession;
 
  private:
@@ -94,4 +97,5 @@ class WsServer : public std::enable_shared_from_this<WsServer> {
 
   std::mutex session_mutex_;
   std::unordered_set<std::shared_ptr<WsSession>> sessions_;
+  std::unordered_set<std::shared_ptr<WsSession>> authorized_sessions_;
 };
