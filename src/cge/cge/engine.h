@@ -31,11 +31,11 @@ class Engine {
            udp::endpoint udp_endpoint,
            std::string audio_codec,
            uint64_t audio_bitrate,
-           bool enable_nvenc,
            KeyboardReplay keyboard_replay,
            GamepadReplay gamepad_replay,
            uint64_t video_bitrate,
            AVCodecID video_codec_id,
+           VideoEncoderType video_encoder_type,
            int video_gop,
            std::string video_preset,
            uint32_t video_quality);

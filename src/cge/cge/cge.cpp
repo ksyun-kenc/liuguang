@@ -73,6 +73,8 @@ constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
 constexpr auto kDefaultVideoCodec{"h264"sv};
 constexpr int kDefaultVideoGop = 180;
+constexpr std::array<std::string_view, 19> kValidAmfPreset = {
+    "speed", "balanced", "quality"};
 constexpr std::array<std::string_view, 19> kValidNvencPreset = {
     "default", "slow", "medium", "fast",     "hp",         "hq", "bd",
     "ll",      "llhq", "llhp",   "lossless", "losslesshp", "p1", "p2",
@@ -105,7 +107,7 @@ int main(int argc, char* argv[]) {
   std::string bind_address;
   uint16_t control_port = 0;
   bool donot_present = false;
-  bool enable_nvenc = true;
+  VideoEncoderType video_encoder_type = VideoEncoderType::Software;
   KeyboardReplay keyboard_replay;
   GamepadReplay gamepad_replay;
   uint16_t stream_port = 0;
@@ -116,6 +118,8 @@ int main(int argc, char* argv[]) {
   uint32_t video_quality = 0;
 
   try {
+    bool enable_amf = false;
+    bool enable_nvenc = false;
     std::string keyboard_replay_string;
     std::string gamepad_replay_string;
     std::string video_codec;
@@ -139,8 +143,11 @@ int main(int argc, char* argv[]) {
       ("donot-present",
         po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
         "Tell cgh don't present")
+      ("enable-amf",
+        po::value<bool>(&enable_amf)->default_value(false),
+        "Enable AMD AMF")
       ("enable-nvenc",
-        po::value<bool>(&enable_nvenc)->default_value(true),
+        po::value<bool>(&enable_nvenc)->default_value(false),
         "Enable nvenc")
       ("keyboard-replay",
         po::value<std::string>(&keyboard_replay_string)->default_value(kDefaultKeyboardReplay.data()),
@@ -168,7 +175,9 @@ int main(int argc, char* argv[]) {
         "Set video gop. [1, 500]")
       ("video-preset",
         po::value<std::string>(&video_preset),
-        std::string("Set preset for video encoder. When enable nvenc, select one of ")
+        std::string("Set preset for video encoder. When enable AMF, select one of ")
+       .append(umu::string::ArrayJoin(kValidAmfPreset))
+       .append("; When enable nvenc, select one of ")
        .append(umu::string::ArrayJoin(kValidNvencPreset))
        .append("; otherwise, select one of ")
        .append(umu::string::ArrayJoin(kValidPreset)).data())
@@ -186,6 +195,16 @@ int main(int argc, char* argv[]) {
     }
 
     // sanity check
+    if (enable_amf && enable_nvenc) {
+      throw std::invalid_argument(
+          "enable_amf and enable_nvenc are mutually exclusive!");
+    }
+    if (enable_amf) {
+      video_encoder_type = VideoEncoderType::AMF;
+    } else if (enable_nvenc) {
+      video_encoder_type = VideoEncoderType::NvEnc;
+    }
+
     if (audio_bitrate < kMinAudioBitrate || audio_bitrate > kMaxAudioBitrate) {
       throw std::out_of_range("audio-bitrate out of range!");
     }
@@ -230,9 +249,21 @@ int main(int argc, char* argv[]) {
       throw std::out_of_range("video-gop out of range!");
     }
     if (video_preset.empty()) {
-      video_preset = enable_nvenc ? "llhp" : "ultrafast";
+      if (VideoEncoderType::AMF == video_encoder_type) {
+        video_preset = "speed";
+      } else if (VideoEncoderType::NvEnc == video_encoder_type) {
+        video_preset = "llhp";
+      } else {
+        video_preset = "ultrafast";
+      }
     } else {
-      if (enable_nvenc) {
+      if (VideoEncoderType::AMF == video_encoder_type) {
+        if (kValidAmfPreset.cend() == std::find(kValidAmfPreset.cbegin(),
+                                                kValidAmfPreset.cend(),
+                                                video_preset)) {
+          throw std::invalid_argument("unsupported AMF video-preset!");
+        }
+      } else if (VideoEncoderType::NvEnc == video_encoder_type) {
         if (kValidNvencPreset.cend() == std::find(kValidNvencPreset.cbegin(),
                                                   kValidNvencPreset.cend(),
                                                   video_preset)) {
@@ -256,7 +287,8 @@ int main(int argc, char* argv[]) {
               << "bind-address: " << bind_address << '\n'
               << "control-port: " << control_port << '\n'
               << "donot-present: " << std::boolalpha << donot_present << '\n'
-              << "enable-nvenc: " << std::boolalpha << enable_nvenc << '\n'
+              << "enable-amf: " << enable_amf << '\n'
+              << "enable-nvenc: " << enable_nvenc << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
               << "gamepad-replay: " << gamepad_replay_string << '\n'
               << "stream-port: " << stream_port << '\n'
@@ -303,10 +335,10 @@ int main(int argc, char* argv[]) {
   });
   Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
                             udp::endpoint(kAddress, control_port),
-                            std::move(audio_codec), audio_bitrate, enable_nvenc,
+                            std::move(audio_codec), audio_bitrate,
                             keyboard_replay, gamepad_replay, video_bitrate,
-                            video_codec_id, video_gop, std::move(video_preset),
-                            video_quality);
+                            video_codec_id, video_encoder_type, video_gop,
+                            std::move(video_preset), video_quality);
   Engine::GetInstance().EncoderStop();
   return EXIT_SUCCESS;
 }

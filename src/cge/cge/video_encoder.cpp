@@ -23,13 +23,13 @@
 
 extern App g_app;
 
-bool VideoEncoder::Init(bool enable_nvenc,
-                        uint64_t bitrate,
+bool VideoEncoder::Init(uint64_t bitrate,
                         AVCodecID codec_id,
+                        VideoEncoderType encoder_type,
                         int gop,
                         std::string video_preset,
                         uint32_t quality) noexcept {
-  enable_nvenc_ = enable_nvenc;
+  encoder_type_ = encoder_type;
   bitrate_ = bitrate;
   SetCodecID(codec_id);
   gop_ = gop;
@@ -229,13 +229,17 @@ int VideoEncoder::AddStream(AVCodec*& codec) {
 
   const char* codec_name = nullptr;
   if (AV_CODEC_ID_H264 == GetCodecID()) {
-    if (enable_nvenc_) {
+    if (VideoEncoderType::AMF == encoder_type_) {
+      codec_name = "h264_amf";
+    } else if (VideoEncoderType::NvEnc == encoder_type_) {
       codec_name = "h264_nvenc";
     } else {
       codec_name = "libx264";
     }
   } else if (AV_CODEC_ID_HEVC == GetCodecID()) {
-    if (enable_nvenc_) {
+    if (VideoEncoderType::AMF == encoder_type_) {
+      codec_name = "hevc_amf";
+    } else if (VideoEncoderType::NvEnc == encoder_type_) {
       codec_name = "hevc_nvenc";
     } else {
       codec_name = "libx265";
@@ -285,10 +289,15 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
     codec_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
   }
 
-  av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
-
   auto quality = std::to_string(quality_);
-  if (enable_nvenc_) {
+  if (VideoEncoderType::AMF == encoder_type_) {
+    // TO-DO
+    av_opt_set(codec_context_->priv_data, "usage", "ultralowlatency", 0);
+    av_opt_set(codec_context_->priv_data, "profile", "main", 0);
+    av_opt_set(codec_context_->priv_data, "quality", video_preset_.data(), 0);
+    av_opt_set(codec_context_->priv_data, "rc", "vbr_latency", 0);
+  } else if (VideoEncoderType::NvEnc == encoder_type_) {
+    av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
     av_opt_set(codec_context_->priv_data, "profile", "main", 0);
     av_opt_set(codec_context_->priv_data, "delay", "0", 0);
     if (AV_CODEC_ID_H264 == GetCodecID()) {
@@ -300,6 +309,7 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
     av_opt_set(codec_context_->priv_data, "tune", "ull", 0);
     av_opt_set(codec_context_->priv_data, "zerolatency", "1", 0);
   } else {
+    av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
     av_opt_set(codec_context_->priv_data, "crf", quality.data(), 0);
     av_opt_set(codec_context_->priv_data, "tune", "zerolatency", 0);
 
@@ -307,8 +317,6 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
       av_opt_set(codec_context_->priv_data, "profile", "baseline", 0);
     } else if (AV_CODEC_ID_HEVC == GetCodecID()) {
       av_opt_set(codec_context_->priv_data, "profile", "main", 0);
-    } else {
-      assert(false);
     }
   }
 

@@ -28,11 +28,11 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  udp::endpoint udp_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
-                 bool enable_nvenc,
                  KeyboardReplay keyboard_replay,
                  GamepadReplay gamepad_replay,
                  uint64_t video_bitrate,
                  AVCodecID video_codec_id,
+                 VideoEncoderType video_encoder_type,
                  int video_gop,
                  std::string video_preset,
                  uint32_t video_quality) {
@@ -42,7 +42,7 @@ void Engine::Run(tcp::endpoint ws_endpoint,
       return;
     }
 
-    if (!video_encoder_.Init(enable_nvenc, video_bitrate, video_codec_id,
+    if (!video_encoder_.Init(video_bitrate, video_codec_id, video_encoder_type,
                              video_gop, std::move(video_preset),
                              video_quality)) {
       std::cout << "Initialize video encoder failed!\n";
