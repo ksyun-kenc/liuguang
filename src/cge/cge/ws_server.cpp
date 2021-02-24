@@ -20,6 +20,8 @@
 
 #include "regame/protocol.h"
 
+using namespace std::literals::chrono_literals;
+
 namespace {
 
 inline void ListenerFail(beast::error_code ec, std::string_view what) {
@@ -71,12 +73,27 @@ WsServer::WsServer(Engine& engine, const tcp::endpoint& endpoint) noexcept
 
 bool WsServer::Join(std::shared_ptr<WsSession> session) noexcept {
   bool inserted = false;
+  {
+    std::lock_guard<std::mutex> lock(session_mutex_);
+    if (authorized_sessions_.size() < kMaxClientCount) {
+      sessions_.insert(session);
+      inserted = true;
+    }
+  }
+  if (!inserted) {
+    session->Stop(true);
+  }
+  return inserted;
+}
+
+bool WsServer::AddAuthorized(std::shared_ptr<WsSession> session) noexcept {
+  bool inserted = false;
   bool first = false;
   {
     std::lock_guard<std::mutex> lock(session_mutex_);
-    first = sessions_.size() == 0;
-    if (sessions_.size() < kMaxClientCount) {
-      sessions_.insert(session);
+    first = authorized_sessions_.size() == 0;
+    if (authorized_sessions_.size() < kMaxClientCount) {
+      authorized_sessions_.insert(session);
       inserted = true;
     }
   }
@@ -91,27 +108,28 @@ bool WsServer::Join(std::shared_ptr<WsSession> session) noexcept {
 }
 
 void WsServer::Leave(std::shared_ptr<WsSession> session) noexcept {
-  bool last = false;
+  bool last_authorized = false;
   {
     std::lock_guard<std::mutex> lock(session_mutex_);
-    if (sessions_.erase(session) > 0) {
-      last = sessions_.size() == 0;
+    sessions_.erase(session);
+    if (authorized_sessions_.erase(session) > 0) {
+      last_authorized = authorized_sessions_.size() == 0;
     }
   }
-  if (last) {
+  if (last_authorized) {
     engine_.EncoderStop();
   }
 }
 
 size_t WsServer::Send(std::string buffer) {
   std::lock_guard<std::mutex> lock(session_mutex_);
-  size_t count = sessions_.size();
+  size_t count = authorized_sessions_.size();
   if (1 == count) {
     // can move when only one
-    sessions_.begin()->get()->Write(std::move(buffer));
+    authorized_sessions_.begin()->get()->Write(std::move(buffer));
   } else {
     // must copy when > 1
-    for (const auto& session : sessions_) {
+    for (const auto& session : authorized_sessions_) {
       session->Write(buffer);
     }
   }
@@ -135,8 +153,8 @@ void WsServer::Stop(bool restart) {
   beast::error_code ec;
   // acceptor_.cancel(ec);
   acceptor_.close(ec);
-  for (const auto& session : sessions_) {
-    session->Stop(restart);
+  while (!sessions_.empty()) {
+    (*sessions_.begin())->Stop(restart);
   }
 }
 #pragma endregion
@@ -246,6 +264,11 @@ void WsSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
   std::cout << __func__ << ": " << bytes_transferred << '\n';
 #endif
 
+  if (!ServeClient()) {
+    Stop(true);
+    return;
+  }
+
   Read();
 }
 
@@ -268,5 +291,99 @@ void WsSession::OnWrite(beast::error_code ec, std::size_t bytes_transferred) {
         net::buffer(write_queue_.front()),
         beast::bind_front_handler(&WsSession::OnWrite, shared_from_this()));
   }
+}
+
+bool WsSession::ServeClient() {
+  static enum class State { NONE, HEAD, BODY } state = State::NONE;
+  static std::chrono::steady_clock::time_point first_byte;
+
+  for (; read_buffer_.size() > 0;) {
+    switch (state) {
+      case State::NONE:
+        first_byte = std::chrono::steady_clock::now();
+        state = State::HEAD;
+        // pass through
+      case State::HEAD:
+        if (std::chrono::steady_clock::now() - first_byte > 7s) {
+          return false;
+        }
+        if (read_buffer_.size() < sizeof(regame::NetPacketHeader)) {
+          return true;
+        }
+        state = State::BODY;
+        // pass through
+      case State::BODY:
+        if (std::chrono::steady_clock::now() - first_byte > 7s) {
+          return false;
+        }
+        auto header =
+            static_cast<regame::NetPacketHeader*>(read_buffer_.data().data());
+        if (regame::kNetPacketCurrentVersion != header->version) {
+          read_buffer_.consume(read_buffer_.size());
+          state = State::NONE;
+          std::cerr << "Invalid packet version\n";
+          return false;
+        }
+        uint32_t body_size = ntohl(header->size);
+        uint32_t packet_size = sizeof(regame::NetPacketHeader) + body_size;
+        if (read_buffer_.size() < packet_size) {
+          return true;
+        }
+
+        // whole
+        auto body =
+            reinterpret_cast<char*>(header) + sizeof(regame::NetPacketHeader);
+        auto type = static_cast<regame::NetPacketType>(header->type);
+        if (authorized_) {
+          if (regame::NetPacketType::Ping == type) {
+          }
+        } else {
+          if (regame::NetPacketType::Login == type) {
+            auto login = reinterpret_cast<regame::Login*>(body);
+            if (login->verification_size > sizeof(login->verification_data)) {
+              return false;
+            }
+            std::string temp(login->username, sizeof(login->username));
+            std::string username(temp.data());
+            if (regame::VerificationType::Code == login->verification_type) {
+              std::string password(login->verification_data,
+                                   login->verification_size);
+              // TO-DO
+              authorized_ = username == "UMU" && password == "123456";
+            }
+          }
+
+          if (!authorized_) {
+            return false;
+          }
+
+          if (!server_->AddAuthorized(shared_from_this())) {
+            return false;
+          }
+
+          std::string buffer;
+          buffer.resize(sizeof(regame::NetPacketLoginResult));
+          auto& login_result =
+              *reinterpret_cast<regame::NetPacketLoginResult*>(buffer.data());
+          login_result.header.version = regame::kNetPacketCurrentVersion;
+          login_result.header.type = regame::NetPacketType::Login;
+          login_result.header.size = htonl(sizeof(login_result.login_result));
+          login_result.login_result.error_code = htonl(0);
+          login_result.login_result.audio_codec =
+              htonl(Engine::GetInstance().GetAudioCodecID());
+          login_result.login_result.video_codec =
+              htonl(Engine::GetInstance().GetVideoCodecID());
+          Write(std::move(buffer));
+
+          std::cout << "Authorized "
+                    << ws_.next_layer().socket().remote_endpoint() << '\n';
+        }
+
+        read_buffer_.consume(packet_size);
+        state = State::NONE;
+        break;
+    }
+  }
+  return true;
 }
 #pragma endregion

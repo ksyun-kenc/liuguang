@@ -23,15 +23,15 @@
 
 extern App g_app;
 
-bool VideoEncoder::Init(bool enable_nvenc,
-                        uint64_t bitrate,
+bool VideoEncoder::Init(uint64_t bitrate,
                         AVCodecID codec_id,
+                        HardwareEncoder hardware_encoder,
                         int gop,
                         std::string video_preset,
                         uint32_t quality) noexcept {
-  enable_nvenc_ = enable_nvenc;
+  hardware_encoder_ = hardware_encoder;
   bitrate_ = bitrate;
-  codec_id_ = codec_id;
+  SetCodecID(codec_id);
   gop_ = gop;
   video_preset_ = std::move(video_preset);
   quality_ = quality;
@@ -91,9 +91,9 @@ int VideoEncoder::EncodingThread() {
   BOOST_SCOPE_EXIT_ALL(&) { Free(false); };
 
   const char* format_name = nullptr;
-  if (AV_CODEC_ID_H264 == codec_id_) {
+  if (AV_CODEC_ID_H264 == GetCodecID()) {
     format_name = "h264";
-  } else if (AV_CODEC_ID_HEVC == codec_id_) {
+  } else if (AV_CODEC_ID_HEVC == GetCodecID()) {
     format_name = "hevc";
   }
 
@@ -228,17 +228,35 @@ int VideoEncoder::AddStream(AVCodec*& codec) {
   assert(nullptr == codec_context_);
 
   const char* codec_name = nullptr;
-  if (AV_CODEC_ID_H264 == codec_id_) {
-    if (enable_nvenc_) {
-      codec_name = "h264_nvenc";
-    } else {
-      codec_name = "libx264";
+  if (AV_CODEC_ID_H264 == GetCodecID()) {
+    switch (hardware_encoder_) {
+      case HardwareEncoder::AMF:
+        codec_name = "h264_amf";
+        break;
+      case HardwareEncoder::NVENC:
+        codec_name = "h264_nvenc";
+        break;
+      case HardwareEncoder::QSV:
+        codec_name = "h264_qsv";
+        break;
+      default:
+        codec_name = "libx264";
+        break;
     }
-  } else if (AV_CODEC_ID_HEVC == codec_id_) {
-    if (enable_nvenc_) {
-      codec_name = "hevc_nvenc";
-    } else {
-      codec_name = "libx265";
+  } else if (AV_CODEC_ID_HEVC == GetCodecID()) {
+    switch (hardware_encoder_) {
+      case HardwareEncoder::AMF:
+        codec_name = "hevc_amf";
+        break;
+      case HardwareEncoder::NVENC:
+        codec_name = "hevc_nvenc";
+        break;
+      case HardwareEncoder::QSV:
+        codec_name = "hevc_qsv";
+        break;
+      default:
+        codec_name = "libx265";
+        break;
     }
   } else {
     assert(false);
@@ -278,38 +296,61 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
   codec_context_->time_base = stream_->time_base;
   codec_context_->max_b_frames = 0;
   codec_context_->gop_size = gop_;
-  codec_context_->pix_fmt = AV_PIX_FMT_YUV420P;
-  codec_context_->codec_id = codec_id_;
+  codec_context_->pix_fmt = HardwareEncoder::QSV == hardware_encoder_
+                                ? AV_PIX_FMT_NV12
+                                : AV_PIX_FMT_YUV420P;
+  codec_context_->codec_id = GetCodecID();
   codec_context_->flags |= AV_CODEC_FLAG_LOW_DELAY;
   if (format_context_->oformat->flags & AVFMT_GLOBALHEADER) {
     codec_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
   }
 
-  av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
-
   auto quality = std::to_string(quality_);
-  if (enable_nvenc_) {
-    av_opt_set(codec_context_->priv_data, "profile", "main", 0);
-    av_opt_set(codec_context_->priv_data, "delay", "0", 0);
-    if (AV_CODEC_ID_H264 == codec_id_) {
-      av_opt_set(codec_context_->priv_data, "rc", "vbr", 0);
-      av_opt_set(codec_context_->priv_data, "cq", quality.data(), 0);
-    } else if (AV_CODEC_ID_HEVC == codec_id_) {
-      av_opt_set(codec_context_->priv_data, "qp", quality.data(), 0);
-    }
-    av_opt_set(codec_context_->priv_data, "tune", "ull", 0);
-    av_opt_set(codec_context_->priv_data, "zerolatency", "1", 0);
-  } else {
-    av_opt_set(codec_context_->priv_data, "crf", quality.data(), 0);
-    av_opt_set(codec_context_->priv_data, "tune", "zerolatency", 0);
-
-    if (AV_CODEC_ID_H264 == codec_id_) {
-      av_opt_set(codec_context_->priv_data, "profile", "baseline", 0);
-    } else if (AV_CODEC_ID_HEVC == codec_id_) {
+  switch (hardware_encoder_) {
+    case HardwareEncoder::AMF:
+      // TO-DO
+      av_opt_set(codec_context_->priv_data, "usage", "ultralowlatency", 0);
       av_opt_set(codec_context_->priv_data, "profile", "main", 0);
-    } else {
-      assert(false);
-    }
+      av_opt_set(codec_context_->priv_data, "quality", video_preset_.data(), 0);
+      av_opt_set(codec_context_->priv_data, "rc", "cqp", 0);
+      av_opt_set(codec_context_->priv_data, "qp_i", quality.data(), 0);
+      av_opt_set(codec_context_->priv_data, "qp_p", quality.data(), 0);
+      av_opt_set(codec_context_->priv_data, "bf_ref", "0", 0);
+      av_opt_set(codec_context_->priv_data, "enforce_hrd", "1", 0);
+      break;
+    case HardwareEncoder::NVENC:
+      av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
+      av_opt_set(codec_context_->priv_data, "profile", "main", 0);
+      av_opt_set(codec_context_->priv_data, "delay", "0", 0);
+      if (AV_CODEC_ID_H264 == GetCodecID()) {
+        av_opt_set(codec_context_->priv_data, "rc", "vbr", 0);
+        av_opt_set(codec_context_->priv_data, "cq", quality.data(), 0);
+      } else if (AV_CODEC_ID_HEVC == GetCodecID()) {
+        av_opt_set(codec_context_->priv_data, "qp", quality.data(), 0);
+      }
+      av_opt_set(codec_context_->priv_data, "tune", "ull", 0);
+      av_opt_set(codec_context_->priv_data, "zerolatency", "1", 0);
+      break;
+    case HardwareEncoder::QSV:
+      // TO-DO
+      av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
+      av_opt_set(codec_context_->priv_data, "profile", "main", 0);
+      if (AV_CODEC_ID_HEVC == GetCodecID()) {
+        av_opt_set(codec_context_->priv_data, "load_plugin", "hevc_hw", 0);
+        av_opt_set(codec_context_->priv_data, "gpb", "0", 0);
+      }
+      break;
+    default:
+      av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
+      av_opt_set(codec_context_->priv_data, "crf", quality.data(), 0);
+      av_opt_set(codec_context_->priv_data, "tune", "zerolatency", 0);
+
+      if (AV_CODEC_ID_H264 == GetCodecID()) {
+        av_opt_set(codec_context_->priv_data, "profile", "baseline", 0);
+      } else if (AV_CODEC_ID_HEVC == GetCodecID()) {
+        av_opt_set(codec_context_->priv_data, "profile", "main", 0);
+      }
+      break;
   }
 
   int error = avcodec_open2(codec_context_, codec, nullptr);

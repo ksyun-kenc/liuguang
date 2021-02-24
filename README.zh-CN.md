@@ -6,6 +6,8 @@
 
 云游戏引擎是一种将普通游戏云化的技术，分为服务端引擎和客户端引擎两部分，其中服务端最为复杂。鎏光还处于开发期，目前已经开源最为复杂的服务端引擎部分，客户端完善之后也将开源。
 
+[按这里下载鎏光 v0.3](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+
 演示视频：
 
 - [01-国产开源项目【鎏光云游戏引擎】试玩街霸](https://www.bilibili.com/video/bv1jt4y1r7GT) - 哔哩哔哩
@@ -48,24 +50,7 @@
 
 全称为 `Cloud Gaming Engine`。
 
-您可以直接运行 `cge`，此时应用的默认参数如下：
-
-```
-audio-bitrate: 128000
-audio-codec: libopus
-bind-address: ::
-control-port: 8080
-donot-present: false
-enable-nvenc: true
-keyboard-replay: none
-gamepad-replay: none
-stream-port: 8080
-video-bitrate: 1000000
-video-codec: h264
-video-gop: 180
-video-preset: llhp
-video-quality: 23
-```
+您可以直接运行 `cge`，使用默认参数。
 
 可以运行 `cge --help` 查看所有参数：
 
@@ -159,7 +144,7 @@ Allowed options:
 和 `cge` 配套的简易客户端。[下载](https://ks3-cn-beijing.ksyun.com/liuguang/cgc_v0.2.7z)。
 
 ```
-Ksyun Edge Cloud Gaming Client v0.2 Beta
+Ksyun Edge Cloud Gaming Client v0.3 Beta
 
 Usage:
   -h [ --help ]                         Produce help message
@@ -172,6 +157,8 @@ Usage:
   -c [ --control-port ] arg (=8080)     Set remote control port
   -s [ --stream-port ] arg (=8080)      Set remote stream port
   --top-most arg                        Keep the main window always on top
+  -u [ --username ] arg                 Set username
+  --verification-code arg               Set verification code
   --volume arg (=100)                   Set volume, [0, 100]
 ```
 
@@ -206,7 +193,7 @@ Boost 的编译命令，参考：
 
 ### 4.3 FFmpeg
 
-设置 `FFMPEG_ROOT` 环境变量，值为您的 [FFmpeg](https://www.ffmpeg.org/download.html) 目录的全路径名。
+设置 `FFMPEG_ROOT` 环境变量，值为您的 [FFmpeg](https://www.ffmpeg.org/download.html) 目录的全路径名。[建议采用 LGPL shared。](https://github.com/BtbN/FFmpeg-Builds/releases)
 
 目录树应该类似这样：
 

@@ -24,6 +24,8 @@
 
 #include "regame/shared_mem_info.h"
 
+enum class HardwareEncoder { None = 0, AMF, NVENC, QSV };
+
 class VideoEncoder : public Encoder {
  public:
   VideoEncoder() noexcept = default;
@@ -33,9 +35,9 @@ class VideoEncoder : public Encoder {
     return regame::NetPacketType::Video;
   }
 
-  bool Init(bool enable_nvenc,
-            uint64_t bitrate,
+  bool Init(uint64_t bitrate,
             AVCodecID codec_id,
+            HardwareEncoder hardware_encoder,
             int gop,
             std::string video_preset,
             uint32_t quality) noexcept;
@@ -52,9 +54,8 @@ class VideoEncoder : public Encoder {
   int EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept;
 
  private:
-  bool enable_nvenc_;
+  HardwareEncoder hardware_encoder_;
   uint64_t bitrate_;
-  AVCodecID codec_id_;
   int gop_;
   std::string video_preset_;
   uint32_t quality_;

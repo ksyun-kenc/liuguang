@@ -32,7 +32,7 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
             udp::endpoint endpoint,
             KeyboardReplay keyboard_replay,
             GamepadReplay gamepad_replay);
-  ~UdpServer() = default;
+  ~UdpServer();
 
   void Run() { Read(); }
 

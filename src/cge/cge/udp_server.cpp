@@ -147,6 +147,10 @@ UdpServer::UdpServer(Engine& engine,
   }
 }
 
+UdpServer::~UdpServer() {
+  cgvhid_client_.KeyboardReset();
+}
+
 void UdpServer::OnRead(const boost::system::error_code& ec,
                        std::size_t bytes_transferred) {
   if (ec) {

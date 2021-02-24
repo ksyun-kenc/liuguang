@@ -31,11 +31,11 @@ class Engine {
            udp::endpoint udp_endpoint,
            std::string audio_codec,
            uint64_t audio_bitrate,
-           bool enable_nvenc,
            KeyboardReplay keyboard_replay,
            GamepadReplay gamepad_replay,
            uint64_t video_bitrate,
            AVCodecID video_codec_id,
+           HardwareEncoder hardware_encoder,
            int video_gop,
            std::string video_preset,
            uint32_t video_quality);
@@ -51,6 +51,13 @@ class Engine {
   }
   const std::string& GetVideoHeader() const noexcept {
     return video_encoder_.GetHeader();
+  }
+
+  AVCodecID GetAudioCodecID() const noexcept {
+    return audio_encoder_.GetCodecID();
+  }
+  AVCodecID GetVideoCodecID() const noexcept {
+    return video_encoder_.GetCodecID();
   }
 
  private:

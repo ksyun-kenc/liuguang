@@ -10,6 +10,8 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 `Regame` is still under development. It would be great if you could help.
 
+[Download Regame v0.3 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+
 Demo videos (Chinese):
 
 - [01-Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
@@ -50,24 +52,7 @@ Use Hook technology to capture image, support most of DirectX games, such as Cyb
 
 The `Cloud Gaming Engine`.
 
-You can launch `cge` directly, which will apply the following options:
-
-```
-audio-bitrate: 128000
-audio-codec: libopus
-bind-address: ::
-control-port: 8080
-donot-present: false
-enable-nvenc: true
-keyboard-replay: none
-gamepad-replay: none
-stream-port: 8080
-video-bitrate: 1000000
-video-codec: h264
-video-gop: 180
-video-preset: llhp
-video-quality: 23
-```
+You can launch `cge` directly, which will apply default options.
 
 Run `cge --help` to see all options:
 
@@ -158,10 +143,10 @@ Video Reference (Chinese):
 
 ### cgc
 
-A simple client to work with `cge`. Download [here](https://ks3-cn-beijing.ksyun.com/liuguang/cgc_v0.2.7z).
+A simple client to work with `cge`.
 
 ```
-Ksyun Edge Cloud Gaming Client v0.2 Beta
+Ksyun Edge Cloud Gaming Client v0.3 Beta
 
 Usage:
   -h [ --help ]                         Produce help message
@@ -174,6 +159,8 @@ Usage:
   -c [ --control-port ] arg (=8080)     Set remote control port
   -s [ --stream-port ] arg (=8080)      Set remote stream port
   --top-most arg                        Keep the main window always on top
+  -u [ --username ] arg                 Set username
+  --verification-code arg               Set verification code
   --volume arg (=100)                   Set volume, [0, 100]
 ```
 
@@ -208,7 +195,7 @@ Video Reference (Chinese):
 
 ### 4.3 FFmpeg
 
-Set `FFMPEG_ROOT` environment variable to the path of your [FFmpeg](https://www.ffmpeg.org/download.html) directory. 
+Set `FFMPEG_ROOT` environment variable to the path of your [FFmpeg](https://www.ffmpeg.org/download.html) directory. [LGPL shared is recommended.](https://github.com/BtbN/FFmpeg-Builds/releases)
 
 The folder tree should be like:
 

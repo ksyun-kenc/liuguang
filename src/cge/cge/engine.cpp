@@ -28,11 +28,11 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  udp::endpoint udp_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
-                 bool enable_nvenc,
                  KeyboardReplay keyboard_replay,
                  GamepadReplay gamepad_replay,
                  uint64_t video_bitrate,
                  AVCodecID video_codec_id,
+                 HardwareEncoder hardware_encoder,
                  int video_gop,
                  std::string video_preset,
                  uint32_t video_quality) {
@@ -42,7 +42,7 @@ void Engine::Run(tcp::endpoint ws_endpoint,
       return;
     }
 
-    if (!video_encoder_.Init(enable_nvenc, video_bitrate, video_codec_id,
+    if (!video_encoder_.Init(video_bitrate, video_codec_id, hardware_encoder,
                              video_gop, std::move(video_preset),
                              video_quality)) {
       std::cout << "Initialize video encoder failed!\n";
@@ -118,7 +118,7 @@ int Engine::OnWriteHeader(void* opaque,
                           uint8_t* buffer,
                           int buffer_size) noexcept {
 #if _DEBUG
-  std::cout << __func__ << ": " << buffer_size << "\n";
+  // std::cout << __func__ << ": " << buffer_size << "\n";
 #endif
   auto ei = static_cast<Encoder*>(opaque);
   ei->SaveHeader(buffer, buffer_size);

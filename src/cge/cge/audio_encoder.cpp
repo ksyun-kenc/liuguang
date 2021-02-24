@@ -79,11 +79,13 @@ int AudioEncoder::EncodingThread() {
   int error_code = -1;
   AVDictionary* opts = nullptr;
   if (codec_name_ == "aac") {
+    SetCodecID(AV_CODEC_ID_AAC);
     error_code = avformat_alloc_output_context2(&format_context_, nullptr,
                                                 "mp4", nullptr);
     av_dict_set(&opts, "movflags",
                 "frag_every_frame+dash+delay_moov+skip_sidx+skip_trailer", 0);
   } else if (codec_name_ == "libopus" || codec_name_ == "opus") {
+    SetCodecID(AV_CODEC_ID_OPUS);
     error_code = avformat_alloc_output_context2(&format_context_, nullptr,
                                                 "opus", nullptr);
   } else {
