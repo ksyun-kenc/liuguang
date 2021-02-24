@@ -52,24 +52,7 @@ Use Hook technology to capture image, support most of DirectX games, such as Cyb
 
 The `Cloud Gaming Engine`.
 
-You can launch `cge` directly, which will apply the following options:
-
-```
-audio-bitrate: 128000
-audio-codec: libopus
-bind-address: ::
-control-port: 8080
-donot-present: false
-enable-nvenc: true
-keyboard-replay: none
-gamepad-replay: none
-stream-port: 8080
-video-bitrate: 1000000
-video-codec: h264
-video-gop: 180
-video-preset: llhp
-video-quality: 23
-```
+You can launch `cge` directly, which will apply default options.
 
 Run `cge --help` to see all options:
 
@@ -163,7 +146,7 @@ Video Reference (Chinese):
 A simple client to work with `cge`.
 
 ```
-Ksyun Edge Cloud Gaming Client v0.2 Beta
+Ksyun Edge Cloud Gaming Client v0.3 Beta
 
 Usage:
   -h [ --help ]                         Produce help message
@@ -176,6 +159,8 @@ Usage:
   -c [ --control-port ] arg (=8080)     Set remote control port
   -s [ --stream-port ] arg (=8080)      Set remote stream port
   --top-most arg                        Keep the main window always on top
+  -u [ --username ] arg                 Set username
+  --verification-code arg               Set verification code
   --volume arg (=100)                   Set volume, [0, 100]
 ```
 

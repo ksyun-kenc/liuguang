@@ -50,24 +50,7 @@
 
 全称为 `Cloud Gaming Engine`。
 
-您可以直接运行 `cge`，此时应用的默认参数如下：
-
-```
-audio-bitrate: 128000
-audio-codec: libopus
-bind-address: ::
-control-port: 8080
-donot-present: false
-enable-nvenc: true
-keyboard-replay: none
-gamepad-replay: none
-stream-port: 8080
-video-bitrate: 1000000
-video-codec: h264
-video-gop: 180
-video-preset: llhp
-video-quality: 23
-```
+您可以直接运行 `cge`，使用默认参数。
 
 可以运行 `cge --help` 查看所有参数：
 
@@ -161,7 +144,7 @@ Allowed options:
 和 `cge` 配套的简易客户端。[下载](https://ks3-cn-beijing.ksyun.com/liuguang/cgc_v0.2.7z)。
 
 ```
-Ksyun Edge Cloud Gaming Client v0.2 Beta
+Ksyun Edge Cloud Gaming Client v0.3 Beta
 
 Usage:
   -h [ --help ]                         Produce help message
@@ -174,6 +157,8 @@ Usage:
   -c [ --control-port ] arg (=8080)     Set remote control port
   -s [ --stream-port ] arg (=8080)      Set remote stream port
   --top-most arg                        Keep the main window always on top
+  -u [ --username ] arg                 Set username
+  --verification-code arg               Set verification code
   --volume arg (=100)                   Set volume, [0, 100]
 ```
 
