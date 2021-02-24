@@ -24,7 +24,7 @@
 
 #include "regame/shared_mem_info.h"
 
-enum class VideoEncoderType { Software, NvEnc, AMF };
+enum class HardwareEncoder { None = 0, AMF, NVENC, QSV };
 
 class VideoEncoder : public Encoder {
  public:
@@ -37,7 +37,7 @@ class VideoEncoder : public Encoder {
 
   bool Init(uint64_t bitrate,
             AVCodecID codec_id,
-            VideoEncoderType encoder_type,
+            HardwareEncoder hardware_encoder,
             int gop,
             std::string video_preset,
             uint32_t quality) noexcept;
@@ -54,7 +54,7 @@ class VideoEncoder : public Encoder {
   int EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept;
 
  private:
-  VideoEncoderType encoder_type_;
+  HardwareEncoder hardware_encoder_;
   uint64_t bitrate_;
   int gop_;
   std::string video_preset_;

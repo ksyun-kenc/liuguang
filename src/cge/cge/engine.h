@@ -35,7 +35,7 @@ class Engine {
            GamepadReplay gamepad_replay,
            uint64_t video_bitrate,
            AVCodecID video_codec_id,
-           VideoEncoderType video_encoder_type,
+           HardwareEncoder hardware_encoder,
            int video_gop,
            std::string video_preset,
            uint32_t video_quality);

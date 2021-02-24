@@ -153,8 +153,8 @@ void WsServer::Stop(bool restart) {
   beast::error_code ec;
   // acceptor_.cancel(ec);
   acceptor_.close(ec);
-  for (const auto& session : sessions_) {
-    session->Stop(restart);
+  while (!sessions_.empty()) {
+    (*sessions_.begin())->Stop(restart);
   }
 }
 #pragma endregion
@@ -349,7 +349,7 @@ bool WsSession::ServeClient() {
               std::string password(login->verification_data,
                                    login->verification_size);
               // TO-DO
-              authorized_ = username == "UMU" && password == "UMU";
+              authorized_ = username == "UMU" && password == "123456";
             }
           }
 

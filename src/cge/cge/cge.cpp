@@ -73,12 +73,16 @@ constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
 constexpr auto kDefaultVideoCodec{"h264"sv};
 constexpr int kDefaultVideoGop = 180;
-constexpr std::array<std::string_view, 19> kValidAmfPreset = {
+constexpr std::array<std::string_view, 3> kValidHardwareEncoders = {
+    "amf", "nvenc", "qsv"};
+constexpr std::array<std::string_view, 3> kValidAmfPreset = {
     "speed", "balanced", "quality"};
 constexpr std::array<std::string_view, 19> kValidNvencPreset = {
     "default", "slow", "medium", "fast",     "hp",         "hq", "bd",
     "ll",      "llhq", "llhp",   "lossless", "losslesshp", "p1", "p2",
     "p3",      "p4",   "p5",     "p6",       "p7"};
+constexpr std::array<std::string_view, 7> kValidQsvPreset = {
+    "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"};
 constexpr std::array<std::string_view, 10> kValidPreset = {
     "ultrafast", "superfast", "veryfast", "faster",   "fast",
     "medium",    "slow",      "slower",   "veryslow", "placebo"};
@@ -107,7 +111,7 @@ int main(int argc, char* argv[]) {
   std::string bind_address;
   uint16_t control_port = 0;
   bool donot_present = false;
-  VideoEncoderType video_encoder_type = VideoEncoderType::Software;
+  HardwareEncoder hardware_encoder = HardwareEncoder::None;
   KeyboardReplay keyboard_replay;
   GamepadReplay gamepad_replay;
   uint16_t stream_port = 0;
@@ -118,11 +122,10 @@ int main(int argc, char* argv[]) {
   uint32_t video_quality = 0;
 
   try {
-    bool enable_amf = false;
-    bool enable_nvenc = false;
     std::string keyboard_replay_string;
     std::string gamepad_replay_string;
     std::string video_codec;
+    std::string hardware_encoder_string;
 
     po::options_description desc("Usage");
     // clang-format off
@@ -143,12 +146,10 @@ int main(int argc, char* argv[]) {
       ("donot-present",
         po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
         "Tell cgh don't present")
-      ("enable-amf",
-        po::value<bool>(&enable_amf)->default_value(false),
-        "Enable AMD AMF")
-      ("enable-nvenc",
-        po::value<bool>(&enable_nvenc)->default_value(false),
-        "Enable nvenc")
+      ("hardware-encoder",
+        po::value<std::string>(&hardware_encoder_string),
+        std::string("Set video hardware encoder. Select one of ")
+        .append(umu::string::ArrayJoin(kValidHardwareEncoders)).data())
       ("keyboard-replay",
         po::value<std::string>(&keyboard_replay_string)->default_value(kDefaultKeyboardReplay.data()),
         std::string("Set keyboard replay method. Select one of ")
@@ -195,16 +196,6 @@ int main(int argc, char* argv[]) {
     }
 
     // sanity check
-    if (enable_amf && enable_nvenc) {
-      throw std::invalid_argument(
-          "enable_amf and enable_nvenc are mutually exclusive!");
-    }
-    if (enable_amf) {
-      video_encoder_type = VideoEncoderType::AMF;
-    } else if (enable_nvenc) {
-      video_encoder_type = VideoEncoderType::NvEnc;
-    }
-
     if (audio_bitrate < kMinAudioBitrate || audio_bitrate > kMaxAudioBitrate) {
       throw std::out_of_range("audio-bitrate out of range!");
     }
@@ -248,35 +239,55 @@ int main(int argc, char* argv[]) {
     if (video_gop < kMinGop || video_gop > kMaxGop) {
       throw std::out_of_range("video-gop out of range!");
     }
-    if (video_preset.empty()) {
-      if (VideoEncoderType::AMF == video_encoder_type) {
-        video_preset = "speed";
-      } else if (VideoEncoderType::NvEnc == video_encoder_type) {
-        video_preset = "llhp";
-      } else {
-        video_preset = "ultrafast";
-      }
-    } else {
-      if (VideoEncoderType::AMF == video_encoder_type) {
-        if (kValidAmfPreset.cend() == std::find(kValidAmfPreset.cbegin(),
-                                                kValidAmfPreset.cend(),
-                                                video_preset)) {
-          throw std::invalid_argument("unsupported AMF video-preset!");
-        }
-      } else if (VideoEncoderType::NvEnc == video_encoder_type) {
-        if (kValidNvencPreset.cend() == std::find(kValidNvencPreset.cbegin(),
-                                                  kValidNvencPreset.cend(),
-                                                  video_preset)) {
-          throw std::invalid_argument("unsupported NvEnc video-preset!");
-        }
-      } else {
-        if (kValidPreset.cend() == std::find(kValidPreset.cbegin(),
-                                             kValidPreset.cend(),
-                                             video_preset)) {
-          throw std::invalid_argument("unsupported NvEnc video-preset!");
-        }
+
+    if (!hardware_encoder_string.empty()) {
+      auto pos =
+          std::find(kValidHardwareEncoders.cbegin(),
+                    kValidHardwareEncoders.cend(), hardware_encoder_string);
+      if (kValidHardwareEncoders.cend() != pos) {
+        hardware_encoder = static_cast<HardwareEncoder>(
+            std::distance(kValidHardwareEncoders.cbegin(), pos) + 1);
       }
     }
+    switch (hardware_encoder) {
+      case HardwareEncoder::AMF:
+        if (video_preset.empty()) {
+          video_preset = "speed";
+        } else if (kValidAmfPreset.cend() == std::find(kValidAmfPreset.cbegin(),
+                                                       kValidAmfPreset.cend(),
+                                                       video_preset)) {
+          throw std::invalid_argument("unsupported AMF video-preset!");
+        }
+        break;
+      case HardwareEncoder::NVENC:
+        if (video_preset.empty()) {
+          video_preset = "llhp";
+        } else if (kValidNvencPreset.cend() ==
+                   std::find(kValidNvencPreset.cbegin(),
+                             kValidNvencPreset.cend(), video_preset)) {
+          throw std::invalid_argument("unsupported NVENC video-preset!");
+        }
+        break;
+      case HardwareEncoder::QSV:
+        if (video_preset.empty()) {
+          video_preset = "veryfast";
+        } else if (kValidQsvPreset.cend() == std::find(kValidQsvPreset.cbegin(),
+                                                       kValidQsvPreset.cend(),
+                                                       video_preset)) {
+          throw std::invalid_argument("unsupported QSV video-preset!");
+        }
+        break;
+      default:
+        if (video_preset.empty()) {
+          video_preset = "ultrafast";
+        } else if (kValidPreset.cend() == std::find(kValidPreset.cbegin(),
+                                                    kValidPreset.cend(),
+                                                    video_preset)) {
+          throw std::invalid_argument("unsupported NVENC video-preset!");
+        }
+        break;
+    }
+
     if (video_quality > kMaxVideoQuality) {
       throw std::out_of_range("video-quality out of range!");
     }
@@ -287,8 +298,7 @@ int main(int argc, char* argv[]) {
               << "bind-address: " << bind_address << '\n'
               << "control-port: " << control_port << '\n'
               << "donot-present: " << std::boolalpha << donot_present << '\n'
-              << "enable-amf: " << enable_amf << '\n'
-              << "enable-nvenc: " << enable_nvenc << '\n'
+              << "hardware-encoder: " << hardware_encoder_string << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
               << "gamepad-replay: " << gamepad_replay_string << '\n'
               << "stream-port: " << stream_port << '\n'
@@ -337,7 +347,7 @@ int main(int argc, char* argv[]) {
                             udp::endpoint(kAddress, control_port),
                             std::move(audio_codec), audio_bitrate,
                             keyboard_replay, gamepad_replay, video_bitrate,
-                            video_codec_id, video_encoder_type, video_gop,
+                            video_codec_id, hardware_encoder, video_gop,
                             std::move(video_preset), video_quality);
   Engine::GetInstance().EncoderStop();
   return EXIT_SUCCESS;
