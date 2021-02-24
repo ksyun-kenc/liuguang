@@ -50,7 +50,7 @@ namespace po = boost::program_options;
 
 using namespace std::literals::string_view_literals;
 
-constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.2 Beta"sv};
+constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.3 Beta"sv};
 constexpr auto kDefaultBindAddress{"::"sv};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
 constexpr auto kDefaultAudioCodec{"libopus"sv};
@@ -176,10 +176,12 @@ int main(int argc, char* argv[]) {
         "Set video gop. [1, 500]")
       ("video-preset",
         po::value<std::string>(&video_preset),
-        std::string("Set preset for video encoder. When enable AMF, select one of ")
+        std::string("Set preset for video encoder. For AMF, select one of ")
        .append(umu::string::ArrayJoin(kValidAmfPreset))
-       .append("; When enable nvenc, select one of ")
+       .append("; For NVENC, select one of ")
        .append(umu::string::ArrayJoin(kValidNvencPreset))
+       .append("; For QSV, select one of ")
+       .append(umu::string::ArrayJoin(kValidQsvPreset))
        .append("; otherwise, select one of ")
        .append(umu::string::ArrayJoin(kValidPreset)).data())
       ("video-quality",
