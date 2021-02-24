@@ -344,16 +344,18 @@ bool WsSession::ServeClient() {
               return false;
             }
             std::string temp(login->username, sizeof(login->username));
-            std::string username(temp.data());
+            username_.assign(temp.data());
             if (regame::VerificationType::Code == login->verification_type) {
               std::string password(login->verification_data,
                                    login->verification_size);
               // TO-DO
-              authorized_ = username == "UMU" && password == "123456";
+              authorized_ = username_ == "UMU" && password == "123456";
             }
           }
 
           if (!authorized_) {
+            std::cout << username_ << " login failed from "
+                      << ws_.next_layer().socket().remote_endpoint() << '\n';
             return false;
           }
 

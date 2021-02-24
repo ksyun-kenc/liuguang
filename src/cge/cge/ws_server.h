@@ -65,6 +65,8 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
   std::queue<std::string> write_queue_;
   bool is_audio_header_sent_ = false;
   bool is_video_header_sent_ = false;
+
+  std::string username_;
 };
 
 class WsServer : public std::enable_shared_from_this<WsServer> {
