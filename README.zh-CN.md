@@ -141,7 +141,7 @@ Allowed options:
 
 ### cgc
 
-和 `cge` 配套的简易客户端。[下载](https://ks3-cn-beijing.ksyun.com/liuguang/cgc_v0.2.7z)。
+和 `cge` 配套的简易客户端。
 
 ```
 Ksyun Edge Cloud Gaming Client v0.3 Beta
