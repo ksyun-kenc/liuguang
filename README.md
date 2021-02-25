@@ -57,7 +57,7 @@ You can launch `cge` directly, which will apply default options.
 Run `cge --help` to see all options:
 
 ```
-KSYUN Edge Cloud Gaming Engine v0.2 Beta
+KSYUN Edge Cloud Gaming Engine v0.3 Beta
 
 Usage:
   -h [ --help ]                  Produce help message
@@ -67,7 +67,8 @@ Usage:
   --bind-address arg (=::)       Set bind address for listening. eg: 0.0.0.0
   --control-port arg (=8080)     Set the UDP port for control flow
   --donot-present arg (=0)       Tell cgh don't present
-  --enable-nvenc arg (=1)        Enable nvenc
+  --hardware-encoder arg         Set video hardware encoder. Select one of
+                                 {amf, nvenc, qsv}
   --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
                                  {none, cgvhid}
   --gamepad-replay arg (=none)   Set gamepad replay method. Select one of
@@ -83,13 +84,16 @@ Usage:
   --video-codec arg (=h264)      Set video codec. Select one of {h264, h265,
                                  hevc}, h265 == hevc
   --video-gop arg (=180)         Set video gop. [1, 500]
-  --video-preset arg             Set preset for video encoder. When enable
-                                 nvenc, select one of {default, slow, medium,
-                                 fast, hp, hq, bd, ll, llhq, llhp, lossless,
-                                 losslesshp, p1, p2, p3, p4, p5, p6, p7};
-                                 otherwise, select one of {ultrafast,
-                                 superfast, veryfast, faster, fast, medium,
-                                 slow, slower, veryslow, placebo}
+  --video-preset arg             Set preset for video encoder. For AMF, select
+                                 one of {speed, balanced, quality}; For NVENC,
+                                 select one of {default, slow, medium, fast,
+                                 hp, hq, bd, ll, llhq, llhp, lossless,
+                                 losslesshp, p1, p2, p3, p4, p5, p6, p7}; For
+                                 QSV, select one of {veryfast, faster, fast,
+                                 medium, slow, slower, veryslow}; otherwise,
+                                 select one of {ultrafast, superfast, veryfast,
+                                 faster, fast, medium, slow, slower, veryslow,
+                                 placebo}
   --video-quality arg (=23)      Set video quality. [0, 51], lower is better, 0
                                  is lossless
 ```
