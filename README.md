@@ -42,11 +42,17 @@ Demo videos (Chinese):
 
 ## 2. Basic
 
-Use Hook technology to capture image, support most of DirectX games, such as Cyberpunk 2077, Street Fighter.
+- `cgh` use Hook technology to capture image, support most of DirectX games, such as Cyberpunk 2077, Street Fighter.
+
+- `cge` use FFmpeg to encode audio and images `cgh` captured into streaming.
+
+- `cgc` use FFmpeg to decode audio and video frames, and use SDL2 to play audio and show images.
 
 [![Data Flow](doc/cg.png)](doc/cg.gv)
 
 ## 3. QuickStart
+
+[FAQ](doc/faq.md)
 
 ### cge
 
