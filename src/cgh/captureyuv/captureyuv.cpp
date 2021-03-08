@@ -231,19 +231,31 @@ int CaptureYuv::HookThread() noexcept {
 
 bool CaptureYuv::CreateSharedVideoYuvFrames(size_t data_size) noexcept {
   bool need_create_file_mapping = false;
+  size_t new_size =
+      sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames;
   if (nullptr == shared_frames_) {
     need_create_file_mapping = true;
-  } else if (data_size * kNumberOfSharedFrames >
-             shared_frames_.GetMappingSize()) {
+  } else if (new_size > shared_frames_.GetMappingSize()) {
     shared_frames_.Unmap();
     need_create_file_mapping = true;
+  } else {
+    // update data_size
+    auto shared_frame =
+        static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
+    if (shared_frame->data_size != static_cast<uint32_t>(data_size)) {
+      shared_frame->data_size = static_cast<uint32_t>(data_size);
+      ATLTRACE2(atlTraceUtil, 0,
+                "Require mapping %zu, but old %zu is enough.\n", new_size,
+                shared_frames_.GetMappingSize());
+    } else {
+      ATLTRACE2(atlTraceUtil, 0, "Require mapping %zu, the same as old.\n",
+                new_size);
+    }
   }
 
   if (need_create_file_mapping) {
     HRESULT hr = shared_frames_.MapSharedMem(
-        sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames,
-        kSharedVideoYuvFramesFileMappingName.data(), nullptr,
-        SA());
+        new_size, kSharedVideoYuvFramesFileMappingName.data(), nullptr, SA());
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed.\n");
       return false;
@@ -261,8 +273,7 @@ bool CaptureYuv::CreateSharedVideoYuvFrames(size_t data_size) noexcept {
     }
 
     ATLTRACE2(atlTraceUtil, 0, "MapSharedMem size = %zu + %zu * 2 = %zu\n",
-              sizeof(SharedVideoYuvFrames), data_size,
-              sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames);
+              sizeof(SharedVideoYuvFrames), data_size, new_size);
 
     auto shared_frame =
         static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
