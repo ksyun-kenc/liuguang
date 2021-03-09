@@ -28,7 +28,9 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
  public:
   explicit WsSession(tcp::socket&& socket,
                      std::shared_ptr<WsServer>&& server) noexcept
-      : ws_(std::move(socket)), server_(std::move(server)) {}
+      : ws_(std::move(socket)),
+        server_(std::move(server)),
+        remote_endpoint_(ws_.next_layer().socket().remote_endpoint()) {}
 
   ~WsSession() = default;
 
@@ -59,6 +61,7 @@ class WsSession : public std::enable_shared_from_this<WsSession> {
   std::shared_ptr<WsServer> server_;
   bool authorized_ = false;
   websocket::stream<beast::tcp_stream> ws_;
+  net::ip::tcp::endpoint remote_endpoint_;
   beast::flat_buffer read_buffer_;
 
   std::mutex queue_mutex_;
@@ -76,6 +79,7 @@ class WsServer : public std::enable_shared_from_this<WsServer> {
   void Run() { Accept(); }
   void Stop(bool restart);
   size_t Send(std::string buffer);
+  void CloseAllClients();
 
  private:
   void Accept() {

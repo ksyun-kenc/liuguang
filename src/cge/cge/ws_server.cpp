@@ -157,6 +157,12 @@ void WsServer::Stop(bool restart) {
     (*sessions_.begin())->Stop(restart);
   }
 }
+
+void WsServer::CloseAllClients() {
+  while (!sessions_.empty()) {
+    (*sessions_.begin())->Stop(true);
+  }
+}
 #pragma endregion
 
 #pragma region "WsSession"
@@ -175,9 +181,7 @@ void WsSession::OnRun() {
 
 void WsSession::Stop(bool restart) {
   if (ws_.is_open()) {
-    std::cout << "Closing " << ws_.next_layer().socket().remote_endpoint()
-              << '\n';
-
+    std::cout << "Closing " << remote_endpoint_ << '\n';
     if (restart) {
       ws_.async_close(
           websocket::close_reason(websocket::close_code::try_again_later),
@@ -225,13 +229,11 @@ void WsSession::Write(std::string buffer) {
 
 void WsSession::OnAccept(beast::error_code ec) {
   if (ec == websocket::error::closed) {
-    std::cout << "Close " << ws_.next_layer().socket().remote_endpoint()
-              << '\n';
+    std::cout << "Close " << remote_endpoint_ << '\n';
     return;
   }
   if (ec) {
-    return SessionFail(ec, ws_.next_layer().socket().remote_endpoint(),
-                       "accept");
+    return SessionFail(ec, remote_endpoint_, "accept");
   }
 
   if (!server_->Join(shared_from_this())) {
@@ -258,7 +260,7 @@ void WsSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
     if (ec == websocket::error::closed) {
       return;
     }
-    return SessionFail(ec, ws_.next_layer().socket().remote_endpoint(), "read");
+    return SessionFail(ec, remote_endpoint_, "read");
   }
 #if _DEBUG
   std::cout << __func__ << ": " << bytes_transferred << '\n';
@@ -275,8 +277,7 @@ void WsSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 void WsSession::OnWrite(beast::error_code ec, std::size_t bytes_transferred) {
   if (ec) {
     Stop(true);
-    return SessionFail(ec, ws_.next_layer().socket().remote_endpoint(),
-                       "write");
+    return SessionFail(ec, remote_endpoint_, "write");
   }
 #if _DEBUG
   if (bytes_transferred != write_queue_.front().size()) {
@@ -354,8 +355,8 @@ bool WsSession::ServeClient() {
           }
 
           if (!authorized_) {
-            std::cout << username_ << " login failed from "
-                      << ws_.next_layer().socket().remote_endpoint() << '\n';
+            std::cout << username_ << " login failed from " << remote_endpoint_
+                      << '\n';
             return false;
           }
 
@@ -377,8 +378,7 @@ bool WsSession::ServeClient() {
               htonl(Engine::GetInstance().GetVideoCodecID());
           Write(std::move(buffer));
 
-          std::cout << "Authorized "
-                    << ws_.next_layer().socket().remote_endpoint() << '\n';
+          std::cout << "Authorized " << remote_endpoint_ << '\n';
         }
 
         read_buffer_.consume(packet_size);

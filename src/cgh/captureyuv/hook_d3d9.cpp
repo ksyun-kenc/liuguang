@@ -120,6 +120,8 @@ class CaptureD3d9 {
     size_t frame_size = mapped_rect.Pitch * desc.Height;
     size_t data_size = sizeof(PackedVideoYuvFrame) + frame_size;
     if (!CaptureYuv::GetInstance().CreateSharedVideoYuvFrames(data_size)) {
+      // unchanged but notify
+      CaptureYuv::GetInstance().SetSharedFrameReadyEvent();
       return;
     }
 

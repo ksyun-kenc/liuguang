@@ -161,3 +161,24 @@ void Engine::SetPresentFlag(bool donot_present) {
     ResetEvent(donot_present_event_);
   }
 }
+
+void Engine::NotifyRestartAudioEncoder() noexcept {}
+
+void Engine::NotifyRestartVideoEncoder() noexcept {
+  if (ws_server_) {
+    std::string buffer;
+    buffer.resize(sizeof(regame::NetPacketHeader));
+    auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
+    header->version = regame::kNetPacketCurrentVersion;
+    header->type = regame::NetPacketType::ResetVideo;
+    header->size = 0;
+    ws_server_->Send(std::move(buffer));
+  }
+
+  net::dispatch(ioc_, boost::bind(&Engine::RestartVideoEncoder, this));
+}
+
+void Engine::RestartVideoEncoder() noexcept {
+  video_encoder_.Stop();
+  video_encoder_.Run();
+}

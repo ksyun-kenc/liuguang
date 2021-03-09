@@ -66,7 +66,7 @@ bool VideoEncoder::Init(uint64_t bitrate,
       sizeof(SharedVideoFrameInfo), kSharedVideoFrameInfoFileMappingName.data(),
       nullptr, g_app.SA());
   if (FAILED(hr)) {
-    std::cerr << "MapSharedMem() failed with 0x" << std::hex << hr << '\n';
+    std::cerr << "MapSharedMem(info) failed with 0x" << std::hex << hr << '\n';
     return false;
   }
 
@@ -88,7 +88,14 @@ void VideoEncoder::Stop() {
 }
 
 int VideoEncoder::EncodingThread() {
-  BOOST_SCOPE_EXIT_ALL(&) { Free(false); };
+  bool restart = false;
+  BOOST_SCOPE_EXIT_ALL(&) {
+    if (restart) {
+      Engine::GetInstance().NotifyRestartVideoEncoder();
+    } else {
+      Free(false);
+    }
+  };
 
   const char* format_name = nullptr;
   if (AV_CODEC_ID_H264 == GetCodecID()) {
@@ -119,7 +126,9 @@ int VideoEncoder::EncodingThread() {
     return error_code;
   }
 
-  saved_frame_info_ = *static_cast<SharedVideoFrameInfo*>(shared_frame_info_);
+  auto shared_frame_info =
+      static_cast<SharedVideoFrameInfo*>(shared_frame_info_);
+  saved_frame_info_ = *shared_frame_info;
   std::cout << "Video timestamp: " << saved_frame_info_.timestamp
             << ", type: " << static_cast<uint32_t>(saved_frame_info_.type)
             << ", dimension: " << saved_frame_info_.width << " * "
@@ -132,11 +141,10 @@ int VideoEncoder::EncodingThread() {
                          sizeof(PackedVideoYuvFrame) * kNumberOfSharedFrames +
                          yuv_size * kNumberOfSharedFrames;
 
-    HRESULT hr = shared_frames_.MapSharedMem(
-        frames_size, kSharedVideoYuvFramesFileMappingName.data(), nullptr,
-        g_app.SA());
+    HRESULT hr = shared_frames_.OpenMapping(
+        kSharedVideoYuvFramesFileMappingName.data(), frames_size);
     if (FAILED(hr)) {
-      std::cerr << "MapSharedMem() failed with 0x" << std::hex << hr << '\n';
+      std::cerr << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
       return hr;
     }
 
@@ -184,6 +192,14 @@ int VideoEncoder::EncodingThread() {
       std::cout << "Unexpected WaitForMultipleObjects() return " << wait
                 << ".\n";
       return -1;
+    }
+
+    if (shared_frame_info->width != saved_frame_info_.width ||
+        shared_frame_info->height != saved_frame_info_.height) {
+      std::cout << "Video dimension changed to " << shared_frame_info->width
+                << " * " << shared_frame_info->height << ".\n";
+      restart = true;
+      return 0;
     }
   }
 

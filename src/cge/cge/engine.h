@@ -60,12 +60,17 @@ class Engine {
     return video_encoder_.GetCodecID();
   }
 
+  void NotifyRestartAudioEncoder() noexcept;
+  void NotifyRestartVideoEncoder() noexcept;
+
  private:
   Engine() = default;
 
   int WritePacket(void* opaque, uint8_t* buffer, int buffer_size) noexcept;
 
   void Loop() noexcept;
+
+  void RestartVideoEncoder() noexcept;
 
  private:
   bool running_ = false;

@@ -257,7 +257,8 @@ bool CaptureYuv::CreateSharedVideoYuvFrames(size_t data_size) noexcept {
     HRESULT hr = shared_frames_.MapSharedMem(
         new_size, kSharedVideoYuvFramesFileMappingName.data(), nullptr, SA());
     if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed.\n");
+      ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed with 0x%08x.\n",
+                hr);
       return false;
     }
 
