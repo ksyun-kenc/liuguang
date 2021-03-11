@@ -31,8 +31,6 @@ Demo videos (Chinese):
 | Software | GeForce Experience | latest GeForce Experience |
 | Driver | GeForce Game Ready Driver | latest GeForce Game Ready Driver |
 
-* If you don't have an NVIDIA GPU, select --enable-nvenc=false to run `cge`.
-
 ### Client
 
 | Target | Minimum | Recommended |
