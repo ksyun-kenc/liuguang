@@ -446,10 +446,10 @@ class CaptureD3d11On12 {
     {
       umu::TimeMeasure tm(stats.elapsed.yuv_convert);
       if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
-        ABGRToI420(mapped_rect.pBits, desc.Width * 4, y, desc.Width, u,
+        ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, desc.Width, u,
                    uv_stride, v, uv_stride, desc.Width, desc.Height);
       } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
-        ARGBToI420(mapped_rect.pBits, desc.Width * 4, y, desc.Width, u,
+        ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, desc.Width, u,
                    uv_stride, v, uv_stride, desc.Width, desc.Height);
       } else {
         ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
@@ -503,7 +503,7 @@ class CaptureD3d11On12 {
     }
 
     hr = D3D11On12CreateDevice_(device_, 0, nullptr, 0, nullptr, 0, 0,
-                                        &device11_, &context11_, nullptr);
+                                &device11_, &context11_, nullptr);
     if (FAILED(hr)) {
       ATLTRACE2(atlTraceException, 0, "!D3D11On12CreateDevice(), #0x%08X\n",
                 hr);
@@ -571,7 +571,8 @@ class CaptureD3d11On12 {
           D3D12_RESOURCE_STATE_PRESENT, IID_PPV_ARGS(&backbuffer11_[i]));
       backbuffer12[i]->Release();
       if (FAILED(hr)) {
-        ATLTRACE2(atlTraceException, 0, "!CreateWrappedResource(), #0x%08x\n", hr);
+        ATLTRACE2(atlTraceException, 0, "!CreateWrappedResource(), #0x%08x\n",
+                  hr);
         return hr;
       }
       device11on12_->ReleaseWrappedResources(&backbuffer11_[i], 1);
@@ -619,7 +620,6 @@ class CaptureD3d11On12 {
   size_t backbuffer_count_;
   size_t current_backbuffer_;
 
-  
   DXGI_FORMAT format_;
   UINT width_ = 0;
   UINT height_ = 0;

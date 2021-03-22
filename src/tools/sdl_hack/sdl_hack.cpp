@@ -403,11 +403,11 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
   {
     umu::TimeMeasure tm(stats.elapsed.yuv_convert);
     if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
-      ABGRToI420(mapped_rect.pBits, desc.Width * 4, y, desc.Width, u, uv_stride,
-                 v, uv_stride, desc.Width, desc.Height);
+      ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, desc.Width, u,
+                 uv_stride, v, uv_stride, desc.Width, desc.Height);
     } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
-      ARGBToI420(mapped_rect.pBits, desc.Width * 4, y, desc.Width, u, uv_stride,
-                 v, uv_stride, desc.Width, desc.Height);
+      ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, desc.Width, u,
+                 uv_stride, v, uv_stride, desc.Width, desc.Height);
     } else {
       ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
     }
