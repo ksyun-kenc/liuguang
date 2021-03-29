@@ -187,20 +187,19 @@ SdlHack::~SdlHack() {
 bool SdlHack::Init() noexcept {
   SDL_version compiled;
   SDL_VERSION(&compiled);
-  matched_version_ =
-      2 == compiled.major && 0 == compiled.minor && 14 == compiled.patch;
-  if (matched_version_) {
-    SDL_version linked;
-    SDL_GetVersion(&linked);
-    matched_version_ = linked.major == compiled.major &&
-                       linked.minor == compiled.minor &&
-                       linked.patch == compiled.patch;
-    if (!matched_version_) {
+  if (2 == compiled.major && 0 == compiled.minor && 12 <= compiled.patch) {
+    SDL_GetVersion(&linked_);
+    if (2 == linked_.major && 0 == linked_.minor && 12 == linked_.patch) {
+      // yes
+    } else if (2 == linked_.major && 0 == linked_.minor &&
+               14 == linked_.patch) {
+      // yes
+    } else {
       CString error_text;
       error_text.Format(
           _T("Compiled with SDL %u.%u.%u\nLinked to SDL %u.%u.%u"),
-          compiled.major, compiled.minor, compiled.patch, linked.major,
-          linked.minor, linked.patch);
+          compiled.major, compiled.minor, compiled.patch, linked_.major,
+          linked_.minor, linked_.patch);
       MessageBox(nullptr, error_text, _T("Warning"), MB_ICONWARNING);
     }
   } else {
@@ -268,10 +267,16 @@ bool SdlHack::IsStarted() const noexcept {
 }
 
 void SdlHack::GetTexture(SDL_Renderer* renderer) {
-  if (!matched_version_) {
+  D3D11_RenderData* render_data = nullptr;
+  if (2 == linked_.major && 0 == linked_.minor && 12 == linked_.patch) {
+    render_data = static_cast<D3D11_RenderData*>(
+        reinterpret_cast<SDL_Renderer_2_0_12*>(renderer)->driverdata);
+  } else if (2 == linked_.major && 0 == linked_.minor && 14 == linked_.patch) {
+    render_data = static_cast<D3D11_RenderData*>(
+        reinterpret_cast<SDL_Renderer_2_0_14*>(renderer)->driverdata);
+  } else {
     return;
   }
-  auto render_data = static_cast<D3D11_RenderData*>(renderer->driverdata);
   if (nullptr == render_data) {
     ATLTRACE2(atlTraceException, 0, "!render_data\n");
     return;
