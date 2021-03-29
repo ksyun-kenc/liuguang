@@ -23,6 +23,7 @@
 
 #include <SDL2/SDL.h>
 
+#include <atomic>
 #include <thread>
 
 #include "regame/shared_mem_info.h"
