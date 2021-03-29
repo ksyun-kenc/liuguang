@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cgvhid_test", "cgvhid_test\
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "cgvhid_setup", "cgvhid_setup\cgvhid_setup.wixproj", "{E1A5B6AC-F386-4D49-86AF-FEA918ED1188}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cgvhid_reset", "cgvhid_reset\cgvhid_reset.vcxproj", "{91B2FBA6-D716-4884-A702-D3A65396144A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -67,6 +69,18 @@ Global
 		{E1A5B6AC-F386-4D49-86AF-FEA918ED1188}.Release|x64.ActiveCfg = Release|x64
 		{E1A5B6AC-F386-4D49-86AF-FEA918ED1188}.Release|x86.ActiveCfg = Release|x86
 		{E1A5B6AC-F386-4D49-86AF-FEA918ED1188}.Release|x86.Build.0 = Release|x86
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Debug|ARM.ActiveCfg = Debug|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Debug|x64.ActiveCfg = Debug|x64
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Debug|x64.Build.0 = Debug|x64
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Debug|x86.ActiveCfg = Debug|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Debug|x86.Build.0 = Debug|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Release|ARM.ActiveCfg = Release|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Release|ARM64.ActiveCfg = Release|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Release|x64.ActiveCfg = Release|x64
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Release|x64.Build.0 = Release|x64
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Release|x86.ActiveCfg = Release|Win32
+		{91B2FBA6-D716-4884-A702-D3A65396144A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
