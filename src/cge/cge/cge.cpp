@@ -16,6 +16,7 @@
 
 #include "pch.h"
 
+#include <boost/algorithm/string.hpp>
 #include <boost/asio/detail/winsock_init.hpp>
 #include <boost/program_options.hpp>
 
@@ -120,12 +121,14 @@ int main(int argc, char* argv[]) {
   int video_gop = 0;
   std::string video_preset;
   uint32_t video_quality = 0;
+  std::vector<uint8_t> disable_keys;
 
   try {
     std::string keyboard_replay_string;
     std::string gamepad_replay_string;
     std::string video_codec;
     std::string hardware_encoder_string;
+    std::string disable_keys_string;
 
     po::options_description desc("Usage");
     // clang-format off
@@ -143,6 +146,9 @@ int main(int argc, char* argv[]) {
       ("control-port",
         po::value<uint16_t>(&control_port)->default_value(kDefaultControlPort),
         "Set the UDP port for control flow")
+      ("disable-keys",
+        po::value<std::string>(&disable_keys_string),
+        "Disable scan codes. eg: 226,230 disable ALT; 227,231 disable WIN")
       ("donot-present",
         po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
         "Tell cgh don't present")
@@ -218,6 +224,21 @@ int main(int argc, char* argv[]) {
     }
     keyboard_replay = static_cast<KeyboardReplay>(std::distance(
         kValidKeyboardReplayMethods.cbegin(), keyboard_replay_pos));
+
+    if (!disable_keys_string.empty()) {
+      std::vector<std::string> arr;
+      boost::algorithm::split(arr, disable_keys_string, boost::is_any_of(","),
+                              boost::algorithm::token_compress_on);
+      disable_keys.reserve(arr.size());
+      for (auto& e : arr) {
+        if (!e.empty()) {
+          int key = std::atoi(e.data());
+          if (0 < key && key < 256) {
+            disable_keys.push_back(key);
+          }
+        }
+      }
+    }
 
     auto gamepad_replay_pos =
         std::find(kValidGamepadReplayMethods.cbegin(),
@@ -299,6 +320,7 @@ int main(int argc, char* argv[]) {
               << "audio-codec: " << audio_codec << '\n'
               << "bind-address: " << bind_address << '\n'
               << "control-port: " << control_port << '\n'
+              << "disable-keys: " << disable_keys_string << '\n'
               << "donot-present: " << std::boolalpha << donot_present << '\n'
               << "hardware-encoder: " << hardware_encoder_string << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
@@ -347,7 +369,7 @@ int main(int argc, char* argv[]) {
   });
   Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
                             udp::endpoint(kAddress, control_port),
-                            std::move(audio_codec), audio_bitrate,
+                            std::move(audio_codec), audio_bitrate, disable_keys,
                             keyboard_replay, gamepad_replay, video_bitrate,
                             video_codec_id, hardware_encoder, video_gop,
                             std::move(video_preset), video_quality);

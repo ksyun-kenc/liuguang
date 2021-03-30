@@ -201,8 +201,155 @@ typedef struct SDL_RenderCommand {
   struct SDL_RenderCommand* next;
 } SDL_RenderCommand;
 
-/* Define the SDL renderer structure */
-struct SDL_Renderer {
+/* Define the SDL 2.0.12 renderer structure */
+struct SDL_Renderer_2_0_12 {
+  const void* magic;
+
+  void (*WindowEvent)(SDL_Renderer* renderer, const SDL_WindowEvent* event);
+  int (*GetOutputSize)(SDL_Renderer* renderer, int* w, int* h);
+  SDL_bool (*SupportsBlendMode)(SDL_Renderer* renderer,
+                                SDL_BlendMode blendMode);
+  int (*CreateTexture)(SDL_Renderer* renderer, SDL_Texture* texture);
+  int (*QueueSetViewport)(SDL_Renderer* renderer, SDL_RenderCommand* cmd);
+  int (*QueueSetDrawColor)(SDL_Renderer* renderer, SDL_RenderCommand* cmd);
+  int (*QueueDrawPoints)(SDL_Renderer* renderer,
+                         SDL_RenderCommand* cmd,
+                         const SDL_FPoint* points,
+                         int count);
+  int (*QueueDrawLines)(SDL_Renderer* renderer,
+                        SDL_RenderCommand* cmd,
+                        const SDL_FPoint* points,
+                        int count);
+  int (*QueueFillRects)(SDL_Renderer* renderer,
+                        SDL_RenderCommand* cmd,
+                        const SDL_FRect* rects,
+                        int count);
+  int (*QueueCopy)(SDL_Renderer* renderer,
+                   SDL_RenderCommand* cmd,
+                   SDL_Texture* texture,
+                   const SDL_Rect* srcrect,
+                   const SDL_FRect* dstrect);
+  int (*QueueCopyEx)(SDL_Renderer* renderer,
+                     SDL_RenderCommand* cmd,
+                     SDL_Texture* texture,
+                     const SDL_Rect* srcquad,
+                     const SDL_FRect* dstrect,
+                     const double angle,
+                     const SDL_FPoint* center,
+                     const SDL_RendererFlip flip);
+  int (*RunCommandQueue)(SDL_Renderer* renderer,
+                         SDL_RenderCommand* cmd,
+                         void* vertices,
+                         size_t vertsize);
+  int (*UpdateTexture)(SDL_Renderer* renderer,
+                       SDL_Texture* texture,
+                       const SDL_Rect* rect,
+                       const void* pixels,
+                       int pitch);
+  int (*UpdateTextureYUV)(SDL_Renderer* renderer,
+                          SDL_Texture* texture,
+                          const SDL_Rect* rect,
+                          const Uint8* Yplane,
+                          int Ypitch,
+                          const Uint8* Uplane,
+                          int Upitch,
+                          const Uint8* Vplane,
+                          int Vpitch);
+  int (*LockTexture)(SDL_Renderer* renderer,
+                     SDL_Texture* texture,
+                     const SDL_Rect* rect,
+                     void** pixels,
+                     int* pitch);
+  void (*UnlockTexture)(SDL_Renderer* renderer, SDL_Texture* texture);
+  void (*SetTextureScaleMode)(SDL_Renderer* renderer,
+                              SDL_Texture* texture,
+                              SDL_ScaleMode scaleMode);
+  int (*SetRenderTarget)(SDL_Renderer* renderer, SDL_Texture* texture);
+  int (*RenderReadPixels)(SDL_Renderer* renderer,
+                          const SDL_Rect* rect,
+                          Uint32 format,
+                          void* pixels,
+                          int pitch);
+  void (*RenderPresent)(SDL_Renderer* renderer);
+  void (*DestroyTexture)(SDL_Renderer* renderer, SDL_Texture* texture);
+
+  void (*DestroyRenderer)(SDL_Renderer* renderer);
+
+  int (*GL_BindTexture)(SDL_Renderer* renderer,
+                        SDL_Texture* texture,
+                        float* texw,
+                        float* texh);
+  int (*GL_UnbindTexture)(SDL_Renderer* renderer, SDL_Texture* texture);
+
+  void* (*GetMetalLayer)(SDL_Renderer* renderer);
+  void* (*GetMetalCommandEncoder)(SDL_Renderer* renderer);
+
+  /* The current renderer info */
+  SDL_RendererInfo info;
+
+  /* The window associated with the renderer */
+  SDL_Window* window;
+  SDL_bool hidden;
+
+  /* The logical resolution for rendering */
+  int logical_w;
+  int logical_h;
+  int logical_w_backup;
+  int logical_h_backup;
+
+  /* Whether or not to force the viewport to even integer intervals */
+  SDL_bool integer_scale;
+
+  /* The drawable area within the window */
+  SDL_Rect viewport;
+  SDL_Rect viewport_backup;
+
+  /* The clip rectangle within the window */
+  SDL_Rect clip_rect;
+  SDL_Rect clip_rect_backup;
+
+  /* Wether or not the clipping rectangle is used. */
+  SDL_bool clipping_enabled;
+  SDL_bool clipping_enabled_backup;
+
+  /* The render output coordinate scale */
+  SDL_FPoint scale;
+  SDL_FPoint scale_backup;
+
+  /* The pixel to point coordinate scale */
+  SDL_FPoint dpi_scale;
+
+  /* The list of textures */
+  SDL_Texture* textures;
+  SDL_Texture* target;
+  SDL_mutex* target_mutex;
+
+  Uint8 r, g, b, a;        /**< Color for drawing operations values */
+  SDL_BlendMode blendMode; /**< The drawing blend mode */
+
+  SDL_bool always_batch;
+  SDL_bool batching;
+  SDL_RenderCommand* render_commands;
+  SDL_RenderCommand* render_commands_tail;
+  SDL_RenderCommand* render_commands_pool;
+  Uint32 render_command_generation;
+  Uint32 last_queued_color;
+  SDL_Rect last_queued_viewport;
+  SDL_Rect last_queued_cliprect;
+  SDL_bool last_queued_cliprect_enabled;
+  SDL_bool color_queued;
+  SDL_bool viewport_queued;
+  SDL_bool cliprect_queued;
+
+  void* vertex_data;
+  size_t vertex_data_used;
+  size_t vertex_data_allocation;
+
+  void* driverdata;
+};
+
+/* Define the SDL 2.0.14 renderer structure */
+struct SDL_Renderer_2_0_14 {
   const void* magic;
 
   void (*WindowEvent)(SDL_Renderer* renderer, const SDL_WindowEvent* event);

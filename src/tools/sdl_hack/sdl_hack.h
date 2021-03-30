@@ -23,6 +23,7 @@
 
 #include <SDL2/SDL.h>
 
+#include <atomic>
 #include <thread>
 
 #include "regame/shared_mem_info.h"
@@ -56,5 +57,5 @@ class SdlHack {
   CAtlFileMapping<SharedVideoFrameInfo> shared_frame_info_;
   CAtlFileMapping<char> shared_frames_;
   CHandle shared_frame_ready_event_;
-  bool matched_version_ = false;
+  SDL_version linked_;
 };

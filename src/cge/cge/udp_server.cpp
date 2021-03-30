@@ -20,6 +20,8 @@
 
 #include "vigem_client.h"
 
+#include <SDL2/SDL_scancode.h>
+
 namespace {
 
 inline void Fail(beast::error_code ec, std::string_view what) {
@@ -114,16 +116,98 @@ uint16_t GamepadButtonMap(uint16_t button) {
   }
 }
 
+// SDL scancode to Windows scancode
+uint8_t ScanCodeMap(uint16_t key_code) {
+  switch (key_code) {
+    case SDL_SCANCODE_MODE:
+      return CgvhidClient::VkToScancode(VK_MODECHANGE);
+    case SDL_SCANCODE_SELECT:
+      return CgvhidClient::VkToScancode(VK_SELECT);
+    case SDL_SCANCODE_EXECUTE:
+      return CgvhidClient::VkToScancode(VK_EXECUTE);
+    case SDL_SCANCODE_HELP:
+      return CgvhidClient::VkToScancode(VK_HELP);
+    case SDL_SCANCODE_PAUSE:
+      return CgvhidClient::VkToScancode(VK_PAUSE);
+    case SDL_SCANCODE_NUMLOCKCLEAR:
+      return CgvhidClient::VkToScancode(VK_NUMLOCK);
+
+    case SDL_SCANCODE_KP_EQUALS:
+      return CgvhidClient::VkToScancode(VK_OEM_NEC_EQUAL);
+    case SDL_SCANCODE_AC_BACK:
+      return CgvhidClient::VkToScancode(VK_BROWSER_BACK);
+    case SDL_SCANCODE_AC_FORWARD:
+      return CgvhidClient::VkToScancode(VK_BROWSER_FORWARD);
+    case SDL_SCANCODE_AC_REFRESH:
+      return CgvhidClient::VkToScancode(VK_BROWSER_REFRESH);
+    case SDL_SCANCODE_AC_STOP:
+      return CgvhidClient::VkToScancode(VK_BROWSER_STOP);
+    case SDL_SCANCODE_AC_SEARCH:
+      return CgvhidClient::VkToScancode(VK_BROWSER_SEARCH);
+    case SDL_SCANCODE_AC_BOOKMARKS:
+      return CgvhidClient::VkToScancode(VK_BROWSER_FAVORITES);
+    case SDL_SCANCODE_AC_HOME:
+      return CgvhidClient::VkToScancode(VK_BROWSER_HOME);
+    case SDL_SCANCODE_AUDIOMUTE:
+      return CgvhidClient::VkToScancode(VK_VOLUME_MUTE);
+    case SDL_SCANCODE_VOLUMEDOWN:
+      return CgvhidClient::VkToScancode(VK_VOLUME_DOWN);
+    case SDL_SCANCODE_VOLUMEUP:
+      return CgvhidClient::VkToScancode(VK_VOLUME_UP);
+
+    case SDL_SCANCODE_AUDIONEXT:
+      return CgvhidClient::VkToScancode(VK_MEDIA_NEXT_TRACK);
+    case SDL_SCANCODE_AUDIOPREV:
+      return CgvhidClient::VkToScancode(VK_MEDIA_PREV_TRACK);
+    case SDL_SCANCODE_AUDIOSTOP:
+      return CgvhidClient::VkToScancode(VK_MEDIA_STOP);
+    case SDL_SCANCODE_AUDIOPLAY:
+      return CgvhidClient::VkToScancode(VK_MEDIA_PLAY_PAUSE);
+    case SDL_SCANCODE_MAIL:
+      return CgvhidClient::VkToScancode(VK_LAUNCH_MAIL);
+    case SDL_SCANCODE_MEDIASELECT:
+      return CgvhidClient::VkToScancode(VK_LAUNCH_MEDIA_SELECT);
+
+    case SDL_SCANCODE_NONUSBACKSLASH:
+      return CgvhidClient::VkToScancode(VK_OEM_102);
+
+    case SDL_SCANCODE_SYSREQ:
+      return CgvhidClient::VkToScancode(VK_ATTN);
+    case SDL_SCANCODE_CRSEL:
+      return CgvhidClient::VkToScancode(VK_CRSEL);
+    case SDL_SCANCODE_EXSEL:
+      return CgvhidClient::VkToScancode(VK_EXSEL);
+    case SDL_SCANCODE_CLEAR:
+      return CgvhidClient::VkToScancode(VK_OEM_CLEAR);
+
+    case SDL_SCANCODE_APP1:
+      return CgvhidClient::VkToScancode(VK_LAUNCH_APP1);
+    case SDL_SCANCODE_APP2:
+      return CgvhidClient::VkToScancode(VK_LAUNCH_APP2);
+
+    default:
+      if (key_code & 0xFF00) {
+        return KEY_NONE;
+      } else {
+        return static_cast<uint8_t>(key_code);
+      }
+  }
+}
 }  // namespace
 
 UdpServer::UdpServer(Engine& engine,
                      udp::endpoint endpoint,
+                     std::vector<uint8_t> disable_keys,
                      KeyboardReplay keyboard_replay,
                      GamepadReplay gamepad_replay)
     : engine_(engine),
       socket_(engine.GetIoContext(), endpoint),
       keyboard_replay_(keyboard_replay),
       gamepad_replay_(gamepad_replay) {
+  for (const auto& e : disable_keys) {
+    disable_keys_[e] = true;
+  }
+
   if (KeyboardReplay::CGVHID == keyboard_replay) {
     cgvhid_client_.Init(0, 0);
     int error_code = cgvhid_client_.KeyboardReset();
@@ -208,14 +292,20 @@ void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
   }
   if (KeyboardReplay::CGVHID == keyboard_replay_) {
     uint16_t key_code = ntohs(control_element->keyboard.key_code);
-    if (key_code & 0xFF00) {
-      std::cout << "Unknown key code: " << key_code;
+    uint8_t scan_code = ScanCodeMap(key_code);
+    if (KEY_NONE == scan_code) {
+      std::cout << "Unknown key code: " << key_code << '\n';
+      return;
+    }
+    if (disable_keys_[scan_code]) {
+      std::cout << "Disabled scan code: " << static_cast<int>(scan_code)
+                << '\n';
       return;
     }
     if (ControlButtonState::Pressed == control_element->keyboard.state) {
-      cgvhid_client_.KeyboardPress(static_cast<uint8_t>(key_code));
+      cgvhid_client_.KeyboardPress(scan_code);
     } else {
-      cgvhid_client_.KeyboardRelease(static_cast<uint8_t>(key_code));
+      cgvhid_client_.KeyboardRelease(scan_code);
     }
   }
 }
@@ -233,6 +323,7 @@ void UdpServer::OnKeyboardVkEvent(std::size_t bytes_transferred,
       std::cout << "Unknown key code: " << key_code;
       return;
     }
+    // TO-DO: disable-keys
     if (ControlButtonState::Pressed == control_element->keyboard.state) {
       cgvhid_client_.KeyboardVkPress(static_cast<uint8_t>(key_code));
     } else {

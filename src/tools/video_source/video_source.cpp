@@ -31,7 +31,7 @@
 #include <boost/scope_exit.hpp>
 
 #include "../sdl_hack/sdl_hack.h"
-#include "../sdl_hack/sdl_internal.h"
+#include "sdl_internal.h"
 
 #include "umu/env.h"
 
