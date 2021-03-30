@@ -28,6 +28,7 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  udp::endpoint udp_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
+                 std::vector<uint8_t> disable_keys,
                  KeyboardReplay keyboard_replay,
                  GamepadReplay gamepad_replay,
                  uint64_t video_bitrate,
@@ -54,9 +55,9 @@ void Engine::Run(tcp::endpoint ws_endpoint,
       std::cout << "WebSocket server on: " << ws_endpoint << '\n';
       ws_server_->Run();
     }
-    udp_server_ = std::make_shared<UdpServer>(*this, udp_endpoint,
-                                              std::move(keyboard_replay),
-                                              std::move(gamepad_replay));
+    udp_server_ = std::make_shared<UdpServer>(
+        *this, udp_endpoint, std::move(disable_keys),
+        std::move(keyboard_replay), std::move(gamepad_replay));
     std::cout << "UDP Server on: " << udp_endpoint << '\n';
     udp_server_->Run();
   } catch (std::exception& e) {

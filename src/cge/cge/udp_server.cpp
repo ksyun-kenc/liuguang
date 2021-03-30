@@ -197,12 +197,17 @@ uint8_t ScanCodeMap(uint16_t key_code) {
 
 UdpServer::UdpServer(Engine& engine,
                      udp::endpoint endpoint,
+                     std::vector<uint8_t> disable_keys,
                      KeyboardReplay keyboard_replay,
                      GamepadReplay gamepad_replay)
     : engine_(engine),
       socket_(engine.GetIoContext(), endpoint),
       keyboard_replay_(keyboard_replay),
       gamepad_replay_(gamepad_replay) {
+  for (const auto& e : disable_keys) {
+    disable_keys_[e] = true;
+  }
+
   if (KeyboardReplay::CGVHID == keyboard_replay) {
     cgvhid_client_.Init(0, 0);
     int error_code = cgvhid_client_.KeyboardReset();
@@ -289,7 +294,12 @@ void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
     uint16_t key_code = ntohs(control_element->keyboard.key_code);
     uint8_t scan_code = ScanCodeMap(key_code);
     if (KEY_NONE == scan_code) {
-      std::cout << "Unknown key code: " << key_code;
+      std::cout << "Unknown key code: " << key_code << '\n';
+      return;
+    }
+    if (disable_keys_[scan_code]) {
+      std::cout << "Disabled scan code: " << static_cast<int>(scan_code)
+                << '\n';
       return;
     }
     if (ControlButtonState::Pressed == control_element->keyboard.state) {
@@ -313,6 +323,7 @@ void UdpServer::OnKeyboardVkEvent(std::size_t bytes_transferred,
       std::cout << "Unknown key code: " << key_code;
       return;
     }
+    // TO-DO: disable-keys
     if (ControlButtonState::Pressed == control_element->keyboard.state) {
       cgvhid_client_.KeyboardVkPress(static_cast<uint8_t>(key_code));
     } else {

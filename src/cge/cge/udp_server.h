@@ -30,6 +30,7 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
  public:
   UdpServer(Engine& engine,
             udp::endpoint endpoint,
+            std::vector<uint8_t> disable_keys,
             KeyboardReplay keyboard_replay,
             GamepadReplay gamepad_replay);
   ~UdpServer();
@@ -80,6 +81,7 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
   udp::endpoint remote_endpoint_;
   std::array<char, 65536> recv_buffer_{};
 
+  std::array<bool, 256> disable_keys_{};
   KeyboardReplay keyboard_replay_;
   CgvhidClient cgvhid_client_;
 
