@@ -333,11 +333,13 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
       av_opt_set(codec_context_->priv_data, "qp_p", quality.data(), 0);
       av_opt_set(codec_context_->priv_data, "bf_ref", "0", 0);
       av_opt_set(codec_context_->priv_data, "enforce_hrd", "1", 0);
+      av_opt_set(codec_context_->priv_data, "header_insertion_mode", "idr", 0);
       break;
     case HardwareEncoder::NVENC:
       av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
       av_opt_set(codec_context_->priv_data, "profile", "main", 0);
       av_opt_set(codec_context_->priv_data, "delay", "0", 0);
+      av_opt_set(codec_context_->priv_data, "forced-idr", "1", 0);
       if (AV_CODEC_ID_H264 == GetCodecID()) {
         av_opt_set(codec_context_->priv_data, "rc", "vbr", 0);
         av_opt_set(codec_context_->priv_data, "cq", quality.data(), 0);
@@ -359,6 +361,7 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
     default:
       av_opt_set(codec_context_->priv_data, "preset", video_preset_.data(), 0);
       av_opt_set(codec_context_->priv_data, "crf", quality.data(), 0);
+      av_opt_set(codec_context_->priv_data, "forced-idr", "1", 0);
       av_opt_set(codec_context_->priv_data, "tune", "zerolatency", 0);
 
       if (AV_CODEC_ID_H264 == GetCodecID()) {
