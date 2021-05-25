@@ -231,7 +231,7 @@ Video Reference (Chinese):
 
 ### 4.4 SDL
 
-Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory. eg:
+Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory.
 
 The same as [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) and [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/).
 
