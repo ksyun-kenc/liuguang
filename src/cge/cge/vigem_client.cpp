@@ -21,7 +21,7 @@
 std::unique_ptr<class ViGEmTargetX360> ViGEmClient::CreateController() {
   return std::unique_ptr<ViGEmTargetX360>{
       new ViGEmTargetX360{shared_from_this()}};
-};
+}
 
 ViGEmTargetX360::ViGEmTargetX360(std::shared_ptr<ViGEmClient> client) {
   client_ = client;

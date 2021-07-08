@@ -81,6 +81,7 @@ void AudioResampler::Free() noexcept {
     fifo_ = nullptr;
   }
   swr_free(&resampler_context_);
+  uint8_ptr_pool_.purge_memory();
 }
 
 int AudioResampler::Store(const uint8_t* in,
@@ -108,22 +109,22 @@ int AudioResampler::Store(const uint8_t* in,
       return AVERROR_EXIT;
     }
   } else {
-    uint8_t** converted_samples = new (std::nothrow)
-        uint8_t*[av_get_channel_layout_nb_channels(out_channel_layout_)];
+    int channel_count = av_get_channel_layout_nb_channels(out_channel_layout_);
+    auto converted_samples = AllocUint8Ptr(channel_count);
     if (nullptr == converted_samples) {
       ATLTRACE2(atlTraceException, 0, "new failed!\n");
       return AVERROR(ENOMEM);
     }
-    BOOST_SCOPE_EXIT_ALL(&) { delete[] converted_samples; };
+    BOOST_SCOPE_EXIT_ALL(&) {
+      uint8_ptr_pool_.ordered_free(converted_samples, channel_count);
+    };
 
     // a * b / c
     int out_size = static_cast<int>(av_rescale_rnd(
         swr_get_delay(resampler_context_, out_sample_rate_) + in_samples,
         out_sample_rate_, in_sample_rate_, AV_ROUND_UP));
-    int error =
-        av_samples_alloc(converted_samples, nullptr,
-                         av_get_channel_layout_nb_channels(out_channel_layout_),
-                         out_size, out_sample_format_, 0);
+    int error = av_samples_alloc(converted_samples, nullptr, channel_count,
+                                 out_size, out_sample_format_, 0);
     if (error < 0) {
       ATLTRACE2(atlTraceException, 0, "!av_samples_alloc(), #%d, %s\n", error,
                 GetAvErrorText(error));

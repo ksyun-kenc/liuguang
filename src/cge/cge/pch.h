@@ -31,6 +31,7 @@
 #include <thread>
 
 #include <boost/asio.hpp>
+#include <boost/pool/pool.hpp>
 #include <boost/scope_exit.hpp>
 
 #include "ffmpeg.h"
