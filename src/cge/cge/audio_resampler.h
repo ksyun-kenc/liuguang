@@ -34,13 +34,6 @@ class AudioResampler {
   int ReadFrame(AVFrame* frame);
 
  private:
-  uint8_t** AllocUint8Ptr(size_t count) {
-    auto ptr = static_cast<uint8_t**>(uint8_ptr_pool_.ordered_malloc(count));
-    std::memset(ptr, 0, count * sizeof(uint8_t*));
-    return ptr;
-  }
-
- private:
   int in_sample_rate_ = 0;
 
   int64_t out_channel_layout_ = 0;

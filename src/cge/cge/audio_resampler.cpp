@@ -110,7 +110,8 @@ int AudioResampler::Store(const uint8_t* in,
     }
   } else {
     int channel_count = av_get_channel_layout_nb_channels(out_channel_layout_);
-    auto converted_samples = AllocUint8Ptr(channel_count);
+    auto converted_samples =
+        static_cast<uint8_t**>(uint8_ptr_pool_.ordered_malloc(channel_count));
     if (nullptr == converted_samples) {
       ATLTRACE2(atlTraceException, 0, "new failed!\n");
       return AVERROR(ENOMEM);
