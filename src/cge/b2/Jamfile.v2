@@ -12,108 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os ;
-  BOOST_ROOT = [ os.environ BOOST_ROOT ] ;
-  FFMPEG_ROOT = [ os.environ FFMPEG_ROOT ] ;
-
-if [ os.name ] = LINUX {
-  if [ os.platform ] = ARM {
-    DEFAULT_INCLUDE_DIR = /usr/include/aarch64-linux-gnu ;
-    DEFAULT_LIB_DIR = /usr/lib/aarch64-linux-gnu ;
-  } else {
-    DEFAULT_INCLUDE_DIR = /usr/include ;
-    DEFAULT_LIB_DIR = /usr/lib ;
-  }
-} else if [ os.name ] = MACOSX {
-  if [ os.platform ] = ARM {
-    DEFAULT_INCLUDE_DIR = /opt/homebrew/include ;
-    DEFAULT_LIB_DIR = /opt/homebrew/lib ;
-  } else {
-    DEFAULT_INCLUDE_DIR = /usr/local/Homebrew/include ;
-    DEFAULT_LIB_DIR = /usr/local/Homebrew/lib ;
-  }
-} else if [ os.name ] = NT {
-  DEFAULT_INCLUDE_DIR = C:/dev/include ;
-  DEFAULT_LIB_DIR = C:/dev/lib ;
-}
-
-if $(FFMPEG_ROOT) {
-  ECHO Using the FFMPEG_ROOT environment variable ;
-
-  FFMPEG_INCLUDE_DIR = $(FFMPEG_ROOT)/include ;
-  FFMPEG_LIB_DIR = $(FFMPEG_ROOT)/lib ;
-} else {
-  ECHO You should set the FFMPEG_ROOT environment variable, otherwise default value will be used! ;
-
-  FFMPEG_INCLUDE_DIR = $(DEFAULT_INCLUDE_DIR) ;
-  FFMPEG_LIB_DIR = $(DEFAULT_LIB_DIR) ;
-}
-
-local search-ffmpeg ;
-local search-sdl2 ;
-if [ os.name ] = NT {
-  search-ffmpeg = <address-model>32:<search>$(FFMPEG_LIB_DIR)/x86
-                <address-model>64:<search>$(FFMPEG_LIB_DIR)/x64 ;
-  search-sdl2 = <address-model>32:<search>$(SDL2_LIB_DIR)/x86
-                <address-model>64:<search>$(SDL2_LIB_DIR)/x64 ;
-} else {
-  search-ffmpeg = <search>$(FFMPEG_LIB_DIR) ;
-  search-sdl2 = <search>$(SDL2_LIB_DIR) ;
-}
-
-lib avutil : : <name>avutil $(search-ffmpeg) ;
-explicit avutil ;
-
-lib avcodec : : <name>avcodec $(search-ffmpeg) ;
-explicit avcodec ;
-
-lib avformat : : <name>avformat $(search-ffmpeg) ;
-explicit avformat ;
-
-lib swresample : : <name>swresample $(search-ffmpeg) ;
-explicit swresample ;
-
-lib swscale : : <name>swscale $(search-ffmpeg) ;
-explicit swscale ;
+import modules ;
+  modules.load boost-config : : $(PROJECT_B2) ;
+  modules.load ffmpeg : : $(PROJECT_B2) ;
+  modules.load sdl2 : : $(PROJECT_B2) ;
 
 project cge
   : requirements
-  <cxxstd>latest
-  <define>UNICODE
-  <define>_UNICODE
-  <library>/boost/program_options//boost_program_options
-  <library>/boost/system//boost_system
-  <library>avutil <library>avcodec <library>avformat <library>swresample <library>swscale
-  <library-path>$(BOOST_ROOT)/stage/lib
-    <target-os>windows:<linkflags>shell32.lib
-  <threading>multi
-  <include>$(BOOST_ROOT)
-  <include>$(FFMPEG_INCLUDE_DIR)
-  <include>../cge
-  <include>../../cgvhid/include
-  <include>../../deps/include
-  <include>../../deps/ViGEmClient/include
-  <implicit-dependency>/boost//headers
+    <cxxstd>latest
+    <define>UNICODE <define>_UNICODE
+    <implicit-dependency>/boost//headers
+    <include>../cge
+    <include>../../cgvhid/include
+    <include>../../deps/include
+    <include>../../deps/ViGEmClient/include
+    <library>/boost//date_time
+    <library>/boost//program_options
+    <library>/boost//system
+    <library>/ffmpeg//avutil
+    <library>/ffmpeg//avcodec
+    <library>/ffmpeg//avformat
+    <library>/ffmpeg//swresample
+    <library>/ffmpeg//swscale
+    <library>/sdl2//sdl2
+    <threading>multi
   : default-build release
   : build-dir ./bin
   : source-location ../cge
   ;
 
-lib deps :
+lib deps
+  :
   ../../cgvhid/cgvhid_client/cgvhid.cpp
   ../../cgvhid/cgvhid_client/cgvhid_client.cpp
   ../../deps/ViGEmClient/src/ViGEmClient.cpp
   ;
 
 cpp-pch pch : pch.h ;
-exe cge : pch deps
-  audio_encoder.cpp
-  audio_resampler.cpp
-  cge.cpp
-  engine.cpp
-  sound_capturer.cpp
-  udp_server.cpp
-  video_encoder.cpp
-  vigem_client.cpp
-  ws_server.cpp
+explicit pch ;
+
+exe cge
+  : pch deps
+    audio_encoder.cpp
+    audio_resampler.cpp
+    cge.cpp
+    engine.cpp
+    sound_capturer.cpp
+    udp_server.cpp
+    video_encoder.cpp
+    vigem_client.cpp
+    ws_server.cpp
   ;

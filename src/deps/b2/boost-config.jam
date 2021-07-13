@@ -1,0 +1,59 @@
+# Copyright 2020-present Ksyun
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+local boost-version = 1.76 ;
+
+import os ;
+  local boost-root = [ os.environ BOOST_ROOT ] ;
+import path ;
+import project ;
+
+project.push-current [ project.current ] ;
+project.initialize $(__name__) ;
+
+if $(boost-root) {
+  ECHO "Using the BOOST_ROOT environment variable: $(boost-root)" ;
+  using boost : $(boost-version) : <root>$(boost-root) ;
+} else {
+  if [ os.name ] = NT {
+    ECHO "You should set the BOOST_ROOT environment variable on Windows!" ;
+  }
+
+  import os-paths ;
+
+  local include-dir ;
+  for local dir in [ os-paths.include-paths ] {
+    if [ path.exists [ path.join $(dir) boost/version.hpp ] ] {
+      include-dir = $(dir) ;
+      break ;
+    }
+  }
+
+  local lib-dir ;
+  for local dir in [ os-paths.lib-paths ] {
+    if [ path.glob $(dir) : libboost_* ] {
+      lib-dir = $(dir) ;
+      break ;
+    }
+  }
+
+  ECHO "Boost include dir:" $(include-dir) ;
+  ECHO "Boost lib dir:" $(lib-dir) ;
+  using boost : $(boost-version) : <include>$(include-dir) <library>$(lib-dir) <layout>system ;
+}
+
+project.pop-current ;
+
+import boost ;
+  boost.use-project ;

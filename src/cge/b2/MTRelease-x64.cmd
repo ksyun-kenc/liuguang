@@ -1,9 +1,26 @@
 @echo off
 
-if "%BOOST_ROOT%"=="" (
-  echo "Please set environment variable BOOST_ROOT to the location of Boost."
-  goto EXIT
+set argv=address-model=64 link=static runtime-link=static variant=release
+
+pushd "%~dp0"
+
+where b2
+if %errorlevel%==0 (
+  b2 %argv%
+) else (
+  if "%BOOST_ROOT%"=="" (
+    echo "Please set environment variable BOOST_ROOT to the location of Boost."
+    goto EXIT
+  )
+
+  if not exist "%BOOST_ROOT%\b2.exe" (
+    echo "Please compile Boost first."
+    goto EXIT
+  )
+
+  "%BOOST_ROOT%\b2.exe" %argv%
 )
-cd /d "%BOOST_ROOT%"
-.\b2.exe address-model=64 link=static runtime-link=static variant=release "%~dp0"
+
+:EXIT
+popd
 pause

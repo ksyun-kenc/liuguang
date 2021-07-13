@@ -1,0 +1,86 @@
+# Copyright 2020-present Ksyun
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os ;
+  local ffmpeg-root = [ os.environ FFMPEG_ROOT ] ;
+import path ;
+import project ;
+import sequence ;
+
+local include-dir ;
+local lib-dir ;
+
+if $(ffmpeg-root) {
+  ECHO "Using the FFMPEG_ROOT environment variable: $(ffmpeg-root)" ;
+  include-dir = [ path.join $(ffmpeg-root) include ] ;
+  lib-dir = [ path.join $(ffmpeg-root) lib ] ;
+} else {
+  if [ os.name ] = NT {
+    ECHO "You should set the FFMPEG_ROOT environment variable on Windows!" ;
+  }
+
+  import os-paths ;
+
+  local counter = x ;
+  for local dir in [ os-paths.include-paths ] {
+    if [ path.exists [ path.join $(dir) libavcodec ] ] {
+      include-dir = $(dir) ;
+      local i = [ sequence.length $(counter) ] ;
+      local lib-paths = [ os-paths.lib-paths ] ;
+      lib-dir = $(lib-paths[$(i)]) ;
+      break ;
+    }
+    counter += x ;
+  }
+}
+
+ECHO "FFmpeg include dir:" $(include-dir) ;
+ECHO "FFmpeg lib dir:" $(lib-dir) ;
+
+project.push-current [ project.current ] ;
+project.initialize $(__name__) ;
+
+project $(__name__)
+  : usage-requirements <include>$(include-dir)
+  : requirements
+    <toolset>msvc,<address-model>32:<search>$(lib-dir)/x86
+    <toolset>msvc,<address-model>64:<search>$(lib-dir)/x64
+    <search>$(lib-dir)
+  ;
+
+lib avcodec : : <name>avcodec ;
+explicit avcodec ;
+
+lib avdevice : : <name>avdevice ;
+explicit avdevice ;
+
+lib avfilter : : <name>avfilter ;
+explicit avfilter ;
+
+lib avformat : : <name>avformat ;
+explicit avformat ;
+
+lib avutil : : <name>avutil ;
+explicit avutil ;
+
+lib postproc : : <name>postproc ;
+explicit postproc ;
+
+lib swresample : : <name>swresample ;
+explicit swresample ;
+
+lib swscale : : <name>swscale ;
+explicit swscale ;
+
+project.pop-current ;
