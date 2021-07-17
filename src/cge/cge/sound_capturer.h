@@ -54,10 +54,10 @@ class SoundCapturer {
     frame_size_ = frame_size;
 
 #if _DEBUG
-    std::cout << "channel layout: " << channel_layout << '\n';
-    std::cout << "sample format: " << sample_format << '\n';
-    std::cout << "sample rate: " << sample_rate << '\n';
-    std::cout << "frame size: " << frame_size << '\n';
+    APP_TRACE() << "channel layout: " << channel_layout << '\n';
+    APP_TRACE() << "sample format: " << sample_format << '\n';
+    APP_TRACE() << "sample rate: " << sample_rate << '\n';
+    APP_TRACE() << "frame size: " << frame_size << '\n';
 #endif
   }
 

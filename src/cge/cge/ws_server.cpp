@@ -25,20 +25,20 @@ using namespace std::literals::chrono_literals;
 namespace {
 
 inline void ListenerFail(beast::error_code ec, std::string_view what) {
-  std::cerr << "WsListener# " << what << ": " << ec.message() << '\n';
+  APP_ERROR() << "WsListener# " << what << ": " << ec.message() << '\n';
 }
 inline void ListenerFail(beast::error_code ec,
                          const tcp::endpoint& endpoint,
                          std::string_view what) {
-  std::cerr << "WsListener# " << endpoint << " " << what << ": " << ec.message()
-            << '\n';
+  APP_ERROR() << "WsListener# " << endpoint << " " << what << ": "
+              << ec.message() << '\n';
 }
 
 inline void SessionFail(beast::error_code ec,
                         const tcp::endpoint& endpoint,
                         std::string_view what) {
-  std::cerr << "WsSession# " << endpoint << " " << what << ": "
-            << "(#" << ec.value() << ')' << ec.message() << '\n';
+  APP_ERROR() << "WsSession# " << endpoint << " " << what << ": "
+              << "(#" << ec.value() << ')' << ec.message() << '\n';
 }
 
 }  // namespace
@@ -141,7 +141,7 @@ void WsServer::OnAccept(beast::error_code ec, tcp::socket socket) {
     return ListenerFail(ec, socket.remote_endpoint(), "accept");
   }
 
-  std::cout << "Accept " << socket.remote_endpoint() << '\n';
+  APP_INFO() << "Accept " << socket.remote_endpoint() << '\n';
 
   socket.set_option(tcp::no_delay(true));
   std::make_shared<WsSession>(std::move(socket), shared_from_this())->Run();
@@ -181,7 +181,7 @@ void WsSession::OnRun() {
 
 void WsSession::Stop(bool restart) {
   if (ws_.is_open()) {
-    std::cout << "Closing " << remote_endpoint_ << '\n';
+    APP_INFO() << "Closing " << remote_endpoint_ << '\n';
     if (restart) {
       ws_.async_close(
           websocket::close_reason(websocket::close_code::try_again_later),
@@ -229,7 +229,7 @@ void WsSession::Write(std::string buffer) {
 
 void WsSession::OnAccept(beast::error_code ec) {
   if (ec == websocket::error::closed) {
-    std::cout << "Close " << remote_endpoint_ << '\n';
+    APP_INFO() << "Close " << remote_endpoint_ << '\n';
     return;
   }
   if (ec) {
@@ -242,7 +242,7 @@ void WsSession::OnAccept(beast::error_code ec) {
   }
 
 #if _DEBUG
-  std::cout << __func__ << "\n";
+  APP_TRACE() << __func__ << "\n";
 #endif
 
   // Write("Hello world!");
@@ -263,7 +263,7 @@ void WsSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
     return SessionFail(ec, remote_endpoint_, "read");
   }
 #if _DEBUG
-  std::cout << __func__ << ": " << bytes_transferred << '\n';
+  APP_TRACE() << __func__ << ": " << bytes_transferred << '\n';
 #endif
 
   if (!ServeClient()) {
@@ -281,7 +281,7 @@ void WsSession::OnWrite(beast::error_code ec, std::size_t bytes_transferred) {
   }
 #if _DEBUG
   if (bytes_transferred != write_queue_.front().size()) {
-    std::cout << "bytes_transferred: " << bytes_transferred
+    APP_TRACE() << "bytes_transferred: " << bytes_transferred
               << ", size: " << write_queue_.front().size() << '\n';
   }
 #endif
@@ -295,25 +295,25 @@ void WsSession::OnWrite(beast::error_code ec, std::size_t bytes_transferred) {
 }
 
 bool WsSession::ServeClient() {
-  static enum class State { NONE, HEAD, BODY } state = State::NONE;
+  static enum class State { kNone, kHead, kBody } state = State::kNone;
   static std::chrono::steady_clock::time_point first_byte;
 
   for (; read_buffer_.size() > 0;) {
     switch (state) {
-      case State::NONE:
+      case State::kNone:
         first_byte = std::chrono::steady_clock::now();
-        state = State::HEAD;
+        state = State::kHead;
         // pass through
-      case State::HEAD:
+      case State::kHead:
         if (std::chrono::steady_clock::now() - first_byte > 7s) {
           return false;
         }
         if (read_buffer_.size() < sizeof(regame::NetPacketHeader)) {
           return true;
         }
-        state = State::BODY;
+        state = State::kBody;
         // pass through
-      case State::BODY:
+      case State::kBody:
         if (std::chrono::steady_clock::now() - first_byte > 7s) {
           return false;
         }
@@ -321,8 +321,8 @@ bool WsSession::ServeClient() {
             static_cast<regame::NetPacketHeader*>(read_buffer_.data().data());
         if (regame::kNetPacketCurrentVersion != header->version) {
           read_buffer_.consume(read_buffer_.size());
-          state = State::NONE;
-          std::cerr << "Invalid packet version\n";
+          state = State::kNone;
+          APP_ERROR() << "Invalid packet version\n";
           return false;
         }
         uint32_t body_size = ntohl(header->size);
@@ -355,8 +355,8 @@ bool WsSession::ServeClient() {
           }
 
           if (!authorized_) {
-            std::cout << username_ << " login failed from " << remote_endpoint_
-                      << '\n';
+            APP_ERROR() << username_ << " login failed from "
+                        << remote_endpoint_ << '\n';
             return false;
           }
 
@@ -378,11 +378,11 @@ bool WsSession::ServeClient() {
               htonl(Engine::GetInstance().GetVideoCodecID());
           Write(std::move(buffer));
 
-          std::cout << "Authorized " << remote_endpoint_ << '\n';
+          APP_INFO() << "Authorized " << remote_endpoint_ << '\n';
         }
 
         read_buffer_.consume(packet_size);
-        state = State::NONE;
+        state = State::kNone;
         break;
     }
   }

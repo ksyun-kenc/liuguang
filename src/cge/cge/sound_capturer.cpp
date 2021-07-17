@@ -22,8 +22,6 @@
 
 #include <avrt.h>
 
-#include "app.hpp"
-
 extern App g_app;
 
 // unit: 100-nanosecond, 1s == 1000 * 1000 * 10 unit
@@ -263,20 +261,20 @@ HRESULT SoundCapturer::CaptureThread() {
       wave_format->nSamplesPerSec, out_channel_layout_, out_sample_format_,
       out_sample_rate_, frame_size_);
   if (error_code < 0) {
-    std::cerr << "Initialize resampler failed with " << error_code << ".\n";
+    APP_ERROR() << "Initialize resampler failed with " << error_code << ".\n";
     return error_code;
   }
 
   hr = shared_frame_.OpenMapping(kSharedAudioFrameFileMappingName.data(), 0);
   if (FAILED(hr)) {
-    std::cerr << "OpenMapping() failed with " << hr << ".\n";
+    APP_ERROR() << "OpenMapping() failed with " << hr << ".\n";
     return hr;
   }
   SharedAudioFrames* saf = shared_frame_;
   if (saf->channels != av_get_channel_layout_nb_channels(out_channel_layout_) ||
       saf->frame_size != frame_size_ ||
       saf->sample_format != out_sample_format_) {
-    std::cerr << "Invalid audio frame format.\n";
+    APP_ERROR() << "Invalid audio frame format.\n";
     return -1;
   }
   HANDLE ev = OpenEvent(EVENT_MODIFY_STATE, FALSE,
@@ -386,13 +384,13 @@ HRESULT SoundCapturer::CaptureThread() {
 
     DWORD wait_result = WaitForSingleObject(stop_event_, time_between_fires);
     if (WAIT_OBJECT_0 == wait_result) {
-      std::cout << "Received stop event after " << passes << " passes and "
-                << frames_ << " frames\n";
+      APP_INFO() << "Received stop event after " << passes << " passes and "
+                 << frames_ << " frames\n";
       break;
     } else if (WAIT_TIMEOUT != wait_result) {
-      std::cout << "Unexpected WaitForMultipleObjects() return " << wait_result
-                << " on pass " << passes << " passes and " << frames_
-                << " frames\n";
+      APP_WARNING() << "Unexpected WaitForMultipleObjects() return "
+                    << wait_result << " on pass " << passes << " passes and "
+                    << frames_ << " frames\n";
       return E_UNEXPECTED;
     }
   }  // capture loop

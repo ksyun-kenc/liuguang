@@ -18,7 +18,6 @@
 
 #include "video_encoder.h"
 
-#include "app.hpp"
 #include "engine.h"
 
 extern App g_app;
@@ -66,7 +65,8 @@ bool VideoEncoder::Init(uint64_t bitrate,
       sizeof(SharedVideoFrameInfo), kSharedVideoFrameInfoFileMappingName.data(),
       nullptr, g_app.SA());
   if (FAILED(hr)) {
-    std::cerr << "MapSharedMem(info) failed with 0x" << std::hex << hr << '\n';
+    APP_ERROR() << "MapSharedMem(info) failed with 0x" << std::hex << hr
+                << '\n';
     return false;
   }
 
@@ -77,7 +77,7 @@ int VideoEncoder::Run() {
   ResetEvent(stop_event_);
   thread_ = std::thread(&VideoEncoder::EncodingThread, this);
   if (nullptr == thread_.native_handle()) {
-    std::cerr << "Create thread failed with " << GetLastError() << '\n';
+    APP_ERROR() << "Create thread failed with " << GetLastError() << '\n';
     return -1;
   }
   return 0;
@@ -121,19 +121,19 @@ int VideoEncoder::EncodingThread() {
     return 0;
   } else if (WAIT_OBJECT_0 + 1 != wait) {
     int error_code = GetLastError();
-    std::cout << "Unexpected WaitForMultipleObjects() return " << wait
-              << ", error code " << error_code << ".\n";
+    APP_WARNING() << "Unexpected WaitForMultipleObjects() return " << wait
+                  << ", error code " << error_code << ".\n";
     return error_code;
   }
 
   auto shared_frame_info =
       static_cast<SharedVideoFrameInfo*>(shared_frame_info_);
   saved_frame_info_ = *shared_frame_info;
-  std::cout << "Video timestamp: " << saved_frame_info_.timestamp
-            << ", type: " << static_cast<uint32_t>(saved_frame_info_.type)
-            << ", dimension: " << saved_frame_info_.width << " * "
-            << saved_frame_info_.height
-            << ", format: " << saved_frame_info_.format << '\n';
+  APP_INFO() << "Video timestamp: " << saved_frame_info_.timestamp
+             << ", type: " << static_cast<uint32_t>(saved_frame_info_.type)
+             << ", dimension: " << saved_frame_info_.width << " * "
+             << saved_frame_info_.height
+             << ", format: " << saved_frame_info_.format << '\n';
 
   if (VideoFrameType::YUV == saved_frame_info_.type) {
     size_t yuv_size = 4 * saved_frame_info_.width * saved_frame_info_.height;
@@ -144,16 +144,16 @@ int VideoEncoder::EncodingThread() {
     HRESULT hr = shared_frames_.OpenMapping(
         kSharedVideoYuvFramesFileMappingName.data(), frames_size);
     if (FAILED(hr)) {
-      std::cerr << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
+      APP_ERROR() << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
       return hr;
     }
 
     auto yuv_frames =
         reinterpret_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
     if (yuv_frames->data_size != sizeof(PackedVideoYuvFrame) + yuv_size) {
-      std::cerr << "Invild data size " << yuv_frames->data_size
-                << ", should be " << sizeof(PackedVideoYuvFrame) + yuv_size
-                << '\n';
+      APP_ERROR() << "Invild data size " << yuv_frames->data_size
+                  << ", should be " << sizeof(PackedVideoYuvFrame) + yuv_size
+                  << '\n';
       return -1;
     }
   }
@@ -176,7 +176,7 @@ int VideoEncoder::EncodingThread() {
   AVFrame* frame = nullptr;
   error_code = InitFrame(frame);
   if (error_code < 0) {
-    std::cout << "Init frame failed with " << error_code << ".\n";
+    APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
   }
   BOOST_SCOPE_EXIT_ALL(&) { av_frame_free(&frame); };
@@ -189,15 +189,15 @@ int VideoEncoder::EncodingThread() {
       ATLTRACE2(atlTraceUtil, 0, "%s: stopping.\n", __func__);
       return 0;
     } else if (WAIT_OBJECT_0 + 1 != wait) {
-      std::cout << "Unexpected WaitForMultipleObjects() return " << wait
-                << ".\n";
+      APP_WARNING() << "Unexpected WaitForMultipleObjects() return " << wait
+                    << ".\n";
       return -1;
     }
 
     if (shared_frame_info->width != saved_frame_info_.width ||
         shared_frame_info->height != saved_frame_info_.height) {
-      std::cout << "Video dimension changed to " << shared_frame_info->width
-                << " * " << shared_frame_info->height << ".\n";
+      APP_INFO() << "Video dimension changed to " << shared_frame_info->width
+                 << " * " << shared_frame_info->height << ".\n";
       restart = true;
       return 0;
     }
@@ -279,12 +279,12 @@ int VideoEncoder::AddStream(AVCodec*& codec) {
   }
   codec = avcodec_find_encoder_by_name(codec_name);
   if (nullptr == codec) {
-    std::cerr << "Could not find encoder for " << codec_name << ".\n";
+    APP_ERROR() << "Could not find encoder for " << codec_name << ".\n";
     return -1;
   }
   stream_ = avformat_new_stream(format_context_, nullptr);
   if (nullptr == stream_) {
-    std::cerr << "Could not allocate stream for " << codec_name << ".\n";
+    APP_ERROR() << "Could not allocate stream for " << codec_name << ".\n";
     return -1;
   }
   stream_->id = format_context_->nb_streams - 1;
@@ -299,8 +299,8 @@ int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
 
   codec_context_ = avcodec_alloc_context3(codec);
   if (nullptr == codec_context_) {
-    std::cerr << "Could not allocate codec context for " << codec->name
-              << ".\n";
+    APP_ERROR() << "Could not allocate codec context for " << codec->name
+                << ".\n";
     return -1;
   }
 

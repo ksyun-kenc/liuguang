@@ -16,11 +16,14 @@
 
 #include "pch.h"
 
-#include <boost/algorithm/string.hpp>
 #include <boost/asio/detail/winsock_init.hpp>
+#include <boost/log/attributes/timer.hpp>
+#include <boost/log/sinks.hpp>
+#include <boost/log/support/date_time.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
 #include <boost/program_options.hpp>
 
-#include "app.hpp"
 #include "engine.h"
 #include "sound_capturer.h"
 
@@ -54,21 +57,21 @@ using namespace std::literals::string_view_literals;
 constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.3 Beta"sv};
 constexpr auto kDefaultBindAddress{"::"sv};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
-constexpr auto kDefaultAudioCodec{"libopus"sv};
-constexpr std::array<std::string_view, 3> kValidAudioCodecs = {
-    kDefaultAudioCodec, "aac", "opus"};
+constexpr std::array<std::string_view, 3> kValidAudioCodecs = {"libopus", "aac",
+                                                               "opus"};
+constexpr size_t kDefaultAudioCodecIndex = 0;
 constexpr uint16_t kDefaultControlPort = 8080;
 constexpr bool kDefaultDonotPresent = false;
 
-constexpr auto kDefaultKeyboardReplay{"none"sv};
 // Should be the same order with KeyboardReplay
 constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
-    kDefaultKeyboardReplay, "cgvhid"};
+    "none", "cgvhid"};
+constexpr size_t kDefaultKeyboardReplayIndex = 0;
 
-constexpr auto kDefaultGamepadReplay{"none"sv};
 // Should be the same order with GamepadReplay
 constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods = {
-    kDefaultGamepadReplay, "cgvhid", "vigem"};
+    "none", "cgvhid", "vigem"};
+constexpr size_t kDefaultGamepadReplayIndex = 0;
 
 constexpr uint16_t kDefaultStreamPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
@@ -104,7 +107,78 @@ const auto io_sync = []() {
   std::cin.tie(nullptr);
   return false;
 }();
+
+// Print ProcessID as std::dec
+struct NativeIdVisitor {
+  typedef attrs::current_process_id::value_type::native_type result_type;
+
+  result_type operator()(
+      const attrs::current_process_id::value_type& pid) const {
+    return pid.native_id();
+  }
+};
+
+struct PosixTimeVisitor {
+  typedef std::string result_type;
+
+  // boost::posix_time::ptime
+  result_type operator()(const attrs::local_clock::value_type& ts) const {
+    return to_iso_extended_string(ts);
+  }
+
+  // boost::posix_time::time_duration
+  result_type operator()(const attrs::timer::value_type& time) const {
+    // too long
+    // return to_iso_string(time);
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(2) << time.hours() << ":"
+       << std::setw(2) << time.minutes() << ":" << std::setw(2)
+       << time.seconds();
+    return ss.str();
+  }
+};
+
+void Formatter(const boost::log::record_view& rec,
+               boost::log::formatting_ostream& os) {
+  std::stringstream ss;
+  ss << '<' << logging::extract<SeverityLevel>("Severity", rec) << '>';
+
+  os << logging::extract<attrs::local_clock::value_type>("TimeStamp", rec)
+            .apply_visitor_or_default(PosixTimeVisitor(), "")
+     << " ["
+     << logging::extract<attrs::timer::value_type>("Uptime", rec)
+            .apply_visitor_or_default(PosixTimeVisitor(), "")
+     << "] ["
+     << logging::extract<attrs::current_process_id::value_type>("ProcessID",
+                                                                rec)
+            .apply_visitor_or_default(NativeIdVisitor(), 0)
+     << "/"
+     << logging::extract<attrs::current_thread_id::value_type>("ThreadID", rec)
+     << "] " << std::setw(MaxSeverityLevelNameSize() + 2) << std::left
+     << ss.str() << " " << rec[expr::message];
 }
+
+void InitLogger(SeverityLevel severity_level) {
+  typedef sinks::asynchronous_sink<sinks::text_ostream_backend> TextSink;
+
+  // console
+  auto console = boost::make_shared<TextSink>();
+  console->set_formatter(&Formatter);
+
+  auto backend = console->locked_backend();
+  backend->add_stream(
+      boost::shared_ptr<std::ostream>(&std::clog, boost::null_deleter()));
+  backend->auto_flush(false);
+  backend->set_auto_newline_mode(
+      sinks::auto_newline_mode::disabled_auto_newline);
+
+  logging::add_common_attributes();
+  auto core = logging::core::get();
+  core->add_global_attribute("Uptime", attrs::timer());
+  core->add_sink(console);
+  core->set_filter(Severity >= severity_level);
+}
+}  // namespace
 
 int main(int argc, char* argv[]) {
   std::string audio_codec;
@@ -122,6 +196,7 @@ int main(int argc, char* argv[]) {
   std::string video_preset;
   uint32_t video_quality = 0;
   std::vector<uint8_t> disable_keys;
+  SeverityLevel severity_level = SeverityLevel::kInfo;
 
   try {
     std::string keyboard_replay_string;
@@ -129,6 +204,7 @@ int main(int argc, char* argv[]) {
     std::string video_codec;
     std::string hardware_encoder_string;
     std::string disable_keys_string;
+    std::string log_level;
 
     po::options_description desc("Usage");
     // clang-format off
@@ -137,7 +213,7 @@ int main(int argc, char* argv[]) {
         po::value<uint64_t>(&audio_bitrate)->default_value(kDefaultAudioBitrate),
         "Set audio bitrate")
       ("audio-codec",
-        po::value<std::string>(&audio_codec)->default_value(kDefaultAudioCodec.data()),
+        po::value<std::string>(&audio_codec)->default_value(kValidAudioCodecs.at(kDefaultAudioCodecIndex).data()),
         std::string("Set audio codec. Select one of ")
        .append(umu::string::ArrayJoin(kValidAudioCodecs)).data())
       ("bind-address",
@@ -157,13 +233,17 @@ int main(int argc, char* argv[]) {
         std::string("Set video hardware encoder. Select one of ")
         .append(umu::string::ArrayJoin(kValidHardwareEncoders)).data())
       ("keyboard-replay",
-        po::value<std::string>(&keyboard_replay_string)->default_value(kDefaultKeyboardReplay.data()),
+        po::value<std::string>(&keyboard_replay_string)->default_value(kValidKeyboardReplayMethods.at(kDefaultKeyboardReplayIndex).data()),
         std::string("Set keyboard replay method. Select one of ")
         .append(umu::string::ArrayJoin(kValidKeyboardReplayMethods)).data())
       ("gamepad-replay",
-        po::value<std::string>(&gamepad_replay_string)->default_value(kDefaultGamepadReplay.data()),
+        po::value<std::string>(&gamepad_replay_string)->default_value(kValidGamepadReplayMethods.at(kDefaultGamepadReplayIndex).data()),
         std::string("Set gamepad replay method. Select one of ")
        .append(umu::string::ArrayJoin(kValidGamepadReplayMethods)).data())
+      ("log-level",
+        po::value<std::string>(&log_level)->default_value(kValidSeverityLevel.at(kDefaultSeverityLevelIndex).data()),
+        std::string("Set logging severity level. Select one of ")
+       .append(umu::string::ArrayJoin(kValidSeverityLevel)).data())
       ("stream-port",
         po::value<uint16_t>(&stream_port)->default_value(kDefaultStreamPort),
         "Set the websocket port for streaming, if port is 0, disable stream "
@@ -249,6 +329,11 @@ int main(int argc, char* argv[]) {
     gamepad_replay = static_cast<GamepadReplay>(
         std::distance(kValidGamepadReplayMethods.cbegin(), gamepad_replay_pos));
 
+    if (!FromString(log_level, severity_level)) {
+      severity_level =
+          static_cast<decltype(severity_level)>(std::atoi(log_level.data()));
+    }
+
     if (video_bitrate < kMinVideoBitrate) {
       throw std::out_of_range("video-bitrate too low!");
     }
@@ -325,6 +410,7 @@ int main(int argc, char* argv[]) {
               << "hardware-encoder: " << hardware_encoder_string << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
               << "gamepad-replay: " << gamepad_replay_string << '\n'
+              << "log-level: " << log_level << '\n'
               << "stream-port: " << stream_port << '\n'
               << "video-bitrate: " << video_bitrate << '\n'
               << "video-codec: " << video_codec << '\n'
@@ -346,16 +432,18 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  InitLogger(severity_level);
+
   boost::asio::detail::winsock_init<2, 2> winsock;
   boost::system::error_code ec;
   const auto kAddress = net::ip::make_address(bind_address, ec);
   if (ec) {
-    std::cerr << "Invalid bind-address: " << ec.message() << "\n";
+    APP_ERROR() << "Invalid bind-address: " << ec.message() << "\n";
     return EXIT_FAILURE;
   }
 
   if (!g_app.Init()) {
-    std::cerr << "Init Engine failed!\n";
+    APP_ERROR() << "Init Engine failed!\n";
     return EXIT_FAILURE;
   }
 
@@ -364,7 +452,7 @@ int main(int argc, char* argv[]) {
   net::signal_set signals(Engine::GetInstance().GetIoContext(), SIGINT, SIGTERM,
                           SIGBREAK);
   signals.async_wait([&](const boost::system::error_code&, int sig) {
-    std::cout << "receive signal(" << sig << ").\n";
+    APP_INFO() << "receive signal(" << sig << ").\n";
     Engine::GetInstance().Stop();
   });
   Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
@@ -374,5 +462,6 @@ int main(int argc, char* argv[]) {
                             video_codec_id, hardware_encoder, video_gop,
                             std::move(video_preset), video_quality);
   Engine::GetInstance().EncoderStop();
+  logging::core::get()->flush();
   return EXIT_SUCCESS;
 }

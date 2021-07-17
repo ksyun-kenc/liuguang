@@ -25,7 +25,7 @@
 namespace {
 
 inline void Fail(beast::error_code ec, std::string_view what) {
-  std::cerr << "UdpServer# " << what << ": " << ec.message() << '\n';
+  APP_ERROR() << "UdpServer# " << what << ": " << ec.message() << '\n';
 }
 
 uint16_t JoystickButtonMap(uint16_t button) {
@@ -213,7 +213,7 @@ UdpServer::UdpServer(Engine& engine,
     int error_code = cgvhid_client_.KeyboardReset();
     if (0 != error_code) {
       keyboard_replay = KeyboardReplay::NONE;
-      std::cerr << "KeyboardReset() failed with " << error_code << '\n';
+      APP_ERROR() << "KeyboardReset() failed with " << error_code << '\n';
     }
   }
 
@@ -226,7 +226,7 @@ UdpServer::UdpServer(Engine& engine,
       vigem_target_x360_ = vigem_client_->CreateController();
     } else {
       gamepad_replay = GamepadReplay::NONE;
-      std::cerr << "Initialize ViGEmClient failed!\n";
+      APP_ERROR() << "Initialize ViGEmClient failed!\n";
     }
   }
 }
@@ -294,11 +294,11 @@ void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
     uint16_t key_code = ntohs(control_element->keyboard.key_code);
     uint8_t scan_code = ScanCodeMap(key_code);
     if (KEY_NONE == scan_code) {
-      std::cout << "Unknown key code: " << key_code << '\n';
+      APP_WARNING() << "Unknown key code: " << key_code << '\n';
       return;
     }
     if (disable_keys_[scan_code]) {
-      std::cout << "Disabled scan code: " << static_cast<int>(scan_code)
+      APP_INFO() << "Disabled scan code: " << static_cast<int>(scan_code)
                 << '\n';
       return;
     }
@@ -320,7 +320,7 @@ void UdpServer::OnKeyboardVkEvent(std::size_t bytes_transferred,
   if (KeyboardReplay::CGVHID == keyboard_replay_) {
     uint16_t key_code = ntohs(control_element->keyboard.key_code);
     if (key_code & 0xFF00) {
-      std::cout << "Unknown key code: " << key_code;
+      APP_WARNING() << "Unknown key code: " << key_code;
       return;
     }
     // TO-DO: disable-keys

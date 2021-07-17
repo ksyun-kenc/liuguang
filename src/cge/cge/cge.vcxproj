@@ -334,6 +334,7 @@
     <ClInclude Include="encoder.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="ffmpeg.h" />
+    <ClInclude Include="log.hpp" />
     <ClInclude Include="net.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="sound_capturer.h" />
