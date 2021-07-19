@@ -45,4 +45,6 @@ class AudioResampler {
   AVAudioFifo* fifo_ = nullptr;
 
   std::mutex mutex_;
+
+  boost::pool<> uint8_ptr_pool_{sizeof(uint8_t*)};
 };

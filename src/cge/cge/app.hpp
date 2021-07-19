@@ -18,6 +18,8 @@
 
 #include <sddl.h>
 
+#include "log.hpp"
+
 class App {
  public:
   bool Init() noexcept {
@@ -40,7 +42,20 @@ class App {
   const SECURITY_ATTRIBUTES* GetSA() const noexcept { return &sa_; }
   SECURITY_ATTRIBUTES* SA() noexcept { return &sa_; }
 
+  src::severity_logger<SeverityLevel>& GetLogger() noexcept { return logger_; }
+
  private:
   LARGE_INTEGER frequency_{};
   SECURITY_ATTRIBUTES sa_{};
+  src::severity_logger<SeverityLevel> logger_;
 };
+
+extern App g_app;
+
+#define APP_LOG(level) BOOST_LOG_SEV(g_app.GetLogger(), level)
+#define APP_TRACE() APP_LOG(SeverityLevel::kTrace)
+#define APP_DEBUG() APP_LOG(SeverityLevel::kDebug)
+#define APP_INFO() APP_LOG(SeverityLevel::kInfo)
+#define APP_WARNING() APP_LOG(SeverityLevel::kWarning)
+#define APP_ERROR() APP_LOG(SeverityLevel::kError)
+#define APP_FATAL() APP_LOG(SeverityLevel::kFatal)

@@ -1,0 +1,68 @@
+# Copyright 2020-present Ksyun
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os ;
+  local sdl2-root = [ os.environ SDL2_ROOT ] ;
+import path ;
+import project ;
+import sequence ;
+
+local include-dir ;
+local lib-dir ;
+
+if $(sdl2-root) {
+  ECHO "Using the SDL2_ROOT environment variable: $(sdl2-root)" ;
+  include-dir = [ path.join $(sdl2-root) include ] ;
+  lib-dir = [ path.join $(sdl2-root) lib ] ;
+} else {
+  if [ os.name ] = NT {
+    ECHO "You should set the SDL2_ROOT environment variable on Windows!" ;
+  }
+
+  import os-paths ;
+
+  local counter = x ;
+  for local dir in [ os-paths.include-paths ] {
+    if [ path.exists [ path.join $(dir) SDL2/SDL.h ] ] {
+      include-dir = $(dir) ;
+      local i = [ sequence.length $(counter) ] ;
+      local lib-paths = [ os-paths.lib-paths ] ;
+      lib-dir = $(lib-paths[$(i)]) ;
+      break ;
+    }
+    counter += x ;
+  }
+}
+
+ECHO "SDL2 include dir:" $(include-dir) ;
+ECHO "SDL2 lib dir:" $(lib-dir) ;
+
+project.push-current [ project.current ] ;
+project.initialize $(__name__) ;
+
+project $(__name__)
+  : usage-requirements <include>$(include-dir)
+  : requirements
+    <toolset>msvc,<address-model>32:<search>$(lib-dir)/x86
+    <toolset>msvc,<address-model>64:<search>$(lib-dir)/x64
+    <search>$(lib-dir)
+  ;
+
+lib sdl2 : : <name>SDL2 ;
+explicit sdl2 ;
+
+lib sdl2main : : <name>SDL2main ;
+explicit sdl2main ;
+
+project.pop-current ;

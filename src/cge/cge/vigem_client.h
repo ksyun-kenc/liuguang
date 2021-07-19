@@ -28,7 +28,7 @@ class ViGEmClient : public std::enable_shared_from_this<ViGEmClient> {
     if (VIGEM_ERROR_NONE != ec) {
       vigem_free(client_);
       client_ = nullptr;
-      std::cerr << "vigem_connect() failed with 0x" << std::hex << ec << '\n';
+      APP_ERROR() << "vigem_connect() failed with 0x" << std::hex << ec << '\n';
     }
   }
 

@@ -70,6 +70,8 @@ Usage:
                                  opus}
   --bind-address arg (=::)       Set bind address for listening. eg: 0.0.0.0
   --control-port arg (=8080)     Set the UDP port for control flow
+  --disable-keys arg             Disable scan codes. eg: 226,230 disable ALT;
+                                 227,231 disable WIN
   --donot-present arg (=0)       Tell cgh don't present
   --hardware-encoder arg         Set video hardware encoder. Select one of
                                  {amf, nvenc, qsv}
@@ -77,6 +79,8 @@ Usage:
                                  {none, cgvhid}
   --gamepad-replay arg (=none)   Set gamepad replay method. Select one of
                                  {none, cgvhid, vigem}
+  --log-level arg (=info)        Set logging severity level. Select one of
+                                 {trace, debug, info, warning, error, fatal}
   --stream-port arg (=8080)      Set the websocket port for streaming, if port
                                  is 0, disable stream out via network. Capture
                                  and encode picture directly at startup but not
@@ -231,7 +235,7 @@ Video Reference (Chinese):
 
 ### 4.4 SDL
 
-Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory. eg:
+Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory.
 
 The same as [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) and [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/).
 

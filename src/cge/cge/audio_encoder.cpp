@@ -18,7 +18,6 @@
 
 #include "audio_encoder.h"
 
-#include "app.hpp"
 #include "engine.h"
 #include "sound_capturer.h"
 
@@ -63,7 +62,7 @@ int AudioEncoder::Run() {
   ResetEvent(stop_event_);
   thread_ = std::thread(&AudioEncoder::EncodingThread, this);
   if (nullptr == thread_.native_handle()) {
-    std::cerr << "Create thread failed with " << GetLastError() << ".\n";
+    APP_ERROR() << "Create thread failed with " << GetLastError() << ".\n";
     return -1;
   }
   return 0;
@@ -120,7 +119,7 @@ int AudioEncoder::EncodingThread() {
       shared_mem_size, kSharedAudioFrameFileMappingName.data(), nullptr,
       g_app.SA());
   if (FAILED(hr)) {
-    std::cerr << "MapSharedMem() failed with 0x" << std::hex << hr << ".\n";
+    APP_ERROR() << "MapSharedMem() failed with 0x" << std::hex << hr << ".\n";
     error_code = -1;
     return error_code;
   }
@@ -135,7 +134,7 @@ int AudioEncoder::EncodingThread() {
   SetEvent(started_event_);
   error_code = Encode();
   if (error_code < 0) {
-    std::cerr << "Encode() failed with " << error_code << ".\n";
+    APP_ERROR() << "Encode() failed with " << error_code << ".\n";
     return error_code;
   }
   return error_code;
@@ -184,28 +183,28 @@ int AudioEncoder::AddStream(AVCodec*& codec) {
 
   codec = avcodec_find_encoder_by_name(codec_name_.data());
   if (nullptr == codec) {
-    std::cerr << "Could not find encoder for " << codec_name_ << ".\n";
+    APP_ERROR() << "Could not find encoder for " << codec_name_ << ".\n";
     return -1;
   }
   next_pts_ = 0;
   stream_ = avformat_new_stream(format_context_, nullptr);
   if (nullptr == stream_) {
-    std::cerr << "Could not allocate stream for " << codec_name_ << ".\n";
+    APP_ERROR() << "Could not allocate stream for " << codec_name_ << ".\n";
     return -1;
   }
   stream_->id = format_context_->nb_streams - 1;
 
   codec_context_ = avcodec_alloc_context3(codec);
   if (nullptr == codec_context_) {
-    std::cerr << "Could not allocate codec context for " << codec_name_
-              << ".\n";
+    APP_ERROR() << "Could not allocate codec context for " << codec_name_
+                << ".\n";
     return -1;
   }
 
   codec_context_->thread_count = 1;
   if (nullptr == codec->sample_fmts) {
-    std::cerr << "Could not find suitable sample format for " << codec_name_
-              << ".\n";
+    APP_ERROR() << "Could not find suitable sample format for " << codec_name_
+                << ".\n";
     return -1;
   }
 
@@ -280,16 +279,17 @@ int AudioEncoder::Open(AVCodec* codec, AVDictionary** opts) {
 
 #if _DEBUG
   if (source_audio_info_.channel_layout != codec_context_->channel_layout) {
-    std::cout << "resample channel layout " << source_audio_info_.channel_layout
-              << " to " << codec_context_->channel_layout << ".\n";
+    APP_TRACE() << "resample channel layout "
+                << source_audio_info_.channel_layout << " to "
+                << codec_context_->channel_layout << ".\n";
   }
   if (source_audio_info_.sample_format != codec_context_->sample_fmt) {
-    std::cout << "resample format " << source_audio_info_.sample_format
-              << " to " << codec_context_->sample_fmt << ".\n";
+    APP_TRACE() << "resample format " << source_audio_info_.sample_format
+                << " to " << codec_context_->sample_fmt << ".\n";
   }
   if (source_audio_info_.sample_rate != codec_context_->sample_rate) {
-    std::cout << "resample rate " << source_audio_info_.sample_rate << " to "
-              << codec_context_->sample_rate << ".\n";
+    APP_TRACE() << "resample rate " << source_audio_info_.sample_rate << " to "
+                << codec_context_->sample_rate << ".\n";
   }
 #endif
 
@@ -336,7 +336,7 @@ int AudioEncoder::InitFrame(AVFrame*& frame) const noexcept {
 
 int AudioEncoder::Encode() {
 #if _DEBUG
-  std::cout << __func__ << "+\n";
+  APP_TRACE() << __func__ << "+\n";
 #endif
   sound_capturer_.Run();
   BOOST_SCOPE_EXIT_ALL(&) { sound_capturer_.Stop(); };
@@ -344,7 +344,7 @@ int AudioEncoder::Encode() {
   AVFrame* frame = nullptr;
   int error_code = InitFrame(frame);
   if (error_code < 0) {
-    std::cout << "Init frame failed with " << error_code << ".\n";
+    APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
   }
   BOOST_SCOPE_EXIT_ALL(&) { av_frame_free(&frame); };
@@ -358,8 +358,8 @@ int AudioEncoder::Encode() {
       break;
     } else if (WAIT_OBJECT_0 + 1 != wait) {
       int error_code = GetLastError();
-      std::cout << "Unexpected WaitForMultipleObjects() return " << wait
-                << ", error code " << error_code << ".\n";
+      APP_WARNING() << "Unexpected WaitForMultipleObjects() return " << wait
+                    << ", error code " << error_code << ".\n";
       return error_code;
     }
 
@@ -405,7 +405,7 @@ int AudioEncoder::Encode() {
   }      // end of for
 
 #if _DEBUG
-  std::cout << __func__ << "-\n";
+  APP_TRACE() << __func__ << "-\n";
 #endif
   return 0;
 }

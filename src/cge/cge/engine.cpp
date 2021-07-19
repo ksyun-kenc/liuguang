@@ -18,11 +18,8 @@
 
 #include "engine.h"
 
-#include "app.hpp"
 #include "udp_server.h"
 #include "ws_server.h"
-
-extern App g_app;
 
 void Engine::Run(tcp::endpoint ws_endpoint,
                  udp::endpoint udp_endpoint,
@@ -39,29 +36,29 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  uint32_t video_quality) {
   try {
     if (!audio_encoder_.Init(std::move(audio_codec), audio_bitrate)) {
-      std::cout << "Initialize audio encoder failed!\n";
+      APP_ERROR() << "Initialize audio encoder failed!\n";
       return;
     }
 
     if (!video_encoder_.Init(video_bitrate, video_codec_id, hardware_encoder,
                              video_gop, std::move(video_preset),
                              video_quality)) {
-      std::cout << "Initialize video encoder failed!\n";
+      APP_ERROR() << "Initialize video encoder failed!\n";
       return;
     }
 
     if (0 != ws_endpoint.port()) {
       ws_server_ = std::make_shared<WsServer>(*this, ws_endpoint);
-      std::cout << "WebSocket server on: " << ws_endpoint << '\n';
+      APP_INFO() << "WebSocket server on: " << ws_endpoint << '\n';
       ws_server_->Run();
     }
     udp_server_ = std::make_shared<UdpServer>(
         *this, udp_endpoint, std::move(disable_keys),
         std::move(keyboard_replay), std::move(gamepad_replay));
-    std::cout << "UDP Server on: " << udp_endpoint << '\n';
+    APP_INFO() << "UDP Server on: " << udp_endpoint << '\n';
     udp_server_->Run();
   } catch (std::exception& e) {
-    std::cerr << e.what() << '\n';
+    APP_FATAL() << e.what() << '\n';
     return;
   }
 
@@ -79,7 +76,7 @@ void Engine::Loop() noexcept {
       break;
     } catch (std::exception& e) {
 #if _DEBUG
-      std::cerr << "# " << e.what() << '\n';
+      APP_ERROR() << e.what() << '\n';
 #else
       boost::ignore_unused(e);
 #endif
@@ -98,7 +95,7 @@ void Engine::Stop() {
     running_ = false;
   } catch (std::exception& e) {
 #if _DEBUG
-    std::cerr << e.what() << '\n';
+    APP_ERROR() << e.what() << '\n';
 #else
     boost::ignore_unused(e);
 #endif
@@ -119,7 +116,7 @@ int Engine::OnWriteHeader(void* opaque,
                           uint8_t* buffer,
                           int buffer_size) noexcept {
 #if _DEBUG
-  // std::cout << __func__ << ": " << buffer_size << "\n";
+  APP_TRACE() << __func__ << ": " << buffer_size << '\n';
 #endif
   auto ei = static_cast<Encoder*>(opaque);
   ei->SaveHeader(buffer, buffer_size);
@@ -130,7 +127,7 @@ int Engine::OnWritePacket(void* opaque,
                           uint8_t* buffer,
                           int buffer_size) noexcept {
 #if _DEBUG
-  // std::cout << __func__ << ": " << buffer_size << "\n";
+  APP_TRACE() << __func__ << ": " << buffer_size << '\n';
 #endif
   return Engine::GetInstance().WritePacket(opaque, buffer, buffer_size);
 }
@@ -152,7 +149,7 @@ void Engine::SetPresentFlag(bool donot_present) {
   HANDLE ev =
       CreateEvent(g_app.SA(), TRUE, FALSE, kDoNotPresentEventName.data());
   if (nullptr == ev) {
-    std::cerr << "CreateEvent() failed with " << GetLastError() << '\n';
+    APP_ERROR() << "CreateEvent() failed with " << GetLastError() << '\n';
     return;
   }
   donot_present_event_.Attach(ev);
