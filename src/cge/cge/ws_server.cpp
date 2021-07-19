@@ -25,20 +25,21 @@ using namespace std::literals::chrono_literals;
 namespace {
 
 inline void ListenerFail(beast::error_code ec, std::string_view what) {
-  APP_ERROR() << "WsListener# " << what << ": " << ec.message() << '\n';
+  APP_ERROR() << "WsListener " << what << ": "
+              << "#" << ec.value() << ", " << ec.message() << '\n';
 }
 inline void ListenerFail(beast::error_code ec,
                          const tcp::endpoint& endpoint,
                          std::string_view what) {
-  APP_ERROR() << "WsListener# " << endpoint << " " << what << ": "
-              << ec.message() << '\n';
+  APP_ERROR() << "WsListener " << endpoint << " " << what << ": "
+              << "#" << ec.value() << ", " << ec.message() << '\n';
 }
 
 inline void SessionFail(beast::error_code ec,
                         const tcp::endpoint& endpoint,
                         std::string_view what) {
-  APP_ERROR() << "WsSession# " << endpoint << " " << what << ": "
-              << "(#" << ec.value() << ')' << ec.message() << '\n';
+  APP_ERROR() << "WsSession " << endpoint << " " << what << ": "
+              << "#" << ec.value() << ", " << ec.message() << '\n';
 }
 
 }  // namespace
@@ -282,7 +283,7 @@ void WsSession::OnWrite(beast::error_code ec, std::size_t bytes_transferred) {
 #if _DEBUG
   if (bytes_transferred != write_queue_.front().size()) {
     APP_TRACE() << "bytes_transferred: " << bytes_transferred
-              << ", size: " << write_queue_.front().size() << '\n';
+                << ", size: " << write_queue_.front().size() << '\n';
   }
 #endif
   std::lock_guard<std::mutex> lock(queue_mutex_);

@@ -25,7 +25,8 @@
 namespace {
 
 inline void Fail(beast::error_code ec, std::string_view what) {
-  APP_ERROR() << "UdpServer# " << what << ": " << ec.message() << '\n';
+  APP_ERROR() << "UdpServer " << what << ": "
+              << "#" << ec.value() << ", " << ec.message() << '\n';
 }
 
 uint16_t JoystickButtonMap(uint16_t button) {
