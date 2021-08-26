@@ -180,9 +180,7 @@ WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 
 ### 4.1 VS2019
 
-安装 VS2019，需要勾选 ATL 和 CLang。
-
-独立安装 [CLang/LLVM x64](https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/LLVM-11.0.0-win64.exe)，因为 VS 带的 CLang 可能只有 x86 版本。
+[参考配置](doc/.vsconfig)
 
 ### 4.2 Boost
 
