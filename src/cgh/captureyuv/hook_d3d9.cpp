@@ -114,7 +114,7 @@ class CaptureD3d9 {
                 copy_surface_, hr);
       return;
     }
-    BOOST_SCOPE_EXIT_ALL(&) { copy_surface_->UnlockRect(); };
+    BOOST_SCOPE_EXIT_ALL(this) { copy_surface_->UnlockRect(); };
 
     size_t pixel_size = desc.Width * desc.Height;
     size_t frame_size = mapped_rect.Pitch * desc.Height;
@@ -336,7 +336,7 @@ bool HookD3d9::Hook() noexcept {
     ATLTRACE2(atlTraceException, 0, "!CreateWindowEx(), #%d\n", GetLastError());
     return false;
   }
-  BOOST_SCOPE_EXIT_ALL(&) { DestroyWindow(hwnd); };
+  BOOST_SCOPE_EXIT_ALL(&hwnd) { DestroyWindow(hwnd); };
 
   CComPtr<IDirect3DDevice9Ex> device;
   D3DPRESENT_PARAMETERS pp = {};

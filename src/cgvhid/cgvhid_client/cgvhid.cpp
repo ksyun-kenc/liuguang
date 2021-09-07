@@ -33,7 +33,7 @@ HANDLE Cgvhid::Open(USAGE usage_page, USAGE usage) noexcept {
               GetLastError());
     return dev_info;
   }
-  BOOST_SCOPE_EXIT_ALL(&) { SetupDiDestroyDeviceInfoList(dev_info); };
+  BOOST_SCOPE_EXIT_ALL(&dev_info) { SetupDiDestroyDeviceInfoList(dev_info); };
 
   SP_DEVICE_INTERFACE_DATA device_interface_data{};
   device_interface_data.cbSize = sizeof(device_interface_data);
@@ -104,7 +104,7 @@ HANDLE Cgvhid::OpenInterface(HDEVINFO dev_info,
       ATLTRACE2(atlTraceException, 0, "!HidD_GetPreparsedData()\n");
       return INVALID_HANDLE_VALUE;
     }
-    BOOST_SCOPE_EXIT_ALL(&) { HidD_FreePreparsedData(pd); };
+    BOOST_SCOPE_EXIT_ALL(&pd) { HidD_FreePreparsedData(pd); };
 
     HIDP_CAPS caps{};
     if (!HidP_GetCaps(pd, &caps)) {

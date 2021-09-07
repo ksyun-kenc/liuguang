@@ -253,7 +253,7 @@ class CaptureD3d11 {
       }
       return;
     }
-    BOOST_SCOPE_EXIT_ALL(&) {
+    BOOST_SCOPE_EXIT_ALL(&surface) {
       // ATLTRACE2(atlTraceUtil, 0, "%p->Unmap()\n", surface);
       surface->Unmap();
     };
@@ -422,7 +422,7 @@ class CaptureD3d11On12 {
       }
       return;
     }
-    BOOST_SCOPE_EXIT_ALL(&) {
+    BOOST_SCOPE_EXIT_ALL(&surface) {
       // ATLTRACE2(atlTraceUtil, 0, "%p->Unmap()\n", surface);
       surface->Unmap();
     };
@@ -772,7 +772,7 @@ bool HookDxgi::HookD3D(HMODULE d3d11_module) noexcept {
     return false;
   }
   ATLTRACE2(atlTraceUtil, 0, "CreateWindowEx() = 0x%p\n", hwnd);
-  BOOST_SCOPE_EXIT_ALL(&) { DestroyWindow(hwnd); };
+  BOOST_SCOPE_EXIT_ALL(&hwnd) { DestroyWindow(hwnd); };
 
   DXGI_SWAP_CHAIN_DESC desc = {};
   desc.BufferCount = 2;

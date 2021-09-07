@@ -178,7 +178,7 @@ HRESULT SoundCapturer::GetAudioInfo(AudioInfo* info) {
 }
 
 HRESULT SoundCapturer::CaptureThread() {
-  BOOST_SCOPE_EXIT_ALL(&) { SetEvent(stop_event_); };
+  BOOST_SCOPE_EXIT_ALL(this) { SetEvent(stop_event_); };
 
   HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
   if (FAILED(hr)) {

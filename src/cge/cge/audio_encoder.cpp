@@ -339,7 +339,7 @@ int AudioEncoder::Encode() {
   APP_TRACE() << __func__ << "+\n";
 #endif
   sound_capturer_.Run();
-  BOOST_SCOPE_EXIT_ALL(&) { sound_capturer_.Stop(); };
+  BOOST_SCOPE_EXIT_ALL(this) { sound_capturer_.Stop(); };
 
   AVFrame* frame = nullptr;
   int error_code = InitFrame(frame);
@@ -347,7 +347,7 @@ int AudioEncoder::Encode() {
     APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
   }
-  BOOST_SCOPE_EXIT_ALL(&) { av_frame_free(&frame); };
+  BOOST_SCOPE_EXIT_ALL(&frame) { av_frame_free(&frame); };
 
   HANDLE events[] = {stop_event_, shared_frame_ready_event_};
   for (;;) {
@@ -394,7 +394,7 @@ int AudioEncoder::Encode() {
           }
           break;
         }
-        BOOST_SCOPE_EXIT_ALL(&) { av_packet_unref(&pkt); };
+        BOOST_SCOPE_EXIT_ALL(&pkt) { av_packet_unref(&pkt); };
 
         pkt.stream_index = stream_->index;
         written = av_write_frame(format_context_, &pkt);

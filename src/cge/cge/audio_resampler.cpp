@@ -131,7 +131,9 @@ int AudioResampler::Store(const uint8_t* in,
                 GetAvErrorText(error));
       return error;
     }
-    BOOST_SCOPE_EXIT_ALL(&) { av_freep(&converted_samples[0]); };
+    BOOST_SCOPE_EXIT_ALL(&converted_samples) {
+      av_freep(&converted_samples[0]);
+    };
 
     error = swr_convert(resampler_context_, converted_samples, out_size, &in,
                         in_samples);

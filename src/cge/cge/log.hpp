@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <format>
-
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/sources/logger.hpp>

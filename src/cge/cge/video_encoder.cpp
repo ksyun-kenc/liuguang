@@ -179,7 +179,7 @@ int VideoEncoder::EncodingThread() {
     APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
   }
-  BOOST_SCOPE_EXIT_ALL(&) { av_frame_free(&frame); };
+  BOOST_SCOPE_EXIT_ALL(&frame) { av_frame_free(&frame); };
 
   for (;;) {
     error_code = EncodeFrame(frame);
@@ -494,7 +494,7 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
       }
       break;
     }
-    BOOST_SCOPE_EXIT_ALL(&) { av_packet_unref(&pkt); };
+    BOOST_SCOPE_EXIT_ALL(&pkt) { av_packet_unref(&pkt); };
 
     pkt.stream_index = stream_->index;
     written = av_write_frame(format_context_, &pkt);
