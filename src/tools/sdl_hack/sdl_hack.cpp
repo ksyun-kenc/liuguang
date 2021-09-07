@@ -194,6 +194,9 @@ bool SdlHack::Init() noexcept {
     } else if (2 == linked_.major && 0 == linked_.minor &&
                14 == linked_.patch) {
       // yes
+    } else if (2 == linked_.major && 0 == linked_.minor &&
+               16 == linked_.patch) {
+      // yes
     } else {
       CString error_text;
       error_text.Format(
@@ -203,7 +206,7 @@ bool SdlHack::Init() noexcept {
       MessageBox(nullptr, error_text, _T("Warning"), MB_ICONWARNING);
     }
   } else {
-    MessageBox(nullptr, _T("sdl_internal.h is only for SDL 2.0.14!"), nullptr,
+    MessageBox(nullptr, _T("sdl_internal.h is only for SDL 2.0.12+!"), nullptr,
                MB_ICONERROR);
   }
 
@@ -274,6 +277,9 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
   } else if (2 == linked_.major && 0 == linked_.minor && 14 == linked_.patch) {
     render_data = static_cast<D3D11_RenderData*>(
         reinterpret_cast<SDL_Renderer_2_0_14*>(renderer)->driverdata);
+  } else if (2 == linked_.major && 0 == linked_.minor && 16 == linked_.patch) {
+    render_data = static_cast<D3D11_RenderData*>(
+        reinterpret_cast<SDL_Renderer_2_0_16*>(renderer)->driverdata);
   } else {
     return;
   }
