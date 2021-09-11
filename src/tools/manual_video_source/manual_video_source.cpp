@@ -40,16 +40,18 @@
 
 #pragma comment(lib, "yuv.lib")
 
+namespace {
+
 TTF_Font* font = nullptr;
 SDL_Window* sdl_win = nullptr;
 SDL_Renderer* renderer = nullptr;
 int render_driver = -1;
 
-static SdlHack sdl_hack;
+SdlHack sdl_hack;
 
-static void refresh(SDL_KeyboardEvent key) {
+void refresh(SDL_KeyboardEvent key) {
   char text[32];
-  snprintf(text, 31, "%c", key.keysym.sym);
+  snprintf(text, std::size(text) - 1, "%c", key.keysym.sym);
 
   SDL_Rect rect = {50, 50, 120, 200};
   SDL_Color color = {255, 0, 0, 128};
@@ -69,7 +71,7 @@ static void refresh(SDL_KeyboardEvent key) {
   SDL_DestroyTexture(texture);
   SDL_FreeSurface(surface);
 
-  snprintf(text, 31, "@ %u", key.timestamp);
+  snprintf(text, std::size(text) - 1, "@ %u", key.timestamp);
 
   rect = {200, 120, 360, 100};
   color = {255, 255, 255, 128};
@@ -85,6 +87,45 @@ static void refresh(SDL_KeyboardEvent key) {
 
   SDL_RenderPresent(renderer);
 }
+
+void mouse(std::string_view message, int x, int y) {
+  SDL_Rect rect = {30, 20, 150, 100};
+  SDL_Color color = {255, 0, 0, 128};
+  SDL_Surface* surface = TTF_RenderText_Blended(font, message.data(), color);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+  if (nullptr == texture) {
+    SDL_DestroyRenderer(renderer);
+    renderer = SDL_GetRenderer(sdl_win);
+    texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (nullptr == texture) {
+      SDL_FreeSurface(surface);
+      return;
+    }
+  }
+  SDL_RenderClear(renderer);
+  SDL_RenderCopy(renderer, texture, nullptr, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(surface);
+
+  char text[40];
+  snprintf(text, std::size(text) - 1, "%d,%d", x, y);
+
+  rect = {190, 20, 420, 100};
+  color = {255, 255, 255, 128};
+  surface = TTF_RenderText_Blended(font, text, color);
+  texture = SDL_CreateTextureFromSurface(renderer, surface);
+  SDL_RenderCopy(renderer, texture, nullptr, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(surface);
+
+  if (sdl_hack.IsStarted() && -1 != render_driver) {
+    sdl_hack.GetTexture(renderer);
+  }
+
+  SDL_RenderPresent(renderer);
+}
+
+}  // namespace
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_opt_ HINSTANCE hPrevInstance,
@@ -132,6 +173,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
   }
   BOOST_SCOPE_EXIT_ALL(&) { SDL_DestroyWindow(sdl_win); };
 
+  SDL_version linked;
+  SDL_GetVersion(&linked);
+  title.AppendFormat("SDL %u.%u.%u - ", linked.major, linked.minor,
+                     linked.patch);
+
   int num = SDL_GetNumRenderDrivers();
   for (int i = 0; i < num; ++i) {
     SDL_RendererInfo info = {};
@@ -171,13 +217,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
   for (;;) {
     SDL_Event sdl_event;
     if (SDL_PollEvent(&sdl_event)) {
-      if (SDL_QUIT == sdl_event.type) {
-        break;
-      } else if (SDL_KEYDOWN == sdl_event.type) {
-        // if (SDLK_ESCAPE == sdl_event.key.keysym.sym) {
-        //  break;
-        //}
-        refresh(sdl_event.key);
+      switch (sdl_event.type) {
+        case SDL_QUIT:
+          return 0;
+        case SDL_KEYDOWN:
+          refresh(sdl_event.key);
+          break;
+        case SDL_MOUSEMOTION:
+          mouse("Motion", sdl_event.motion.xrel, sdl_event.motion.yrel);
+          break;
+        case SDL_MOUSEWHEEL:
+          mouse("Wheel", sdl_event.wheel.x, sdl_event.wheel.y);
+          break;
+        case SDL_MOUSEBUTTONDOWN:
+          mouse("Down", sdl_event.button.x, sdl_event.button.y);
+          break;
+        case SDL_MOUSEBUTTONUP:
+          mouse("Up", sdl_event.button.x, sdl_event.button.y);
+          break;
       }
     }
   }

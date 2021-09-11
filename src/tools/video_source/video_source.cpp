@@ -105,6 +105,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
   }
   BOOST_SCOPE_EXIT_ALL(&) { SDL_DestroyWindow(sdl_win); };
 
+  SDL_version linked;
+  SDL_GetVersion(&linked);
+  title.AppendFormat("SDL %u.%u.%u - ", linked.major, linked.minor,
+                     linked.patch);
+
   int num = SDL_GetNumRenderDrivers();
   for (int i = 0; i < num; ++i) {
     SDL_RendererInfo info = {};
