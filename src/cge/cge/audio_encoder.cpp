@@ -349,6 +349,12 @@ int AudioEncoder::Encode() {
   }
   BOOST_SCOPE_EXIT_ALL(&frame) { av_frame_free(&frame); };
 
+  AVPacket* packet = av_packet_alloc();
+  if (nullptr == packet) {
+    return ERROR_OUTOFMEMORY;
+  }
+  BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_free(&packet); };
+
   HANDLE events[] = {stop_event_, shared_frame_ready_event_};
   for (;;) {
     DWORD wait =
@@ -384,20 +390,18 @@ int AudioEncoder::Encode() {
       }
 
       int written = -1;
-      AVPacket pkt = {0};
-      av_init_packet(&pkt);
       for (;;) {
-        error_code = avcodec_receive_packet(codec_context_, &pkt);
+        error_code = avcodec_receive_packet(codec_context_, packet);
         if (error_code < 0) {
           if (AVERROR(EAGAIN) == error_code && written == 0) {
             error_code = 0;
           }
           break;
         }
-        BOOST_SCOPE_EXIT_ALL(&pkt) { av_packet_unref(&pkt); };
+        BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_unref(packet); };
 
-        pkt.stream_index = stream_->index;
-        written = av_write_frame(format_context_, &pkt);
+        packet->stream_index = stream_->index;
+        written = av_write_frame(format_context_, packet);
         // flush the buffer.
         av_write_frame(format_context_, nullptr);
       }  // end of for

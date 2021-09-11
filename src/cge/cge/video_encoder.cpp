@@ -483,21 +483,25 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
     return error_code;
   }
 
+  AVPacket* packet = av_packet_alloc();
+  if (nullptr == packet) {
+    return ERROR_OUTOFMEMORY;
+  }
+  BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_free(&packet); };
+
   int written = -1;
-  AVPacket pkt = {0};
-  av_init_packet(&pkt);
   for (;;) {
-    error_code = avcodec_receive_packet(codec_context_, &pkt);
+    error_code = avcodec_receive_packet(codec_context_, packet);
     if (error_code < 0) {
       if (AVERROR(EAGAIN) == error_code && written == 0) {
         error_code = 0;
       }
       break;
     }
-    BOOST_SCOPE_EXIT_ALL(&pkt) { av_packet_unref(&pkt); };
+    BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_unref(packet); };
 
-    pkt.stream_index = stream_->index;
-    written = av_write_frame(format_context_, &pkt);
+    packet->stream_index = stream_->index;
+    written = av_write_frame(format_context_, packet);
     // flush the buffer.
     av_write_frame(format_context_, nullptr);
   }  // end of for
