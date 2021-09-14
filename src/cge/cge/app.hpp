@@ -59,3 +59,11 @@ extern App g_app;
 #define APP_WARNING() APP_LOG(SeverityLevel::kWarning)
 #define APP_ERROR() APP_LOG(SeverityLevel::kError)
 #define APP_FATAL() APP_LOG(SeverityLevel::kFatal)
+
+#if _DEBUG
+#define DEBUG_VERBOSE(x) APP_TRACE() << (x);
+#define DEBUG_PRINT(x) APP_DEBUG() << (x);
+#else
+#define DEBUG_VERBOSE(x)
+#define DEBUG_PRINT(x)
+#endif

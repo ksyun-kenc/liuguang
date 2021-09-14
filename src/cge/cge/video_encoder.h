@@ -32,7 +32,7 @@ class VideoEncoder : public Encoder {
   ~VideoEncoder() noexcept = default;
 
   regame::NetPacketType GetType() const noexcept override {
-    return regame::NetPacketType::Video;
+    return regame::NetPacketType::kVideo;
   }
 
   bool Init(uint64_t bitrate,

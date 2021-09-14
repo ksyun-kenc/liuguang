@@ -379,3 +379,51 @@ int CgvhidClient::KeyboardModifierRelease(uint8_t scancode) noexcept {
   return cgvhid_.KeyboardUpdate(keyboard_state_.modifiers,
                                 keyboard_state_.key_codes);
 }
+
+int CgvhidClient::MouseReset() noexcept {
+  mouse_state_.buttons = 0;
+  mouse_state_.postion.x = 0;
+  mouse_state_.postion.y = 0;
+  return cgvhid_.AbsoluteMouseUpdate(0, 0, 0, 0, 0);
+}
+
+int CgvhidClient::AbsoluteMouseButtonPress(CgvhidMouseButton button,
+                                           uint16_t x,
+                                           uint16_t y) noexcept {
+  mouse_state_.buttons |= button;
+  return cgvhid_.AbsoluteMouseUpdate(mouse_state_.buttons, x, y, 0, 0);
+}
+
+int CgvhidClient::AbsoluteMouseButtonRelease(CgvhidMouseButton button,
+                                             uint16_t x,
+                                             uint16_t y) noexcept {
+  mouse_state_.buttons &= ~button;
+  return cgvhid_.AbsoluteMouseUpdate(mouse_state_.buttons, x, y, 0, 0);
+}
+
+int CgvhidClient::AbsoluteMouseMove(uint16_t x, uint16_t y) noexcept {
+  return cgvhid_.AbsoluteMouseUpdate(0, x, y, 0, 0);
+}
+
+int CgvhidClient::AbsoluteMouseWheel(int8_t hwheel, int8_t vwheel) noexcept {
+  return cgvhid_.AbsoluteMouseUpdate(0, 0, 0, hwheel, vwheel);
+}
+
+int CgvhidClient::RelativeMouseButtonPress(CgvhidMouseButton button) noexcept {
+  mouse_state_.buttons |= button;
+  return cgvhid_.RelativeMouseUpdate(mouse_state_.buttons, 0, 0, 0, 0);
+}
+
+int CgvhidClient::RelativeMouseButtonRelease(
+    CgvhidMouseButton button) noexcept {
+  mouse_state_.buttons &= ~button;
+  return cgvhid_.RelativeMouseUpdate(mouse_state_.buttons, 0, 0, 0, 0);
+}
+
+int CgvhidClient::RelativeMouseMove(int8_t x, int8_t y) noexcept {
+  return cgvhid_.RelativeMouseUpdate(0, x, y, 0, 0);
+}
+
+int CgvhidClient::RelativeMouseWheel(int8_t hwheel, int8_t vwheel) noexcept {
+  return cgvhid_.RelativeMouseUpdate(0, 0, 0, hwheel, vwheel);
+}

@@ -158,6 +158,7 @@ typedef struct VHID_ABS_MOUSE_REPORT {
   uint16_t x;
   uint16_t y;
   uint8_t wheel;
+  uint8_t hwheel;
 } VhidAbsoluteMouseReport;
 
 typedef struct VHID_RELATIVE_MOUSE_REPORT {
@@ -166,6 +167,7 @@ typedef struct VHID_RELATIVE_MOUSE_REPORT {
   uint8_t x;
   uint8_t y;
   uint8_t wheel;
+  uint8_t hwheel;
 } VhidRelativeMouseReport;
 
 typedef struct VHID_DIGI_REPORT {

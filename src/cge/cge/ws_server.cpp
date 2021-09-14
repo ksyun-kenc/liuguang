@@ -51,22 +51,26 @@ WsServer::WsServer(Engine& engine, const tcp::endpoint& endpoint) noexcept
     : engine_(engine), acceptor_(engine.GetIoContext()) {
   beast::error_code ec;
 
-  if (acceptor_.open(endpoint.protocol(), ec)) {
+  acceptor_.open(endpoint.protocol(), ec);
+  if (ec) {
     ListenerFail(ec, "open");
     return;
   }
 
-  if (acceptor_.set_option(net::socket_base::reuse_address(true), ec)) {
+  acceptor_.set_option(net::socket_base::reuse_address(true), ec);
+  if (ec) {
     ListenerFail(ec, "set_option");
     return;
   }
 
-  if (acceptor_.bind(endpoint, ec)) {
+  acceptor_.bind(endpoint, ec);
+  if (ec) {
     ListenerFail(ec, "bind");
     return;
   }
 
-  if (acceptor_.listen(net::socket_base::max_listen_connections, ec)) {
+  acceptor_.listen(net::socket_base::max_listen_connections, ec);
+  if (ec) {
     ListenerFail(ec, "listen");
     return;
   }
@@ -202,13 +206,13 @@ void WsSession::Write(std::string buffer) {
   std::lock_guard<std::mutex> lock(queue_mutex_);
   const auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
   switch (header->type) {
-    case regame::NetPacketType::Audio:
+    case regame::NetPacketType::kAudio:
       if (!is_audio_header_sent_) {
         is_audio_header_sent_ = true;
         buffer = Engine::GetInstance().GetAudioHeader() + buffer;
       }
       break;
-    case regame::NetPacketType::Video:
+    case regame::NetPacketType::kVideo:
       if (!is_video_header_sent_) {
         is_video_header_sent_ = true;
         buffer = Engine::GetInstance().GetVideoHeader() + buffer;
@@ -337,10 +341,10 @@ bool WsSession::ServeClient() {
             reinterpret_cast<char*>(header) + sizeof(regame::NetPacketHeader);
         auto type = static_cast<regame::NetPacketType>(header->type);
         if (authorized_) {
-          if (regame::NetPacketType::Ping == type) {
+          if (regame::NetPacketType::kPing == type) {
           }
         } else {
-          if (regame::NetPacketType::Login == type) {
+          if (regame::NetPacketType::kLogin == type) {
             auto login = reinterpret_cast<regame::Login*>(body);
             if (login->verification_size > sizeof(login->verification_data)) {
               return false;
@@ -370,7 +374,7 @@ bool WsSession::ServeClient() {
           auto& login_result =
               *reinterpret_cast<regame::NetPacketLoginResult*>(buffer.data());
           login_result.header.version = regame::kNetPacketCurrentVersion;
-          login_result.header.type = regame::NetPacketType::Login;
+          login_result.header.type = regame::NetPacketType::kLogin;
           login_result.header.size = htonl(sizeof(login_result.login_result));
           login_result.login_result.error_code = htonl(0);
           login_result.login_result.audio_codec =

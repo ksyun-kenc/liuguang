@@ -315,17 +315,26 @@
 #endif  // USB_HID_KEYS
 
 // clockwise
-enum VhidGamepadHat : uint8_t {
-  CENTERED = 0,
-  UP = GAMEPAD_HAT_LOGICAL_MIN,
-  RIGHTUP,
-  RIGHT,
-  RIGHTDOWN,
-  DOWN,
-  LEFTDOWN,
-  LEFT,
-  LEFTUP,
-  MAX
+enum class CgvhidGamepadHat : std::uint8_t {
+  kCentered = 0,
+  kUp = GAMEPAD_HAT_LOGICAL_MIN,
+  kRightUp,
+  kRight,
+  kRightDown,
+  kDown,
+  kLeftDown,
+  kLeft,
+  kLeftUp,
+  kMax
+};
+
+enum CgvhidMouseButton : std::uint8_t {
+  kCgvhidMouseButtonNone = 0x00,
+  kCgvhidMouseButtonLeft = 0x01,
+  kCgvhidMouseButtonRight = 0x02,
+  kCgvhidMouseButtonMiddle = 0x04,
+  kCgvhidMouseButtonX1 = 0x08,
+  kCgvhidMouseButtonX2 = 0x10
 };
 
 class Cgvhid {
@@ -335,9 +344,20 @@ class Cgvhid {
 
   bool Init() noexcept;
   void Free() noexcept;
-  
-  int KeyboardUpdate(uint8_t modifiers,
-                     uint8_t key_codes[KEYBD_MAX_KEY_COUNT]) noexcept;
+
+  int KeyboardUpdate(std::uint8_t modifiers,
+                     std::uint8_t key_codes[KEYBD_MAX_KEY_COUNT]) noexcept;
+
+  int AbsoluteMouseUpdate(std::uint8_t button,
+                          std::int16_t x,
+                          std::int16_t y,
+                          std::uint8_t hwheel,
+                          std::uint8_t vwheel) noexcept;
+  int RelativeMouseUpdate(std::uint8_t button,
+                          std::int8_t x,
+                          std::int8_t y,
+                          std::uint8_t hwheel,
+                          std::uint8_t vwheel) noexcept;
 
  private:
   HANDLE Open(USAGE usage_page, USAGE usage) noexcept;
@@ -348,12 +368,21 @@ class Cgvhid {
 
   VhidControlReport* GetControlReport() noexcept {
     return reinterpret_cast<VhidControlReport*>(control_report_);
-  };
+  }
 
   VhidKeyboardReport* GetKeyboardReport() noexcept {
     return reinterpret_cast<VhidKeyboardReport*>(control_report_ +
                                                  sizeof(VhidControlReport));
-  };
+  }
+
+  VhidAbsoluteMouseReport* GetAbsoluteMouseReport() noexcept {
+    return reinterpret_cast<VhidAbsoluteMouseReport*>(
+        control_report_ + sizeof(VhidControlReport));
+  }
+  VhidRelativeMouseReport* GetRelativeMouseReport() noexcept {
+    return reinterpret_cast<VhidRelativeMouseReport*>(
+        control_report_ + sizeof(VhidControlReport));
+  }
 
   int WriteControlReport() noexcept;
 

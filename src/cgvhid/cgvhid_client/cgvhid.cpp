@@ -156,8 +156,9 @@ void Cgvhid::Free() noexcept {
   message_.Close();
 }
 
-int Cgvhid::KeyboardUpdate(uint8_t modifiers,
-                           uint8_t key_codes[KEYBD_MAX_KEY_COUNT]) noexcept {
+int Cgvhid::KeyboardUpdate(
+    std::uint8_t modifiers,
+    std::uint8_t key_codes[KEYBD_MAX_KEY_COUNT]) noexcept {
   static_assert(CONTROL_REPORT_SIZE >
                     sizeof(VhidControlReport) + sizeof(VhidKeyboardReport),
                 "CONTROL_REPORT_SIZE is too small");
@@ -175,6 +176,24 @@ int Cgvhid::KeyboardUpdate(uint8_t modifiers,
          sizeof(keyboard_report->key_codes));
 
   return WriteControlReport();
+}
+
+int Cgvhid::AbsoluteMouseUpdate(std::uint8_t button,
+                                std::int16_t x,
+                                std::int16_t y,
+                                std::uint8_t hwheel,
+                                std::uint8_t vwheel) noexcept {
+  // Enterprise version
+  return 0;
+}
+
+int Cgvhid::RelativeMouseUpdate(std::uint8_t button,
+                                std::int8_t x,
+                                std::int8_t y,
+                                std::uint8_t hwheel,
+                                std::uint8_t vwheel) noexcept {
+  // Enterprise version
+  return 0;
 }
 
 int Cgvhid::WriteControlReport() noexcept {

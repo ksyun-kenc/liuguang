@@ -17,16 +17,19 @@
 #pragma once
 
 namespace regame {
+
 enum class NetPacketType : uint8_t {
-  Login = 0,
-  Audio,
-  Video,
-  Ping,
-  Pong,
-  ResetAudio,
-  ResetVideo
+  kLogin = 0,
+  kAudio,
+  kVideo,
+  kPing,
+  kPong,
+  kResetAudio,
+  kResetVideo
 };
+
 enum class VerificationType : uint8_t { Code = 0, SM3 };
+
 constexpr uint8_t kNetPacketCurrentVersion = 0;
 constexpr uint8_t kMaxUsernameSize = 32;
 constexpr uint8_t kMaxVerificationSize = 32;
@@ -63,4 +66,5 @@ struct NetPacketLoginResult {
   LoginResult login_result;
 };
 #pragma pack(pop)
+
 }  // namespace regame

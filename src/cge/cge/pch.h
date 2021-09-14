@@ -31,6 +31,7 @@
 #include <thread>
 
 #include <boost/algorithm/string.hpp>
+#define BOOST_ASIO_NO_DEPRECATED
 #include <boost/asio.hpp>
 #include <boost/pool/pool.hpp>
 #include <boost/scope_exit.hpp>

@@ -18,9 +18,12 @@
 
 #include "udp_server.h"
 
-#include "vigem_client.h"
-
+#include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_scancode.h>
+
+#include <format>
+
+#include "vigem_client.h"
 
 namespace {
 
@@ -58,22 +61,22 @@ uint16_t JoystickButtonMap(uint16_t button) {
 }
 
 uint16_t JoystickHatMap(uint8_t hat) {
-  switch (hat) {
-    case VhidGamepadHat::UP:
+  switch (static_cast<CgvhidGamepadHat>(hat)) {
+    case CgvhidGamepadHat::kUp:
       return XINPUT_GAMEPAD_DPAD_UP;
-    case VhidGamepadHat::RIGHTUP:
+    case CgvhidGamepadHat::kRightUp:
       return XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
-    case VhidGamepadHat::RIGHT:
+    case CgvhidGamepadHat::kRight:
       return XINPUT_GAMEPAD_DPAD_RIGHT;
-    case VhidGamepadHat::RIGHTDOWN:
+    case CgvhidGamepadHat::kRightDown:
       return XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
-    case VhidGamepadHat::DOWN:
+    case CgvhidGamepadHat::kDown:
       return XINPUT_GAMEPAD_DPAD_DOWN;
-    case VhidGamepadHat::LEFTDOWN:
+    case CgvhidGamepadHat::kLeftDown:
       return XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
-    case VhidGamepadHat::LEFT:
+    case CgvhidGamepadHat::kLeft:
       return XINPUT_GAMEPAD_DPAD_LEFT;
-    case VhidGamepadHat::LEFTUP:
+    case CgvhidGamepadHat::kLeftUp:
       return XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
     default:
       return 0;
@@ -194,6 +197,23 @@ uint8_t ScanCodeMap(uint16_t key_code) {
       }
   }
 }
+
+// SDL mouse button to CGVHID
+CgvhidMouseButton MouseButtonMap(uint8_t sdl_button) {
+  switch (sdl_button) {
+    case SDL_BUTTON_LEFT:
+    case SDL_BUTTON_X1:
+    case SDL_BUTTON_X2:
+      return static_cast<CgvhidMouseButton>(SDL_BUTTON(sdl_button));
+    case SDL_BUTTON_MIDDLE:
+      return CgvhidMouseButton::kCgvhidMouseButtonMiddle;
+    case SDL_BUTTON_RIGHT:
+      return CgvhidMouseButton::kCgvhidMouseButtonRight;
+    default:
+      return kCgvhidMouseButtonNone;
+  }
+}
+
 }  // namespace
 
 UdpServer::UdpServer(Engine& engine,
@@ -209,24 +229,24 @@ UdpServer::UdpServer(Engine& engine,
     disable_keys_[e] = true;
   }
 
-  if (KeyboardReplay::CGVHID == keyboard_replay) {
+  if (KeyboardReplay::kCgvhid == keyboard_replay) {
     cgvhid_client_.Init(0, 0);
     int error_code = cgvhid_client_.KeyboardReset();
     if (0 != error_code) {
-      keyboard_replay = KeyboardReplay::NONE;
+      keyboard_replay = KeyboardReplay::kNone;
       APP_ERROR() << "KeyboardReset() failed with " << error_code << '\n';
     }
   }
 
-  if (GamepadReplay::CGVHID == gamepad_replay) {
+  if (GamepadReplay::kCgvhid == gamepad_replay) {
     // Not ready
-    gamepad_replay = GamepadReplay::NONE;
-  } else if (GamepadReplay::VIGEM == gamepad_replay) {
+    gamepad_replay = GamepadReplay::kNone;
+  } else if (GamepadReplay::kVigem == gamepad_replay) {
     vigem_client_ = std::make_shared<ViGEmClient>();
     if (nullptr != vigem_client_->GetHandle()) {
       vigem_target_x360_ = vigem_client_->CreateController();
     } else {
-      gamepad_replay = GamepadReplay::NONE;
+      gamepad_replay = GamepadReplay::kNone;
       APP_ERROR() << "Initialize ViGEmClient failed!\n";
     }
   }
@@ -245,7 +265,7 @@ void UdpServer::OnRead(const boost::system::error_code& ec,
     return Fail(ec, "receive_from");
   }
 
-  if (bytes_transferred >= sizeof(ControlBase)) {
+  if (bytes_transferred >= sizeof(regame::ControlBase)) {
     OnControlEvent(bytes_transferred);
   }
   Read();
@@ -255,43 +275,60 @@ void UdpServer::OnWrite(const boost::system::error_code& ec,
                         std::size_t bytes_transferred) {}
 
 void UdpServer::OnControlEvent(std::size_t bytes_transferred) noexcept {
-  auto control_element = reinterpret_cast<ControlElement*>(recv_buffer_.data());
-  switch (static_cast<ControlType>(control_element->base.type)) {
-    case ControlType::KEYBOARD:
+  auto control_element =
+      reinterpret_cast<regame::ControlElement*>(recv_buffer_.data());
+  switch (static_cast<regame::ControlType>(control_element->base.type)) {
+    case regame::ControlType::kKeyboard:
       OnKeyboardEvent(bytes_transferred, control_element);
       break;
-    case ControlType::KEYBOARD_VK:
+    case regame::ControlType::kKeyboardVk:
       OnKeyboardVkEvent(bytes_transferred, control_element);
       break;
-    case ControlType::GAMEPAD_AXIS:
+    case regame::ControlType::kAbsoluteMouseMove:
+      break;
+    case regame::ControlType::kAbsoluteMouseButton:
+      break;
+    case regame::ControlType::kAbsoluteMouseWheel:
+      break;
+    case regame::ControlType::kRelativeMouseMove:
+      OnRelativeMouseMoveEvent(bytes_transferred, control_element);
+      break;
+    case regame::ControlType::kRelativeMouseButton:
+      OnRelativeMouseButtonEvent(bytes_transferred, control_element);
+      break;
+    case regame::ControlType::kRelativeMouseWheel:
+      OnRelativeMouseWheelEvent(bytes_transferred, control_element);
+      break;
+    case regame::ControlType::kGamepadAxis:
       OnGamepadAxisEvent(bytes_transferred, control_element);
       break;
-    case ControlType::GAMEPAD_BUTTON:
+    case regame::ControlType::kGamepadButton:
       OnGamepadButtonEvent(bytes_transferred, control_element);
       break;
-    case ControlType::JOYSTICK_AXIS:
+    case regame::ControlType::kJoystickAxis:
       // cgc old version use JOYSTICK
       OnJoystickAxisEvent(bytes_transferred, control_element);
       break;
-    case ControlType::JOYSTICK_BUTTON:
+    case regame::ControlType::kJoystickButton:
       // cgc old version use JOYSTICK
       OnJoystickButtonEvent(bytes_transferred, control_element);
       break;
-    case ControlType::JOYSTICK_HAT:
+    case regame::ControlType::kJoystickHat:
       // cgc old version use JOYSTICK
       OnJoystickHatEvent(bytes_transferred, control_element);
       break;
   }
 }
 
-void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
-                                ControlElement* control_element) noexcept {
+void UdpServer::OnKeyboardEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
   assert(nullptr != control_element);
 
-  if (bytes_transferred < sizeof(ControlKeyboard)) {
+  if (bytes_transferred < sizeof(regame::ControlKeyboard)) {
     return;
   }
-  if (KeyboardReplay::CGVHID == keyboard_replay_) {
+  if (KeyboardReplay::kCgvhid == keyboard_replay_) {
     uint16_t key_code = ntohs(control_element->keyboard.key_code);
     uint8_t scan_code = ScanCodeMap(key_code);
     if (KEY_NONE == scan_code) {
@@ -300,10 +337,11 @@ void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
     }
     if (disable_keys_[scan_code]) {
       APP_INFO() << "Disabled scan code: " << static_cast<int>(scan_code)
-                << '\n';
+                 << '\n';
       return;
     }
-    if (ControlButtonState::Pressed == control_element->keyboard.state) {
+    if (regame::ControlButtonState::Pressed ==
+        control_element->keyboard.state) {
       cgvhid_client_.KeyboardPress(scan_code);
     } else {
       cgvhid_client_.KeyboardRelease(scan_code);
@@ -311,21 +349,23 @@ void UdpServer::OnKeyboardEvent(std::size_t bytes_transferred,
   }
 }
 
-void UdpServer::OnKeyboardVkEvent(std::size_t bytes_transferred,
-                                  ControlElement* control_element) noexcept {
+void UdpServer::OnKeyboardVkEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
   assert(nullptr != control_element);
 
-  if (bytes_transferred < sizeof(ControlKeyboard)) {
+  if (bytes_transferred < sizeof(regame::ControlKeyboard)) {
     return;
   }
-  if (KeyboardReplay::CGVHID == keyboard_replay_) {
+  if (KeyboardReplay::kCgvhid == keyboard_replay_) {
     uint16_t key_code = ntohs(control_element->keyboard.key_code);
     if (key_code & 0xFF00) {
       APP_WARNING() << "Unknown key code: " << key_code;
       return;
     }
     // TO-DO: disable-keys
-    if (ControlButtonState::Pressed == control_element->keyboard.state) {
+    if (regame::ControlButtonState::Pressed ==
+        control_element->keyboard.state) {
       cgvhid_client_.KeyboardVkPress(static_cast<uint8_t>(key_code));
     } else {
       cgvhid_client_.KeyboardVkRelease(static_cast<uint8_t>(key_code));
@@ -333,13 +373,14 @@ void UdpServer::OnKeyboardVkEvent(std::size_t bytes_transferred,
   }
 }
 
-void UdpServer::OnJoystickAxisEvent(std::size_t bytes_transferred,
-                                    ControlElement* control_element) noexcept {
-  if (bytes_transferred < sizeof(ControlJoystickAxis)) {
+void UdpServer::OnJoystickAxisEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  if (bytes_transferred < sizeof(regame::ControlJoystickAxis)) {
     return;
   }
 
-  if (GamepadReplay::VIGEM == gamepad_replay_) {
+  if (GamepadReplay::kVigem == gamepad_replay_) {
     auto& axis = control_element->joystick_axis;
     switch (axis.axis) {
       case 0:
@@ -367,14 +408,14 @@ void UdpServer::OnJoystickAxisEvent(std::size_t bytes_transferred,
 
 void UdpServer::OnJoystickButtonEvent(
     std::size_t bytes_transferred,
-    ControlElement* control_element) noexcept {
-  if (bytes_transferred < sizeof(ControlJoystickButton)) {
+    regame::ControlElement* control_element) noexcept {
+  if (bytes_transferred < sizeof(regame::ControlJoystickButton)) {
     return;
   }
 
-  if (GamepadReplay::VIGEM == gamepad_replay_) {
+  if (GamepadReplay::kVigem == gamepad_replay_) {
     auto& button = control_element->joystick_button;
-    if (ControlButtonState::Pressed == button.state) {
+    if (regame::ControlButtonState::Pressed == button.state) {
       gamepad_state_.wButtons |= JoystickButtonMap(button.button);
     } else {
       gamepad_state_.wButtons &= ~JoystickButtonMap(button.button);
@@ -383,13 +424,14 @@ void UdpServer::OnJoystickButtonEvent(
   }
 }
 
-void UdpServer::OnJoystickHatEvent(std::size_t bytes_transferred,
-                                   ControlElement* control_element) noexcept {
-  if (bytes_transferred < sizeof(ControlJoystickHat)) {
+void UdpServer::OnJoystickHatEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  if (bytes_transferred < sizeof(regame::ControlJoystickHat)) {
     return;
   }
 
-  if (GamepadReplay::VIGEM == gamepad_replay_) {
+  if (GamepadReplay::kVigem == gamepad_replay_) {
     auto& hat = control_element->joystick_hat;
     gamepad_state_.wButtons &=
         ~(XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN |
@@ -401,13 +443,14 @@ void UdpServer::OnJoystickHatEvent(std::size_t bytes_transferred,
   }
 }
 
-void UdpServer::OnGamepadAxisEvent(std::size_t bytes_transferred,
-                                   ControlElement* control_element) noexcept {
-  if (bytes_transferred < sizeof(ControlGamepadAxis)) {
+void UdpServer::OnGamepadAxisEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  if (bytes_transferred < sizeof(regame::ControlGamepadAxis)) {
     return;
   }
 
-  if (GamepadReplay::VIGEM == gamepad_replay_) {
+  if (GamepadReplay::kVigem == gamepad_replay_) {
     auto& axis = control_element->gamepad_axis;
     auto value = ntohs(axis.value);
     switch (axis.axis) {
@@ -434,19 +477,78 @@ void UdpServer::OnGamepadAxisEvent(std::size_t bytes_transferred,
   }
 }
 
-void UdpServer::OnGamepadButtonEvent(std::size_t bytes_transferred,
-                                     ControlElement* control_element) noexcept {
-  if (bytes_transferred < sizeof(ControlGamepadButton)) {
+void UdpServer::OnGamepadButtonEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  if (bytes_transferred < sizeof(regame::ControlGamepadButton)) {
     return;
   }
 
-  if (GamepadReplay::VIGEM == gamepad_replay_) {
+  if (GamepadReplay::kVigem == gamepad_replay_) {
     auto& button = control_element->gamepad_button;
-    if (ControlButtonState::Pressed == button.state) {
+    if (regame::ControlButtonState::Pressed == button.state) {
       gamepad_state_.wButtons |= GamepadButtonMap(button.button);
     } else {
       gamepad_state_.wButtons &= ~GamepadButtonMap(button.button);
     }
     vigem_target_x360_->SetState(gamepad_state_);
+  }
+}
+
+void UdpServer::OnRelativeMouseButtonEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  assert(nullptr != control_element);
+  if (bytes_transferred < sizeof(regame::ControlRelativeMouseButton)) {
+    return;
+  }
+  DEBUG_VERBOSE(std::format(
+      "{}: state {}, button {}\n", __func__,
+      static_cast<int>(control_element->relative_mouse_button.state),
+      control_element->relative_mouse_button.button));
+  if (KeyboardReplay::kCgvhid == keyboard_replay_) {
+    CgvhidMouseButton button =
+        MouseButtonMap(control_element->relative_mouse_button.button);
+    if (kCgvhidMouseButtonNone == button) {
+      return;
+    }
+    if (regame::ControlButtonState::Pressed ==
+        control_element->relative_mouse_button.state) {
+      cgvhid_client_.RelativeMouseButtonPress(button);
+    } else {
+      cgvhid_client_.RelativeMouseButtonRelease(button);
+    }
+  }
+}
+
+void UdpServer::OnRelativeMouseMoveEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  assert(nullptr != control_element);
+  if (bytes_transferred < sizeof(regame::ControlRelativeMouseMove)) {
+    return;
+  }
+  DEBUG_VERBOSE(std::format("{}: ({}, {})\n", __func__,
+                            control_element->relative_mouse_move.x,
+                            control_element->relative_mouse_move.y));
+  if (KeyboardReplay::kCgvhid == keyboard_replay_) {
+    cgvhid_client_.RelativeMouseMove(control_element->relative_mouse_move.x,
+                                     control_element->relative_mouse_move.y);
+  }
+}
+
+void UdpServer::OnRelativeMouseWheelEvent(
+    std::size_t bytes_transferred,
+    regame::ControlElement* control_element) noexcept {
+  assert(nullptr != control_element);
+  if (bytes_transferred < sizeof(regame::ControlRelativeMouseWheel)) {
+    return;
+  }
+  DEBUG_VERBOSE(std::format("{}: ({}, {})\n", __func__,
+                            control_element->relative_mouse_wheel.x,
+                            control_element->relative_mouse_wheel.y));
+  if (KeyboardReplay::kCgvhid == keyboard_replay_) {
+    cgvhid_client_.RelativeMouseWheel(control_element->relative_mouse_wheel.x,
+                                      control_element->relative_mouse_wheel.y);
   }
 }

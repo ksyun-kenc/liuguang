@@ -168,7 +168,7 @@ void Engine::NotifyRestartVideoEncoder() noexcept {
     buffer.resize(sizeof(regame::NetPacketHeader));
     auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
     header->version = regame::kNetPacketCurrentVersion;
-    header->type = regame::NetPacketType::ResetVideo;
+    header->type = regame::NetPacketType::kResetVideo;
     header->size = 0;
     ws_server_->Send(std::move(buffer));
   }

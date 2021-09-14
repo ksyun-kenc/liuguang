@@ -16,62 +16,103 @@
 
 #pragma once
 
-#pragma pack(push, 1)
-enum class ControlType : uint8_t {
-  KEYBOARD = 0,
-  KEYBOARD_VK,
+namespace regame {
 
-  MOUSE = 10,
+constexpr std::uint8_t kCurrentControlVersion = 0;
 
-  GAMEPAD_AXIS = 20,
-  GAMEPAD_BUTTON,
+#pragma pack(push, 2)
+enum class ControlType : std::uint8_t {
+  kKeyboard = 0,
+  kKeyboardVk,
 
-  // use GAMEPAD instead of JOYSTICK
-  JOYSTICK_AXIS = 30,
-  JOYSTICK_BALL,
-  JOYSTICK_BUTTON,
-  JOYSTICK_HAT,
+  kAbsoluteMouseMove = 10,
+  kAbsoluteMouseButton,
+  kAbsoluteMouseWheel,
+  kRelativeMouseMove,
+  kRelativeMouseButton,
+  kRelativeMouseWheel,
 
-  PING = 40,
-  PONG
+  kGamepadAxis = 20,
+  kGamepadButton,
+
+  kJoystickAxis = 30,  // use GAMEPAD instead of JOYSTICK
+  kJoystickBall,
+  kJoystickButton,
+  kJoystickHat,
+
+  kPing = 40,
+  kPong
 };
 
-enum class ControlButtonState : uint8_t { Released = 0, Pressed = 1 };
+enum class ControlButtonState : std::uint8_t { Released = 0, Pressed = 1 };
 
 struct ControlBase {
+  std::uint8_t version;
   ControlType type;
-  uint32_t timestamp;
+  std::uint32_t timestamp;
 };
 
 struct ControlPing : public ControlBase {};
 
 struct ControlKeyboard : public ControlBase {
-  uint16_t key_code;
+  std::uint16_t key_code;
   ControlButtonState state;
 };
 
+struct ControlAbsoluteMouseButton : public ControlBase {
+  std::uint8_t button;
+  ControlButtonState state;
+  std::uint16_t x;
+  std::uint16_t y;
+};
+
+struct ControlAbsoluteMouseMove : public ControlBase {
+  std::uint16_t x;
+  std::uint16_t y;
+};
+
+struct ControlAbsoluteMouseWheel : public ControlBase {
+  std::uint16_t x;
+  std::uint16_t y;
+};
+
+struct ControlRelativeMouseButton : public ControlBase {
+  std::uint8_t button;
+  ControlButtonState state;
+};
+
+struct ControlRelativeMouseMove : public ControlBase {
+  std::int8_t x;
+  std::int8_t y;
+};
+
+struct ControlRelativeMouseWheel : public ControlBase {
+  std::int8_t x;
+  std::int8_t y;
+};
+
 struct ControlJoystickAxis : public ControlBase {
-  int32_t which;
-  uint8_t axis;
-  uint16_t value; // -32768(0x8000) to 32767(0x7fff)
+  std::uint8_t which;
+  std::uint8_t axis;
+  std::uint16_t value;  // -32768(0x8000) to 32767(0x7fff)
 };
 
 struct ControlJoystickBall : public ControlBase {
-  int32_t which;
-  uint8_t ball;
-  int16_t x;
-  int16_t y;
+  std::uint8_t which;
+  std::uint8_t ball;
+  std::int16_t x;
+  std::int16_t y;
 };
 
 struct ControlJoystickButton : public ControlBase {
-  int32_t which;
-  uint8_t button;
+  std::uint8_t which;
+  std::uint8_t button;
   ControlButtonState state;
 };
 
 struct ControlJoystickHat : public ControlBase {
-  int32_t which;
-  uint8_t hat;
+  std::uint8_t which;
+  std::uint8_t hat; // CgvhidGamepadHat
 };
 
 struct ControlGamepadAxis : public ControlJoystickAxis {};
@@ -87,5 +128,13 @@ union ControlElement {
   ControlJoystickHat joystick_hat;
   ControlGamepadAxis gamepad_axis;
   ControlGamepadButton gamepad_button;
+  ControlAbsoluteMouseButton absolute_mouse_button;
+  ControlAbsoluteMouseMove absolute_mouse_move;
+  ControlAbsoluteMouseWheel absolute_mouse_wheel;
+  ControlRelativeMouseButton relative_mouse_button;
+  ControlRelativeMouseMove relative_mouse_move;
+  ControlRelativeMouseWheel relative_mouse_wheel;
 };
 #pragma pack(pop)
+
+}  // namespace regame

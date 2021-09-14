@@ -81,10 +81,9 @@ constexpr std::array<std::string_view, 3> kValidHardwareEncoders = {
     "amf", "nvenc", "qsv"};
 constexpr std::array<std::string_view, 3> kValidAmfPreset = {
     "speed", "balanced", "quality"};
-constexpr std::array<std::string_view, 19> kValidNvencPreset = {
-    "default", "slow", "medium", "fast",     "hp",         "hq", "bd",
-    "ll",      "llhq", "llhp",   "lossless", "losslesshp", "p1", "p2",
-    "p3",      "p4",   "p5",     "p6",       "p7"};
+constexpr std::array<std::string_view, 10> kValidNvencPreset = {
+    // NVENC_HAVE_NEW_PRESETS: slow=p7, medium=p4, fast=p1
+    "p1", "p2", "p3", "p4", "p5", "p6", "p7", "slow", "medium", "fast"};
 constexpr std::array<std::string_view, 7> kValidQsvPreset = {
     "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"};
 constexpr std::array<std::string_view, 10> kValidPreset = {
@@ -369,7 +368,7 @@ int main(int argc, char* argv[]) {
         break;
       case HardwareEncoder::NVENC:
         if (video_preset.empty()) {
-          video_preset = "llhp";
+          video_preset = "p1";
         } else if (kValidNvencPreset.cend() ==
                    std::find(kValidNvencPreset.cbegin(),
                              kValidNvencPreset.cend(), video_preset)) {

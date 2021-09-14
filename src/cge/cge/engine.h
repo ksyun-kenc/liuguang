@@ -5,9 +5,9 @@
 #include "audio_encoder.h"
 #include "video_encoder.h"
 
-enum class KeyboardReplay { NONE = 0, CGVHID };
+enum class KeyboardReplay { kNone = 0, kCgvhid };
 
-enum class GamepadReplay { NONE = 0, CGVHID, VIGEM };
+enum class GamepadReplay { kNone = 0, kCgvhid, kVigem };
 
 class Engine {
  public:

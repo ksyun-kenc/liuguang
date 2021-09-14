@@ -61,19 +61,28 @@ class UdpServer : public std::enable_shared_from_this<UdpServer> {
   void OnControlEvent(std::size_t bytes_transferred) noexcept;
 
   void OnKeyboardEvent(std::size_t bytes_transferred,
-                       ControlElement* control_element) noexcept;
+                       regame::ControlElement* control_element) noexcept;
   void OnKeyboardVkEvent(std::size_t bytes_transferred,
-                         ControlElement* control_element) noexcept;
+                         regame::ControlElement* control_element) noexcept;
   void OnJoystickAxisEvent(std::size_t bytes_transferred,
-                           ControlElement* control_element) noexcept;
+                           regame::ControlElement* control_element) noexcept;
   void OnJoystickButtonEvent(std::size_t bytes_transferred,
-                             ControlElement* control_element) noexcept;
+                             regame::ControlElement* control_element) noexcept;
   void OnJoystickHatEvent(std::size_t bytes_transferred,
-                          ControlElement* control_element) noexcept;
+                          regame::ControlElement* control_element) noexcept;
   void OnGamepadAxisEvent(std::size_t bytes_transferred,
-                          ControlElement* control_element) noexcept;
+                          regame::ControlElement* control_element) noexcept;
   void OnGamepadButtonEvent(std::size_t bytes_transferred,
-                            ControlElement* control_element) noexcept;
+                            regame::ControlElement* control_element) noexcept;
+  void OnRelativeMouseButtonEvent(
+      std::size_t bytes_transferred,
+      regame::ControlElement* control_element) noexcept;
+  void OnRelativeMouseMoveEvent(
+      std::size_t bytes_transferred,
+      regame::ControlElement* control_element) noexcept;
+  void OnRelativeMouseWheelEvent(
+      std::size_t bytes_transferred,
+      regame::ControlElement* control_element) noexcept;
 
  private:
   Engine& engine_;
