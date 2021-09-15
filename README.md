@@ -268,7 +268,7 @@ Test steps:
 
 - Run `video_source` on server.
 
-- Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
+- Run `cgc -r <server_address>` on anther PC as long as it can access the server over the network.
 
 Test with games:
 
@@ -282,7 +282,7 @@ Assume you want to test USF4.
 
 - Run `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll` on server.
 
-- Run `cgc --server=<server_address>` on anther PC as long as it can access the server over the network.
+- Run `cgc -r <server_address>` on anther PC as long as it can access the server over the network.
 
 **Note** that only support D3D9, D3D11, D3D12 games now.
 

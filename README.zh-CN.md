@@ -264,7 +264,7 @@ git submodule update --init
 
 - 服务器上运行 `video_source`。
 
-- 客户端上运行 `cgc --server=<server_address>`，请把 `<server_address>` 替换为服务器地址。
+- 客户端上运行 `cgc -r <server_address>`，请把 `<server_address>` 替换为服务器地址。
 
 测试游戏：
 
@@ -278,7 +278,7 @@ git submodule update --init
 
 - 服务器上运行 `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll`，其中 `-e SSFIV.exe` 处要填好正确的路径名。
 
-- 客户端上运行 `cgc --server=<server_address>`。
+- 客户端上运行 `cgc -r <server_address>`。
 
 **注意** 目前只支持 D3D9、D3D11、D3D12 游戏。（D3D10 游戏没测试过，但可能也支持。）
 
