@@ -30,7 +30,6 @@
     <ClCompile Include="..\..\cgc\arena.cpp" />
     <ClCompile Include="..\..\cgc\audio_player.cpp" />
     <ClCompile Include="..\..\cgc\cgc.cpp" />
-    <ClCompile Include="..\..\cgc\udp_client.cpp" />
     <ClCompile Include="..\..\cgc\engine.cpp" />
     <ClCompile Include="..\..\cgc\frame_pool.cpp" />
     <ClCompile Include="..\..\cgc\frame_queue.cpp" />
@@ -46,12 +45,11 @@
     </ClCompile>
     <ClCompile Include="..\..\cgc\stream_buffer.cpp" />
     <ClCompile Include="..\..\cgc\video_player.cpp" />
-    <ClCompile Include="..\..\cgc\ws_client.cpp" />
+    <ClCompile Include="..\..\cgc\game_client.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cgc\arena.h" />
     <ClInclude Include="..\..\cgc\audio_player.h" />
-    <ClInclude Include="..\..\cgc\udp_client.h" />
     <ClInclude Include="..\..\cgc\engine.h" />
     <ClInclude Include="..\..\cgc\ffmpeg.h" />
     <ClInclude Include="..\..\cgc\frame_pool.h" />
@@ -62,7 +60,7 @@
     <ClInclude Include="..\..\cgc\pch.h" />
     <ClInclude Include="..\..\cgc\stream_buffer.h" />
     <ClInclude Include="..\..\cgc\video_player.h" />
-    <ClInclude Include="..\..\cgc\ws_client.h" />
+    <ClInclude Include="..\..\cgc\game_client.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
