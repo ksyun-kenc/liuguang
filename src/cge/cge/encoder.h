@@ -25,27 +25,28 @@ constexpr size_t kInitialBufferSize = 0x100000;  // 1MB
 
 class Encoder {
  public:
-  virtual regame::NetPacketType GetType() const noexcept = 0;
-
   AVCodecID GetCodecID() const noexcept { return codec_id_; }
   const std::string& GetHeader() const noexcept { return header_; }
+  regame::ServerAction GetServerAction() const noexcept { return action_; }
 
-  void SaveHeader(const uint8_t* buffer, int size) noexcept {
+  void SaveHeader(std::span<std::uint8_t> buffer) noexcept {
     if (header_.empty()) {
-      header_.resize(sizeof(regame::NetPacketHeader));
-      auto header = reinterpret_cast<regame::NetPacketHeader*>(header_.data());
-      header->version = regame::kNetPacketCurrentVersion;
-      header->type = GetType();
-      header->size = htonl(size);
+      header_.resize(sizeof(regame::PackageHead) +
+                     sizeof(regame::ServerPacket));
+      auto head = reinterpret_cast<regame::PackageHead*>(header_.data());
+      head->size =
+          htonl(static_cast<int>(sizeof(regame::ServerPacket) + buffer.size()));
+      auto packet = reinterpret_cast<regame::ServerPacket*>(head + 1);
+      packet->action = GetServerAction();
     } else {
-      auto header = reinterpret_cast<regame::NetPacketHeader*>(header_.data());
-      header->size = htonl(ntohl(header->size) + size);
+      auto head = reinterpret_cast<regame::PackageHead*>(header_.data());
+      head->size = htonl(ntohl(head->size) + static_cast<int>(buffer.size()));
     }
-    header_.append(reinterpret_cast<const char*>(buffer), size);
+    header_.append(reinterpret_cast<const char*>(buffer.data()), buffer.size());
   }
 
  protected:
-  Encoder() = default;
+  Encoder(regame::ServerAction action) : action_(action) {}
   ~Encoder() = default;
 
   void FreeHeader() noexcept { header_.clear(); }
@@ -54,4 +55,5 @@ class Encoder {
  private:
   AVCodecID codec_id_ = AV_CODEC_ID_NONE;
   std::string header_;
+  regame::ServerAction action_;
 };

@@ -325,10 +325,16 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
   if (should_update) {
     SharedVideoFrameInfo* svfi = shared_frame_info_;
     svfi->timestamp = tick.QuadPart;
-    svfi->type = VideoFrameType::YUV;
+    svfi->type = VideoFrameType::kYuv;
     svfi->width = desc.Width;
     svfi->height = desc.Height;
     svfi->format = desc.Format;
+    HWND window = nullptr;
+    hr = render_data->swapChain->GetHwnd(&window);
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!GetHwnd(), #0x%08X\n", hr);
+    }
+    svfi->window = reinterpret_cast<std::uint64_t>(window);
   }
 
   CComPtr<IDXGISurface> surface;

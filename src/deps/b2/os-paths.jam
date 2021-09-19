@@ -17,11 +17,11 @@ import path ;
 
 if [ os.name ] = LINUX {
   if [ os.platform ] = ARM {
-    include-paths = /usr/include/aarch64-linux-gnu ;
-    lib-paths = /usr/lib/aarch64-linux-gnu ;
+    .include-paths = /usr/include/aarch64-linux-gnu ;
+    .lib-paths = /usr/lib/aarch64-linux-gnu ;
   } else {
-    include-paths = /usr/local/include /usr/include ;
-    lib-paths = /usr/local/lib /usr/lib ;
+    .include-paths = /usr/local/include /usr/include ;
+    .lib-paths = /usr/local/lib /usr/lib ;
   }
 } else if [ os.name ] = MACOSX {
   if [ os.platform ] = ARM {

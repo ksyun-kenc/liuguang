@@ -71,7 +71,7 @@ class CgvhidClient {
 
   int RelativeMouseButtonPress(CgvhidMouseButton button) noexcept;
   int RelativeMouseButtonRelease(CgvhidMouseButton button) noexcept;
-  int RelativeMouseMove(std::int8_t x, std::int8_t y) noexcept;
+  int RelativeMouseMove(std::int16_t x, std::int16_t y) noexcept;
   int RelativeMouseWheel(std::int8_t hwheel, std::int8_t vwheel) noexcept;
 
  private:

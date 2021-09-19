@@ -18,16 +18,13 @@
 
 #include "engine.h"
 
-#include "udp_server.h"
-#include "ws_server.h"
-
 void Engine::Run(tcp::endpoint ws_endpoint,
-                 udp::endpoint udp_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
-                 std::vector<uint8_t> disable_keys,
-                 KeyboardReplay keyboard_replay,
+                 const std::vector<uint8_t>& disable_keys,
                  GamepadReplay gamepad_replay,
+                 KeyboardReplay keyboard_replay,
+                 MouseReplay mouse_replay,
                  uint64_t video_bitrate,
                  AVCodecID video_codec_id,
                  HardwareEncoder hardware_encoder,
@@ -47,16 +44,11 @@ void Engine::Run(tcp::endpoint ws_endpoint,
       return;
     }
 
-    if (0 != ws_endpoint.port()) {
-      ws_server_ = std::make_shared<WsServer>(*this, ws_endpoint);
-      APP_INFO() << "WebSocket server on: " << ws_endpoint << '\n';
-      ws_server_->Run();
-    }
-    udp_server_ = std::make_shared<UdpServer>(
-        *this, udp_endpoint, std::move(disable_keys),
-        std::move(keyboard_replay), std::move(gamepad_replay));
-    APP_INFO() << "UDP Server on: " << udp_endpoint << '\n';
-    udp_server_->Run();
+    game_service_ =
+        std::make_shared<GameService>(ws_endpoint, disable_keys, gamepad_replay,
+                                      keyboard_replay, mouse_replay);
+    APP_INFO() << "WebSocket server on: " << ws_endpoint << '\n';
+    game_service_->Run();
   } catch (std::exception& e) {
     APP_FATAL() << e.what() << '\n';
     return;
@@ -88,8 +80,7 @@ void Engine::Stop() {
   if (!running_) {
     return;
   }
-  ws_server_->Stop(false);
-  udp_server_->Stop();
+  game_service_->Stop(false);
   try {
     ioc_.stop();
     running_ = false;
@@ -112,36 +103,28 @@ void Engine::EncoderStop() {
   video_encoder_.Stop();
 }
 
-int Engine::OnWriteHeader(void* opaque,
-                          uint8_t* buffer,
-                          int buffer_size) noexcept {
-#if _DEBUG
-  APP_TRACE() << __func__ << ": " << buffer_size << '\n';
-#endif
+int Engine::OnWriteHeader(void* opaque, uint8_t* data, int size) noexcept {
   auto ei = static_cast<Encoder*>(opaque);
-  ei->SaveHeader(buffer, buffer_size);
+  ei->SaveHeader(std::span(data, size));
   return 0;
 }
 
-int Engine::OnWritePacket(void* opaque,
-                          uint8_t* buffer,
-                          int buffer_size) noexcept {
-#if _DEBUG
-  APP_TRACE() << __func__ << ": " << buffer_size << '\n';
-#endif
-  return Engine::GetInstance().WritePacket(opaque, buffer, buffer_size);
+int Engine::OnWritePacket(void* opaque, uint8_t* data, int size) noexcept {
+  return Engine::GetInstance().WritePacket(opaque, std::span(data, size));
 }
 
-int Engine::WritePacket(void* opaque, uint8_t* body, int body_size) noexcept {
+int Engine::WritePacket(void* opaque, std::span<uint8_t> packet) noexcept {
   auto ei = static_cast<Encoder*>(opaque);
   std::string buffer;
-  buffer.resize(sizeof(regame::NetPacketHeader) + body_size);
-  auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
-  header->version = regame::kNetPacketCurrentVersion;
-  header->type = ei->GetType();
-  header->size = htonl(body_size);
-  memcpy(buffer.data() + sizeof(regame::NetPacketHeader), body, body_size);
-  ws_server_->Send(std::move(buffer));
+  buffer.resize(sizeof(regame::PackageHead) + sizeof(regame::ServerPacket) +
+                packet.size());
+  auto head = reinterpret_cast<regame::PackageHead*>(buffer.data());
+  head->size =
+      htonl(static_cast<int>(sizeof(regame::ServerPacket) + packet.size()));
+  auto server_packet = reinterpret_cast<regame::ServerPacket*>(head + 1);
+  server_packet->action = ei->GetServerAction();
+  memcpy(server_packet + 1, packet.data(), packet.size());
+  game_service_->Send(std::move(buffer));
   return 0;
 }
 
@@ -163,17 +146,17 @@ void Engine::SetPresentFlag(bool donot_present) {
 void Engine::NotifyRestartAudioEncoder() noexcept {}
 
 void Engine::NotifyRestartVideoEncoder() noexcept {
-  if (ws_server_) {
+  if (game_service_) {
     std::string buffer;
-    buffer.resize(sizeof(regame::NetPacketHeader));
-    auto header = reinterpret_cast<regame::NetPacketHeader*>(buffer.data());
-    header->version = regame::kNetPacketCurrentVersion;
-    header->type = regame::NetPacketType::kResetVideo;
-    header->size = 0;
-    ws_server_->Send(std::move(buffer));
+    buffer.resize(sizeof(regame::PackageHead) + sizeof(regame::ServerPacket));
+    auto head = reinterpret_cast<regame::PackageHead*>(buffer.data());
+    head->size = htonl(sizeof(regame::ServerPacket));
+    auto packet = reinterpret_cast<regame::ServerPacket*>(head + 1);
+    packet->action = regame::ServerAction::kResetVideo;
+    game_service_->Send(std::move(buffer));
   }
 
-  net::dispatch(ioc_, boost::bind(&Engine::RestartVideoEncoder, this));
+  net::dispatch(ioc_, std::bind(&Engine::RestartVideoEncoder, this));
 }
 
 void Engine::RestartVideoEncoder() noexcept {

@@ -26,7 +26,10 @@ project cge
     <include>../../cgvhid/include
     <include>../../deps/include
     <include>../../deps/ViGEmClient/include
+    <target-os>windows,<toolset>msvc:<find-static-library>Setupapi
     <library>/boost//date_time
+    <library>/boost//log
+    <library>/boost//log_setup
     <library>/boost//program_options
     <library>/boost//system
     <library>/ffmpeg//avutil
@@ -57,9 +60,10 @@ exe cge
     audio_resampler.cpp
     cge.cpp
     engine.cpp
+    game_control.cpp
+    game_service.cpp
+    game_session.cpp
     sound_capturer.cpp
-    udp_server.cpp
     video_encoder.cpp
     vigem_client.cpp
-    ws_server.cpp
   ;

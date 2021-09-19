@@ -135,7 +135,7 @@ int VideoEncoder::EncodingThread() {
              << saved_frame_info_.height
              << ", format: " << saved_frame_info_.format << '\n';
 
-  if (VideoFrameType::YUV == saved_frame_info_.type) {
+  if (VideoFrameType::kYuv == saved_frame_info_.type) {
     size_t yuv_size = 4 * saved_frame_info_.width * saved_frame_info_.height;
     size_t frames_size = sizeof(SharedVideoYuvFrames) +
                          sizeof(PackedVideoYuvFrame) * kNumberOfSharedFrames +
@@ -436,7 +436,7 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
 
   int error_code = 0;
 
-  if (VideoFrameType::YUV == saved_frame_info_.type) {
+  if (VideoFrameType::kYuv == saved_frame_info_.type) {
     auto yuv_frames =
         reinterpret_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
     auto yuv_frame = reinterpret_cast<PackedVideoYuvFrame*>(yuv_frames->data);

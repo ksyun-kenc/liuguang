@@ -84,10 +84,11 @@ class CaptureD3d9 {
       SharedVideoFrameInfo* svfi =
           CaptureYuv::GetInstance().GetSharedVideoFrameInfo();
       svfi->timestamp = tick.QuadPart;
-      svfi->type = VideoFrameType::YUV;
+      svfi->type = VideoFrameType::kYuv;
       svfi->width = desc.Width;
       svfi->height = desc.Height;
       svfi->format = desc.Format;
+      svfi->window = reinterpret_cast<std::uint64_t>(window_);
     }
 
     VideoFrameStats stats = {};
@@ -258,6 +259,8 @@ class CaptureD3d9 {
       return false;
     }
 
+    window_ = pp.hDeviceWindow;
+
     CComPtr<IDirect3DSurface9> back_buffer;
     HRESULT hr = device_->GetRenderTarget(0, &back_buffer);
     if (FAILED(hr)) {
@@ -292,6 +295,7 @@ class CaptureD3d9 {
   uint32_t cx_ = 0;
   uint32_t cy_ = 0;
   CComPtr<IDirect3DSurface9> copy_surface_;
+  HWND window_ = nullptr;
 };
 
 CaptureD3d9 capture;

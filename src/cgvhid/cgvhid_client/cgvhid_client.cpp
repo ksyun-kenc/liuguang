@@ -402,11 +402,12 @@ int CgvhidClient::AbsoluteMouseButtonRelease(CgvhidMouseButton button,
 }
 
 int CgvhidClient::AbsoluteMouseMove(uint16_t x, uint16_t y) noexcept {
-  return cgvhid_.AbsoluteMouseUpdate(0, x, y, 0, 0);
+  return cgvhid_.AbsoluteMouseUpdate(mouse_state_.buttons, x, y, 0, 0);
 }
 
 int CgvhidClient::AbsoluteMouseWheel(int8_t hwheel, int8_t vwheel) noexcept {
-  return cgvhid_.AbsoluteMouseUpdate(0, 0, 0, hwheel, vwheel);
+  return cgvhid_.AbsoluteMouseUpdate(mouse_state_.buttons, 0, 0, hwheel,
+                                     vwheel);
 }
 
 int CgvhidClient::RelativeMouseButtonPress(CgvhidMouseButton button) noexcept {
@@ -420,10 +421,11 @@ int CgvhidClient::RelativeMouseButtonRelease(
   return cgvhid_.RelativeMouseUpdate(mouse_state_.buttons, 0, 0, 0, 0);
 }
 
-int CgvhidClient::RelativeMouseMove(int8_t x, int8_t y) noexcept {
-  return cgvhid_.RelativeMouseUpdate(0, x, y, 0, 0);
+int CgvhidClient::RelativeMouseMove(int16_t x, int16_t y) noexcept {
+  return cgvhid_.RelativeMouseUpdate(mouse_state_.buttons, x, y, 0, 0);
 }
 
 int CgvhidClient::RelativeMouseWheel(int8_t hwheel, int8_t vwheel) noexcept {
-  return cgvhid_.RelativeMouseUpdate(0, 0, 0, hwheel, vwheel);
+  return cgvhid_.RelativeMouseUpdate(mouse_state_.buttons, 0, 0, hwheel,
+                                     vwheel);
 }

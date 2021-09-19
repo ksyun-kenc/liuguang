@@ -24,9 +24,11 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <queue>
+#include <span>
 #include <string>
 #include <thread>
 

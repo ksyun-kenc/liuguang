@@ -354,8 +354,8 @@ class Cgvhid {
                           std::uint8_t hwheel,
                           std::uint8_t vwheel) noexcept;
   int RelativeMouseUpdate(std::uint8_t button,
-                          std::int8_t x,
-                          std::int8_t y,
+                          std::int16_t x,
+                          std::int16_t y,
                           std::uint8_t hwheel,
                           std::uint8_t vwheel) noexcept;
 

@@ -313,6 +313,7 @@
     <ClCompile Include="audio_resampler.cpp" />
     <ClCompile Include="cge.cpp" />
     <ClCompile Include="engine.cpp" />
+    <ClCompile Include="game_control.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='MTRelease|Win32'">Create</PrecompiledHeader>
@@ -322,10 +323,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="sound_capturer.cpp" />
-    <ClCompile Include="udp_server.cpp" />
     <ClCompile Include="video_encoder.cpp" />
     <ClCompile Include="vigem_client.cpp" />
-    <ClCompile Include="ws_server.cpp" />
+    <ClCompile Include="game_service.cpp" />
+    <ClCompile Include="game_session.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.hpp" />
@@ -334,14 +335,15 @@
     <ClInclude Include="encoder.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="ffmpeg.h" />
+    <ClInclude Include="game_control.h" />
     <ClInclude Include="log.hpp" />
     <ClInclude Include="net.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="sound_capturer.h" />
-    <ClInclude Include="udp_server.h" />
     <ClInclude Include="video_encoder.h" />
     <ClInclude Include="vigem_client.h" />
-    <ClInclude Include="ws_server.h" />
+    <ClInclude Include="game_service.h" />
+    <ClInclude Include="game_session.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
