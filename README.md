@@ -61,7 +61,7 @@ You can launch `cge` directly, which will apply default options.
 Run `cge --help` to see all options:
 
 ```
-KSYUN Edge Cloud Gaming Engine v0.3 Beta
+KSYUN Edge Cloud Gaming Engine v0.4 Beta
 
 Usage:
   -h [ --help ]                  Produce help message
@@ -69,39 +69,32 @@ Usage:
   --audio-codec arg (=libopus)   Set audio codec. Select one of {libopus, aac,
                                  opus}
   --bind-address arg (=::)       Set bind address for listening. eg: 0.0.0.0
-  --control-port arg (=8080)     Set the UDP port for control flow
   --disable-keys arg             Disable scan codes. eg: 226,230 disable ALT;
                                  227,231 disable WIN
   --donot-present arg (=0)       Tell cgh don't present
   --hardware-encoder arg         Set video hardware encoder. Select one of
                                  {amf, nvenc, qsv}
-  --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
-                                 {none, cgvhid}
   --gamepad-replay arg (=none)   Set gamepad replay method. Select one of
                                  {none, cgvhid, vigem}
+  --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
+                                 {none, cgvhid}
+  --mouse-replay arg (=none)     Set mouse replay method. Select one of {none,
+                                 cgvhid}
   --log-level arg (=info)        Set logging severity level. Select one of
                                  {trace, debug, info, warning, error, fatal}
-  --stream-port arg (=8080)      Set the websocket port for streaming, if port
-                                 is 0, disable stream out via network. Capture
-                                 and encode picture directly at startup but not
-                                 on connection establishing, and never stop
-                                 this until cge exit. stream port is not same
-                                 as control port, this port is only for media
-                                 output.
+  -p [ --port ] arg (=8080)      Set the service port
   --video-bitrate arg (=1000000) Set video bitrate
   --video-codec arg (=h264)      Set video codec. Select one of {h264, h265,
                                  hevc}, h265 == hevc
   --video-gop arg (=180)         Set video gop. [1, 500]
   --video-preset arg             Set preset for video encoder. For AMF, select
                                  one of {speed, balanced, quality}; For NVENC,
-                                 select one of {default, slow, medium, fast,
-                                 hp, hq, bd, ll, llhq, llhp, lossless,
-                                 losslesshp, p1, p2, p3, p4, p5, p6, p7}; For
-                                 QSV, select one of {veryfast, faster, fast,
-                                 medium, slow, slower, veryslow}; otherwise,
-                                 select one of {ultrafast, superfast, veryfast,
-                                 faster, fast, medium, slow, slower, veryslow,
-                                 placebo}
+                                 select one of {p1, p2, p3, p4, p5, p6, p7,
+                                 slow, medium, fast}; For QSV, select one of
+                                 {veryfast, faster, fast, medium, slow, slower,
+                                 veryslow}; otherwise, select one of
+                                 {ultrafast, superfast, veryfast, faster, fast,
+                                 medium, slow, slower, veryslow, placebo}
   --video-quality arg (=23)      Set video quality. [0, 51], lower is better, 0
                                  is lossless
 ```
@@ -168,8 +161,7 @@ Usage:
   -l [ --list-hardware-decoder ]        List hardware decoder
   -d [ --hardware-decoder ] arg         Set hardware decoder
   -r [ --remote-host ] arg (=127.0.0.1) Set remote host
-  -c [ --control-port ] arg (=8080)     Set remote control port
-  -s [ --stream-port ] arg (=8080)      Set remote stream port
+  -p [ --remote-port ] arg (=8080)      Set remote port
   --top-most arg                        Keep the main window always on top
   -u [ --username ] arg                 Set username
   --verification-code arg               Set verification code
@@ -185,6 +177,8 @@ A WebRTC server works together with `cge`, to serve web clients.
 ### 4.1 VS2019
 
 [Reference .vsconfig](doc/.vsconfig)
+
+![VS2019](doc/vs2019.jpg)
 
 ### 4.2 Boost
 
