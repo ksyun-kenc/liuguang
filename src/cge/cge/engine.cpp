@@ -18,6 +18,8 @@
 
 #include "engine.h"
 
+#include "app.hpp"
+
 void Engine::Run(tcp::endpoint ws_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
@@ -47,7 +49,7 @@ void Engine::Run(tcp::endpoint ws_endpoint,
     game_service_ =
         std::make_shared<GameService>(ws_endpoint, disable_keys, gamepad_replay,
                                       keyboard_replay, mouse_replay);
-    APP_INFO() << "WebSocket server on: " << ws_endpoint << '\n';
+    APP_INFO() << "Regame service via WebSocket on " << ws_endpoint << '\n';
     game_service_->Run();
   } catch (std::exception& e) {
     APP_FATAL() << e.what() << '\n';
@@ -110,7 +112,7 @@ int Engine::OnWriteHeader(void* opaque, uint8_t* data, int size) noexcept {
 }
 
 int Engine::OnWritePacket(void* opaque, uint8_t* data, int size) noexcept {
-  return Engine::GetInstance().WritePacket(opaque, std::span(data, size));
+  return g_app.GetEngine().WritePacket(opaque, std::span(data, size));
 }
 
 int Engine::WritePacket(void* opaque, std::span<uint8_t> packet) noexcept {

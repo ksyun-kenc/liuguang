@@ -38,5 +38,3 @@
 #include <boost/pool/pool.hpp>
 #include <boost/scope_exit.hpp>
 
-#include "ffmpeg.h"
-#include "app.hpp"

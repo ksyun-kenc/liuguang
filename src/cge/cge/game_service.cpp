@@ -18,19 +18,19 @@
 
 #include "game_service.h"
 
-#include "engine.h"
+#include "app.hpp"
 
 namespace {
 
-inline void ListenerFail(beast::error_code ec, std::string_view what) {
-  APP_ERROR() << "WsListener " << what << ": "
-              << "#" << ec.value() << ", " << ec.message() << '\n';
+inline void Fail(beast::error_code ec, std::string_view what) {
+  APP_ERROR() << "GameService: " << what << " error " << ec.value() << ", "
+              << ec.message() << '\n';
 }
-inline void ListenerFail(beast::error_code ec,
-                         const tcp::endpoint& endpoint,
-                         std::string_view what) {
-  APP_ERROR() << "WsListener " << endpoint << " " << what << ": "
-              << "#" << ec.value() << ", " << ec.message() << '\n';
+inline void Fail(beast::error_code ec,
+                 std::string_view what,
+                 const tcp::endpoint& endpoint) {
+  APP_ERROR() << "GameService: " << what << " " << endpoint << " error "
+              << ec.value() << ", " << ec.message() << '\n';
 }
 
 }  // namespace
@@ -43,7 +43,7 @@ GameService::GameService(const tcp::endpoint& endpoint,
                          GamepadReplay gamepad_replay,
                          KeyboardReplay keyboard_replay,
                          MouseReplay mouse_replay) noexcept
-    : acceptor_(Engine::GetInstance().GetIoContext()),
+    : acceptor_(g_app.GetEngine().GetIoContext()),
       gamepad_replay_(gamepad_replay),
       keyboard_replay_(keyboard_replay),
       mouse_replay_(mouse_replay) {
@@ -51,25 +51,25 @@ GameService::GameService(const tcp::endpoint& endpoint,
 
   acceptor_.open(endpoint.protocol(), ec);
   if (ec) {
-    ListenerFail(ec, "open");
+    Fail(ec, "open");
     return;
   }
 
   acceptor_.set_option(net::socket_base::reuse_address(true), ec);
   if (ec) {
-    ListenerFail(ec, "set_option");
+    Fail(ec, "set_option");
     return;
   }
 
   acceptor_.bind(endpoint, ec);
   if (ec) {
-    ListenerFail(ec, "bind");
+    Fail(ec, "bind");
     return;
   }
 
   acceptor_.listen(net::socket_base::max_listen_connections, ec);
   if (ec) {
-    ListenerFail(ec, "listen");
+    Fail(ec, "listen");
     return;
   }
 
@@ -80,7 +80,7 @@ GameService::GameService(const tcp::endpoint& endpoint,
 
 void GameService::Accept() {
   acceptor_.async_accept(
-      net::make_strand(Engine::GetInstance().GetIoContext()),
+      g_app.GetEngine().GetIoContext(),
       beast::bind_front_handler(&GameService::OnAccept, shared_from_this()));
 }
 
@@ -112,7 +112,7 @@ bool GameService::AddAuthorized(std::shared_ptr<GameSession> session) noexcept {
   }
   if (inserted) {
     if (first) {
-      Engine::GetInstance().EncoderRun();
+      g_app.GetEngine().EncoderRun();
     }
   } else {
     session->Stop(true);
@@ -130,7 +130,7 @@ void GameService::Leave(std::shared_ptr<GameSession> session) noexcept {
     }
   }
   if (last_authorized) {
-    Engine::GetInstance().EncoderStop();
+    g_app.GetEngine().EncoderStop();
   }
 }
 
@@ -151,7 +151,7 @@ size_t GameService::Send(std::string buffer) {
 
 void GameService::OnAccept(beast::error_code ec, tcp::socket socket) {
   if (ec) {
-    return ListenerFail(ec, socket.remote_endpoint(), "accept");
+    return Fail(ec, "Accept", socket.remote_endpoint());
   }
 
   APP_INFO() << "Accept " << socket.remote_endpoint() << '\n';

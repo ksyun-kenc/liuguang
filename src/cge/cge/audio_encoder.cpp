@@ -18,10 +18,8 @@
 
 #include "audio_encoder.h"
 
-#include "engine.h"
+#include "app.hpp"
 #include "sound_capturer.h"
-
-extern App g_app;
 
 const int kTargetChannels = 2;
 const int64_t kTargetChannelLayout = AV_CH_LAYOUT_STEREO;
@@ -279,16 +277,16 @@ int AudioEncoder::Open(AVCodec* codec, AVDictionary** opts) {
 
 #if _DEBUG
   if (source_audio_info_.channel_layout != codec_context_->channel_layout) {
-    APP_TRACE() << "resample channel layout "
+    APP_DEBUG() << "resample channel layout "
                 << source_audio_info_.channel_layout << " to "
                 << codec_context_->channel_layout << ".\n";
   }
   if (source_audio_info_.sample_format != codec_context_->sample_fmt) {
-    APP_TRACE() << "resample format " << source_audio_info_.sample_format
+    APP_DEBUG() << "resample format " << source_audio_info_.sample_format
                 << " to " << codec_context_->sample_fmt << ".\n";
   }
   if (source_audio_info_.sample_rate != codec_context_->sample_rate) {
-    APP_TRACE() << "resample rate " << source_audio_info_.sample_rate << " to "
+    APP_DEBUG() << "resample rate " << source_audio_info_.sample_rate << " to "
                 << codec_context_->sample_rate << ".\n";
   }
 #endif

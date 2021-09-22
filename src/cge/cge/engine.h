@@ -8,12 +8,8 @@
 
 class Engine {
  public:
+  Engine() = default;
   ~Engine() = default;
-
-  static Engine& GetInstance() noexcept {
-    static Engine instance;
-    return instance;
-  }
 
   static int OnWriteHeader(void* opaque, uint8_t* data, int size) noexcept;
   static int OnWritePacket(void* opaque, uint8_t* data, int size) noexcept;
@@ -61,9 +57,9 @@ class Engine {
     return video_encoder_.GetSourceWindow();
   }
 
- private:
-  Engine() = default;
+  void PostAuthenticateRequest(std::string json);
 
+ private:
   int WritePacket(void* opaque, std::span<uint8_t> packet) noexcept;
 
   void Loop() noexcept;

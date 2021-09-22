@@ -24,7 +24,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/program_options.hpp>
 
-#include "engine.h"
+#include "app.hpp"
 #include "sound_capturer.h"
 
 #include "umu/string.h"
@@ -454,20 +454,20 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  Engine::GetInstance().SetPresentFlag(donot_present);
+  g_app.GetEngine().SetPresentFlag(donot_present);
 
-  net::signal_set signals(Engine::GetInstance().GetIoContext(), SIGINT, SIGTERM,
+  net::signal_set signals(g_app.GetEngine().GetIoContext(), SIGINT, SIGTERM,
                           SIGBREAK);
   signals.async_wait([&](const boost::system::error_code&, int sig) {
     APP_INFO() << "receive signal(" << sig << ").\n";
-    Engine::GetInstance().Stop();
+    g_app.GetEngine().Stop();
   });
-  Engine::GetInstance().Run(tcp::endpoint(kAddress, port),
-                            std::move(audio_codec), audio_bitrate, disable_keys,
-                            gamepad_replay, keyboard_replay, mouse_replay,
-                            video_bitrate, video_codec_id, hardware_encoder,
-                            video_gop, std::move(video_preset), video_quality);
-  Engine::GetInstance().EncoderStop();
+  g_app.GetEngine().Run(tcp::endpoint(kAddress, port), std::move(audio_codec),
+                        audio_bitrate, disable_keys, gamepad_replay,
+                        keyboard_replay, mouse_replay, video_bitrate,
+                        video_codec_id, hardware_encoder, video_gop,
+                        std::move(video_preset), video_quality);
+  g_app.GetEngine().EncoderStop();
   logging::core::get()->flush();
   return EXIT_SUCCESS;
 }

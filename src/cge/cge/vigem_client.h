@@ -22,15 +22,7 @@
 
 class ViGEmClient : public std::enable_shared_from_this<ViGEmClient> {
  public:
-  ViGEmClient() noexcept {
-    client_ = vigem_alloc();
-    VIGEM_ERROR ec = vigem_connect(client_);
-    if (VIGEM_ERROR_NONE != ec) {
-      vigem_free(client_);
-      client_ = nullptr;
-      APP_ERROR() << "vigem_connect() failed with 0x" << std::hex << ec << '\n';
-    }
-  }
+  ViGEmClient() noexcept;
 
   ~ViGEmClient() {
     if (nullptr != client_) {

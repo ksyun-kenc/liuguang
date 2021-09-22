@@ -18,9 +18,7 @@
 
 #include "video_encoder.h"
 
-#include "engine.h"
-
-extern App g_app;
+#include "app.hpp"
 
 bool VideoEncoder::Init(uint64_t bitrate,
                         AVCodecID codec_id,
@@ -91,7 +89,7 @@ int VideoEncoder::EncodingThread() {
   bool restart = false;
   BOOST_SCOPE_EXIT_ALL(&) {
     if (restart) {
-      Engine::GetInstance().NotifyRestartVideoEncoder();
+      g_app.GetEngine().NotifyRestartVideoEncoder();
     } else {
       Free(false);
     }

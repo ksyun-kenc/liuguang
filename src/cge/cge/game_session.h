@@ -18,7 +18,6 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
   ~GameSession() = default;
 
   void Run() {
-    game_control_.Initialize();
     net::dispatch(
         ws_.get_executor(),
         beast::bind_front_handler(&GameSession::OnRun, shared_from_this()));
@@ -33,9 +32,16 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
 
   void Write(std::string buffer);
 
+  void SetAuthorized(bool authorized) {
+    net::dispatch(ws_.get_executor(),
+                  beast::bind_front_handler(&GameSession::OnAuthorized,
+                                            shared_from_this(), authorized));
+  }
+
  private:
   void OnRun();
   void OnAccept(beast::error_code ec);
+  void OnAuthorized(bool authorized) noexcept;
   void OnStop(beast::error_code ec);
   void OnRead(beast::error_code ec, std::size_t bytes_transferred);
   void OnWrite(beast::error_code ec, std::size_t bytes_transferred);
@@ -43,7 +49,6 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
 
  private:
   std::shared_ptr<GameService> game_service_;
-  bool authorized_ = false;
   websocket::stream<beast::tcp_stream> ws_;
   net::ip::tcp::endpoint remote_endpoint_;
   beast::flat_buffer read_buffer_;
@@ -55,6 +60,17 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
 
   std::string username_;
 
-  enum class State { kNone, kHead, kBody } state_ = State::kNone;
+  enum class ParseState {
+    kNone,
+    kHead,
+    kBody
+  } parse_state_ = ParseState::kNone;
+  enum SessionState {
+    kNone = 0,
+    kAuthorizing,
+    kFailed,
+    kAuthorized
+  } session_state_ = SessionState::kNone;
+
   GameControl game_control_;
 };

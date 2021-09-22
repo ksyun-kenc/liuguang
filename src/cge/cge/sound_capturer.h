@@ -52,13 +52,6 @@ class SoundCapturer {
     out_sample_format_ = sample_format;
     out_sample_rate_ = sample_rate;
     frame_size_ = frame_size;
-
-#if _DEBUG
-    APP_TRACE() << "channel layout: " << channel_layout << '\n';
-    APP_TRACE() << "sample format: " << sample_format << '\n';
-    APP_TRACE() << "sample rate: " << sample_rate << '\n';
-    APP_TRACE() << "frame size: " << frame_size << '\n';
-#endif
   }
 
   int ReadFrame(AVFrame* frame) { return audio_resampler_.ReadFrame(frame); }

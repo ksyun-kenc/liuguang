@@ -16,8 +16,12 @@ class GameControl {
   GameControl(GameService& game_service) noexcept
       : game_service_(game_service) {}
   ~GameControl() {
-    cgvhid_client_.KeyboardReset();
-    cgvhid_client_.MouseReset();
+    if (KeyboardReplay::kCgvhid == keyboard_replay_) {
+      cgvhid_client_.KeyboardReset();
+    }
+    if (MouseReplay::kCgvhid == mouse_replay_) {
+      cgvhid_client_.MouseReset();
+    }
   }
 
   void Initialize() noexcept;

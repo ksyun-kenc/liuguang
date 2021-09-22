@@ -18,6 +18,18 @@
 
 #include "vigem_client.h"
 
+#include "app.hpp"
+
+ViGEmClient::ViGEmClient() noexcept {
+  client_ = vigem_alloc();
+  VIGEM_ERROR ec = vigem_connect(client_);
+  if (VIGEM_ERROR_NONE != ec) {
+    vigem_free(client_);
+    client_ = nullptr;
+    APP_ERROR() << "vigem_connect() failed with 0x" << std::hex << ec << '\n';
+  }
+}
+
 std::unique_ptr<class ViGEmTargetX360> ViGEmClient::CreateController() {
   return std::unique_ptr<ViGEmTargetX360>{
       new ViGEmTargetX360{shared_from_this()}};
