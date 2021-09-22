@@ -1,5 +1,4 @@
 digraph G {
-
 	subgraph cluster_0 {
 		style=filled;
 		color="#3FBFFF";
@@ -29,7 +28,7 @@ digraph G {
 		color="#F13929";
 		node [style=filled,color="#ADB9CA"];
 		label = "net";
-		websocket udp;
+		websocket;
 	}
 
 	subgraph cluster_4 {
@@ -42,5 +41,5 @@ digraph G {
 
 	audio -> audio_frames -> audio_encoder -> websocket -> audio_decoder -> player;
 	video -> video_frames -> video_encoder -> websocket -> video_decoder -> player;
-	controller -> udp -> control_replay;
+	controller -> websocket -> control_replay;
 }
