@@ -6,7 +6,7 @@
 
 云游戏引擎是一种将普通游戏云化的技术，分为服务端引擎和客户端引擎两部分，其中服务端最为复杂。鎏光还处于开发期，目前已经开源最为复杂的服务端引擎部分，客户端完善之后也将开源。
 
-[按这里下载鎏光 v0.3](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+[按这里下载鎏光 v0.4](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip)
 
 演示视频：
 

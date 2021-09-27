@@ -10,7 +10,7 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 `Regame` is still under development. It would be great if you could help.
 
-[Download Regame v0.3 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+[Download Regame v0.4 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip)
 
 Demo videos (Chinese):
 
