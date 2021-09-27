@@ -229,7 +229,7 @@ Boost 的编译命令，参考：
 
 设置 `SDL2_ROOT` 环境变量，值为您的 [SDL2](https://www.libsdl.org/) 目录的全路径名。
 
-[SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) 和 [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/) 也同样操作。
+[SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) 也同样操作。
 
 目录树应该类似这样：
 

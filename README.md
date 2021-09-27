@@ -233,7 +233,7 @@ Video Reference (Chinese):
 
 Set `SDL2_ROOT` environment variable to the path of your [SDL2](https://www.libsdl.org/) directory.
 
-The same as [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) and [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/).
+The same as [SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/).
 
 The folder tree should be like:
 
