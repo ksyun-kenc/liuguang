@@ -24,61 +24,62 @@ const size_t kNumberOfDataPointers = 8;
 #pragma warning(push)
 #pragma warning(disable : 200)
 struct SharedPacket {
-  uint64_t timestamp;
-  uint32_t type;
-  uint32_t length;
-  uint8_t data[0];
+  std::uint64_t timestamp;
+  std::uint32_t type;
+  std::uint32_t length;
+  std::uint8_t data[0];
 };
 
 struct PackedAudioFrame {
-  uint64_t timestamp;
-  uint32_t linesize[kNumberOfDataPointers];
-  uint8_t data[0];
+  std::uint64_t timestamp;
+  std::uint32_t linesize[kNumberOfDataPointers];
+  std::uint8_t data[0];
 };
 
 struct SharedAudioFrames {
   char codec_name[16];
-  uint32_t channels;
-  uint32_t frame_size;
-  uint32_t sample_bits;
-  uint32_t sample_format;
+  std::uint32_t channels;
+  std::uint32_t frame_size;
+  std::uint32_t sample_bits;
+  std::uint32_t sample_format;
   PackedAudioFrame frame0;
 };
 
-enum class VideoFrameType : uint32_t { NONE = 0, YUV, TEXTURE };
+enum class VideoFrameType : std::uint32_t { kNone = 0, kYuv, kTexture };
 
 struct SharedVideoFrameInfo {
-  uint64_t timestamp;
+  std::uint64_t timestamp;
   VideoFrameType type;
-  uint32_t width;
-  uint32_t height;
-  uint32_t format;
+  std::uint32_t width;
+  std::uint32_t height;
+  std::uint32_t format;
+  std::uint64_t window;  // HWND
 };
 
 struct VideoFrameStats {
   volatile uint64_t timestamp;
   struct {
-    uint64_t preprocess;
-    uint64_t nvenc;
-    uint64_t wait_rgb_mapping;
-    uint64_t rgb_mapping;
-    uint64_t yuv_convert;
-    uint64_t total;
+    std::uint64_t preprocess;
+    std::uint64_t nvenc;
+    std::uint64_t wait_rgb_mapping;
+    std::uint64_t rgb_mapping;
+    std::uint64_t yuv_convert;
+    std::uint64_t total;
   } elapsed;
   struct {
-    uint64_t acquire_buffer_pending;
-    uint64_t acquire_buffer_successed;
+    std::uint64_t acquire_buffer_pending;
+    std::uint64_t acquire_buffer_successed;
   } count;
 };
 
 struct PackedVideoYuvFrame {
   VideoFrameStats stats;
-  uint8_t data[0];  // YUV
+  std::uint8_t data[0];  // YUV
 };
 
 struct SharedVideoYuvFrames {
-  uint32_t data_size;
-  uint8_t data[0];  // PackedVideoYuvFrame
+  std::uint32_t data_size;
+  std::uint8_t data[0];  // PackedVideoYuvFrame
 };
 #pragma warning(pop)
 

@@ -3,37 +3,26 @@
 #include "net.hpp"
 
 #include "audio_encoder.h"
+#include "game_service.h"
 #include "video_encoder.h"
-
-enum class KeyboardReplay { NONE = 0, CGVHID };
-
-enum class GamepadReplay { NONE = 0, CGVHID, VIGEM };
 
 class Engine {
  public:
+  Engine() = default;
   ~Engine() = default;
 
-  static Engine& GetInstance() noexcept {
-    static Engine instance;
-    return instance;
-  }
-
-  static int OnWriteHeader(void* opaque,
-                           uint8_t* buffer,
-                           int buffer_size) noexcept;
-  static int OnWritePacket(void* opaque,
-                           uint8_t* buffer,
-                           int buffer_size) noexcept;
+  static int OnWriteHeader(void* opaque, uint8_t* data, int size) noexcept;
+  static int OnWritePacket(void* opaque, uint8_t* data, int size) noexcept;
 
   net::io_context& GetIoContext() { return ioc_; }
 
   void Run(tcp::endpoint ws_endpoint,
-           udp::endpoint udp_endpoint,
            std::string audio_codec,
            uint64_t audio_bitrate,
-           std::vector<uint8_t> disable_keys,
-           KeyboardReplay keyboard_replay,
+           const std::vector<uint8_t>& disable_keys,
            GamepadReplay gamepad_replay,
+           KeyboardReplay keyboard_replay,
+           MouseReplay mouse_replay,
            uint64_t video_bitrate,
            AVCodecID video_codec_id,
            HardwareEncoder hardware_encoder,
@@ -64,10 +53,12 @@ class Engine {
   void NotifyRestartAudioEncoder() noexcept;
   void NotifyRestartVideoEncoder() noexcept;
 
- private:
-  Engine() = default;
+  HWND GetSourceWindow() const noexcept {
+    return video_encoder_.GetSourceWindow();
+  }
 
-  int WritePacket(void* opaque, uint8_t* buffer, int buffer_size) noexcept;
+ private:
+  int WritePacket(void* opaque, std::span<uint8_t> packet) noexcept;
 
   void Loop() noexcept;
 
@@ -77,8 +68,7 @@ class Engine {
   bool running_ = false;
 
   net::io_context ioc_{2};
-  std::shared_ptr<class WsServer> ws_server_;
-  std::shared_ptr<class UdpServer> udp_server_;
+  std::shared_ptr<GameService> game_service_;
 
   AudioEncoder audio_encoder_;
   VideoEncoder video_encoder_;

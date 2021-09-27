@@ -24,7 +24,7 @@
     <ClCompile Include="..\..\cgc\arena.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cgc\ws_client.cpp">
+    <ClCompile Include="..\..\cgc\game_client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\cgc\media_player.cpp">
@@ -51,9 +51,6 @@
     <ClCompile Include="..\..\cgc\frame_pool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cgc\udp_client.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cgc\ffmpeg.h">
@@ -71,7 +68,7 @@
     <ClInclude Include="..\..\cgc\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\cgc\ws_client.h">
+    <ClInclude Include="..\..\cgc\game_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\cgc\media_player.h">
@@ -93,9 +90,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\cgc\frame_pool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\cgc\udp_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

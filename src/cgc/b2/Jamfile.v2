@@ -38,8 +38,7 @@ exe cgc
     packet_queue.cpp
     stream_buffer.cpp
     video_player.cpp
-    udp_client.cpp
-    ws_client.cpp
+    game_client.cpp
   : <implicit-dependency>/boost//headers
     <target-os>windows,<toolset>msvc:<find-static-library>shell32
     <library>/boost//date_time

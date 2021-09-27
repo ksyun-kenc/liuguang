@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "ffmpeg.h"
+
 class AudioResampler {
  public:
   AudioResampler() noexcept {}

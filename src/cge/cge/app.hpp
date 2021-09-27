@@ -18,6 +18,7 @@
 
 #include <sddl.h>
 
+#include "engine.h"
 #include "log.hpp"
 
 class App {
@@ -38,6 +39,7 @@ class App {
     }
   }
 
+  Engine& GetEngine() noexcept { return engine_; }
   LARGE_INTEGER GetFrequency() const noexcept { return frequency_; }
   const SECURITY_ATTRIBUTES* GetSA() const noexcept { return &sa_; }
   SECURITY_ATTRIBUTES* SA() noexcept { return &sa_; }
@@ -45,6 +47,7 @@ class App {
   src::severity_logger<SeverityLevel>& GetLogger() noexcept { return logger_; }
 
  private:
+  Engine engine_;
   LARGE_INTEGER frequency_{};
   SECURITY_ATTRIBUTES sa_{};
   src::severity_logger<SeverityLevel> logger_;
@@ -59,3 +62,11 @@ extern App g_app;
 #define APP_WARNING() APP_LOG(SeverityLevel::kWarning)
 #define APP_ERROR() APP_LOG(SeverityLevel::kError)
 #define APP_FATAL() APP_LOG(SeverityLevel::kFatal)
+
+#if _DEBUG
+#define DEBUG_VERBOSE(x) APP_TRACE() << (x);
+#define DEBUG_PRINT(x) APP_DEBUG() << (x);
+#else
+#define DEBUG_VERBOSE(x)
+#define DEBUG_PRINT(x)
+#endif

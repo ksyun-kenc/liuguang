@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-local boost-version = 1.76 ;
+local boost-version = 1.77 ;
 
 import os ;
   local boost-root = [ os.environ BOOST_ROOT ] ;
@@ -22,7 +22,7 @@ import project ;
 project.push-current [ project.current ] ;
 project.initialize $(__name__) ;
 
-if $(boost-root) {
+if $(boost-root) && [ path.exists $(boost-root) ] {
   ECHO "Using the BOOST_ROOT environment variable: $(boost-root)" ;
   using boost : $(boost-version) : <root>$(boost-root) ;
 } else {
@@ -55,5 +55,5 @@ if $(boost-root) {
 
 project.pop-current ;
 
-import boost ;
-  boost.use-project ;
+import boost-modified ;
+  boost-modified.use-project ;

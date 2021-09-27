@@ -28,12 +28,8 @@ enum class HardwareEncoder { None = 0, AMF, NVENC, QSV };
 
 class VideoEncoder : public Encoder {
  public:
-  VideoEncoder() noexcept = default;
+  VideoEncoder() noexcept : Encoder(regame::ServerAction::kVideo) {}
   ~VideoEncoder() noexcept = default;
-
-  regame::NetPacketType GetType() const noexcept override {
-    return regame::NetPacketType::Video;
-  }
 
   bool Init(uint64_t bitrate,
             AVCodecID codec_id,
@@ -43,6 +39,10 @@ class VideoEncoder : public Encoder {
             uint32_t quality) noexcept;
   int Run();
   void Stop();
+
+  HWND GetSourceWindow() const noexcept {
+    return reinterpret_cast<HWND>(saved_frame_info_.window);
+  }
 
  private:
   int EncodingThread();

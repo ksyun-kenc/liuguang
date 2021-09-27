@@ -14,27 +14,4 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <SDKDDKVer.h>
-
-#include <atlbase.h>
-#include <atlfile.h>
-
-#include <array>
-#include <chrono>
-#include <cstdlib>
-#include <functional>
-#include <iostream>
-#include <mutex>
-#include <queue>
-#include <span>
-#include <string>
-#include <thread>
-
-#include <boost/algorithm/string.hpp>
-#define BOOST_ASIO_NO_DEPRECATED
-#include <boost/asio.hpp>
-#include <boost/pool/pool.hpp>
-#include <boost/scope_exit.hpp>
-
+// Enterprise version

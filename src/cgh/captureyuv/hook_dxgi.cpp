@@ -212,10 +212,11 @@ class CaptureD3d11 {
       SharedVideoFrameInfo* svfi =
           CaptureYuv::GetInstance().GetSharedVideoFrameInfo();
       svfi->timestamp = tick.QuadPart;
-      svfi->type = VideoFrameType::YUV;
+      svfi->type = VideoFrameType::kYuv;
       svfi->width = desc.Width;
       svfi->height = desc.Height;
       svfi->format = desc.Format;
+      svfi->window = reinterpret_cast<std::uint64_t>(GetInstance().window_);
     }
 
     CComPtr<IDXGISurface> surface;
@@ -329,6 +330,7 @@ class CaptureD3d11 {
   ID3D11DeviceContext* context_ = nullptr;
   UINT width_ = 0;
   UINT height_ = 0;
+  HWND window_ = nullptr;
 };
 
 class CaptureD3d11On12 {
@@ -381,10 +383,11 @@ class CaptureD3d11On12 {
       SharedVideoFrameInfo* svfi =
           CaptureYuv::GetInstance().GetSharedVideoFrameInfo();
       svfi->timestamp = tick.QuadPart;
-      svfi->type = VideoFrameType::YUV;
+      svfi->type = VideoFrameType::kYuv;
       svfi->width = desc.Width;
       svfi->height = desc.Height;
       svfi->format = desc.Format;
+      svfi->window = reinterpret_cast<std::uint64_t>(GetInstance().window_);
     }
 
     CComPtr<IDXGISurface> surface;
@@ -542,6 +545,7 @@ class CaptureD3d11On12 {
     width_ = desc.BufferDesc.Width;
     height_ = desc.BufferDesc.Height;
     multisampled_ = desc.SampleDesc.Count > 1;
+    window_ = desc.OutputWindow;
     ATLTRACE2(atlTraceUtil, 0, "Format %u, %u * %u, Count = %u\n", format_,
               width_, height_, desc.SampleDesc.Count);
 
@@ -624,6 +628,7 @@ class CaptureD3d11On12 {
   UINT width_ = 0;
   UINT height_ = 0;
   bool multisampled_ = false;
+  HWND window_ = nullptr;
 };
 
 class CaptureDxgi {

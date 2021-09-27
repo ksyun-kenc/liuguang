@@ -27,10 +27,7 @@
     <ClCompile Include="engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ws_server.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="udp_server.cpp">
+    <ClCompile Include="game_service.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="audio_encoder.cpp">
@@ -60,15 +57,21 @@
     <ClCompile Include="..\..\deps\ViGEmClient\src\ViGEmClient.cpp">
       <Filter>Source Files\ViGEmClient</Filter>
     </ClCompile>
+    <ClCompile Include="game_session.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_control.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="authenticator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ws_server.h">
+    <ClInclude Include="game_service.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="net.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="udp_server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="audio_encoder.h">
@@ -102,6 +105,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="log.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game_session.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game_control.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="authenticator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

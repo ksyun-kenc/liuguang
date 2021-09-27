@@ -23,12 +23,8 @@
 
 class AudioEncoder : public Encoder {
  public:
-  AudioEncoder() = default;
+  AudioEncoder() : Encoder(regame::ServerAction::kAudio) {}
   ~AudioEncoder() = default;
-
-  regame::NetPacketType GetType() const noexcept override {
-    return regame::NetPacketType::Audio;
-  }
 
   bool Init(std::string codec_name, uint64_t bitrate) noexcept;
   int Run();

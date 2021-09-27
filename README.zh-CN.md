@@ -6,7 +6,7 @@
 
 云游戏引擎是一种将普通游戏云化的技术，分为服务端引擎和客户端引擎两部分，其中服务端最为复杂。鎏光还处于开发期，目前已经开源最为复杂的服务端引擎部分，客户端完善之后也将开源。
 
-[按这里下载鎏光 v0.3](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.3.zip)
+[按这里下载鎏光 v0.4](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip)
 
 演示视频：
 
@@ -57,7 +57,7 @@
 可以运行 `cge --help` 查看所有参数：
 
 ```
-KSYUN Edge Cloud Gaming Engine v0.3 Beta
+KSYUN Edge Cloud Gaming Engine v0.4 Beta
 
 Usage:
   -h [ --help ]                  Produce help message
@@ -65,44 +65,41 @@ Usage:
   --audio-codec arg (=libopus)   Set audio codec. Select one of {libopus, aac,
                                  opus}
   --bind-address arg (=::)       Set bind address for listening. eg: 0.0.0.0
-  --control-port arg (=8080)     Set the UDP port for control flow
   --disable-keys arg             Disable scan codes. eg: 226,230 disable ALT;
                                  227,231 disable WIN
   --donot-present arg (=0)       Tell cgh don't present
   --hardware-encoder arg         Set video hardware encoder. Select one of
                                  {amf, nvenc, qsv}
-  --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
-                                 {none, cgvhid}
   --gamepad-replay arg (=none)   Set gamepad replay method. Select one of
                                  {none, cgvhid, vigem}
+  --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
+                                 {none, cgvhid}
+  --mouse-replay arg (=none)     Set mouse replay method. Select one of {none,
+                                 cgvhid}
   --log-level arg (=info)        Set logging severity level. Select one of
                                  {trace, debug, info, warning, error, fatal}
-  --stream-port arg (=8080)      Set the websocket port for streaming, if port
-                                 is 0, disable stream out via network. Capture
-                                 and encode picture directly at startup but not
-                                 on connection establishing, and never stop
-                                 this until cge exit. stream port is not same
-                                 as control port, this port is only for media
-                                 output.
+  -p [ --port ] arg (=8080)      Set the service port
   --video-bitrate arg (=1000000) Set video bitrate
   --video-codec arg (=h264)      Set video codec. Select one of {h264, h265,
                                  hevc}, h265 == hevc
   --video-gop arg (=180)         Set video gop. [1, 500]
   --video-preset arg             Set preset for video encoder. For AMF, select
                                  one of {speed, balanced, quality}; For NVENC,
-                                 select one of {default, slow, medium, fast,
-                                 hp, hq, bd, ll, llhq, llhp, lossless,
-                                 losslesshp, p1, p2, p3, p4, p5, p6, p7}; For
-                                 QSV, select one of {veryfast, faster, fast,
-                                 medium, slow, slower, veryslow}; otherwise,
-                                 select one of {ultrafast, superfast, veryfast,
-                                 faster, fast, medium, slow, slower, veryslow,
-                                 placebo}
+                                 select one of {p1, p2, p3, p4, p5, p6, p7,
+                                 slow, medium, fast}; For QSV, select one of
+                                 {veryfast, faster, fast, medium, slow, slower,
+                                 veryslow}; otherwise, select one of
+                                 {ultrafast, superfast, veryfast, faster, fast,
+                                 medium, slow, slower, veryslow, placebo}
   --video-quality arg (=23)      Set video quality. [0, 51], lower is better, 0
                                  is lossless
 ```
 
 可以按 `Ctrl+C` 优雅退出。
+
+### regame-authenticator
+
+`cge` 使用 [regame-authenticator](https://github.com/ksyun-kenc/regame-authenticator) 验证登录。
 
 ### cgh
 
@@ -164,8 +161,7 @@ Usage:
   -l [ --list-hardware-decoder ]        List hardware decoder
   -d [ --hardware-decoder ] arg         Set hardware decoder
   -r [ --remote-host ] arg (=127.0.0.1) Set remote host
-  -c [ --control-port ] arg (=8080)     Set remote control port
-  -s [ --stream-port ] arg (=8080)      Set remote stream port
+  -p [ --remote-port ] arg (=8080)      Set remote port
   --top-most arg                        Keep the main window always on top
   -u [ --username ] arg                 Set username
   --verification-code arg               Set verification code
@@ -181,6 +177,8 @@ WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 ### 4.1 VS2019
 
 [参考配置](doc/.vsconfig)
+
+![VS2019](doc/vs2019.jpg)
 
 ### 4.2 Boost
 
@@ -231,7 +229,7 @@ Boost 的编译命令，参考：
 
 设置 `SDL2_ROOT` 环境变量，值为您的 [SDL2](https://www.libsdl.org/) 目录的全路径名。
 
-[SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) 和 [SDL_net 2.0](https://www.libsdl.org/projects/SDL_net/) 也同样操作。
+[SDL_ttf 2.0](https://www.libsdl.org/projects/SDL_ttf/) 也同样操作。
 
 目录树应该类似这样：
 
@@ -264,7 +262,7 @@ git submodule update --init
 
 - 服务器上运行 `video_source`。
 
-- 客户端上运行 `cgc --server=<server_address>`，请把 `<server_address>` 替换为服务器地址。
+- 客户端上运行 `cgc -r <server_address>`，请把 `<server_address>` 替换为服务器地址。
 
 测试游戏：
 
@@ -278,7 +276,7 @@ git submodule update --init
 
 - 服务器上运行 `cgi -d true -e SSFIV.exe -i SSFIV.exe --lx86 .\captureyuv.dll`，其中 `-e SSFIV.exe` 处要填好正确的路径名。
 
-- 客户端上运行 `cgc --server=<server_address>`。
+- 客户端上运行 `cgc -r <server_address>`。
 
 **注意** 目前只支持 D3D9、D3D11、D3D12 游戏。（D3D10 游戏没测试过，但可能也支持。）
 

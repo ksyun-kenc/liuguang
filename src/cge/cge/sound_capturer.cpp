@@ -18,11 +18,9 @@
 
 #include "sound_capturer.h"
 
-#include <atlbase.h>
-
 #include <avrt.h>
 
-extern App g_app;
+#include "app.hpp"
 
 // unit: 100-nanosecond, 1s == 1000 * 1000 * 10 unit
 constexpr REFERENCE_TIME kReferenceTimePerSecond = 10000000;

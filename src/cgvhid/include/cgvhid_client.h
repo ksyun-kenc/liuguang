@@ -23,24 +23,24 @@ struct MouseState {
   int display_width;
   int display_height;
   POINT postion;
-  uint8_t buttons;
+  std::uint8_t buttons;
 };
 
 struct KeyboardState {
-  uint8_t modifiers;
-  uint8_t key_codes[KEYBD_MAX_KEY_COUNT];
+  std::uint8_t modifiers;
+  std::uint8_t key_codes[KEYBD_MAX_KEY_COUNT];
 };
 
 // VhidGamepadInReport without id
 struct GamepadState {
-  uint16_t x;
-  uint16_t y;
-  uint16_t z;
-  uint16_t rx;
-  uint16_t ry;
-  uint16_t rz;
-  uint8_t hat;
-  uint16_t buttons;
+  std::uint16_t x;
+  std::uint16_t y;
+  std::uint16_t z;
+  std::uint16_t rx;
+  std::uint16_t ry;
+  std::uint16_t rz;
+  std::uint8_t hat;
+  std::uint16_t buttons;
 };
 
 class CgvhidClient {
@@ -48,22 +48,38 @@ class CgvhidClient {
   CgvhidClient() = default;
   ~CgvhidClient() = default;
 
-  static uint8_t VkToScancode(uint8_t vk) noexcept;
+  static std::uint8_t VkToScancode(std::uint8_t vk) noexcept;
 
   void Init(int display_width, int display_height) noexcept;
 
   int KeyboardReset() noexcept;
-  int KeyboardPress(uint8_t scancode) noexcept;
-  int KeyboardRelease(uint8_t scancode) noexcept;
+  int KeyboardPress(std::uint8_t scancode) noexcept;
+  int KeyboardRelease(std::uint8_t scancode) noexcept;
 
-  int KeyboardVkPress(uint8_t vk) noexcept;
-  int KeyboardVkRelease(uint8_t vk) noexcept;
+  int KeyboardVkPress(std::uint8_t vk) noexcept;
+  int KeyboardVkRelease(std::uint8_t vk) noexcept;
+
+  int MouseReset() noexcept;
+  int AbsoluteMouseButtonPress(CgvhidMouseButton button,
+                               std::uint16_t x,
+                               std::uint16_t y) noexcept;
+  int AbsoluteMouseButtonRelease(CgvhidMouseButton button,
+                                 std::uint16_t x,
+                                 std::uint16_t y) noexcept;
+  int AbsoluteMouseMove(std::uint16_t x, std::uint16_t y) noexcept;
+  int AbsoluteMouseWheel(std::int8_t hwheel, std::int8_t vwheel) noexcept;
+
+  int RelativeMouseButtonPress(CgvhidMouseButton button) noexcept;
+  int RelativeMouseButtonRelease(CgvhidMouseButton button) noexcept;
+  int RelativeMouseMove(std::int16_t x, std::int16_t y) noexcept;
+  int RelativeMouseWheel(std::int8_t hwheel, std::int8_t vwheel) noexcept;
 
  private:
-  int KeyboardModifierPress(uint8_t key) noexcept;
-  int KeyboardModifierRelease(uint8_t key) noexcept;
+  int KeyboardModifierPress(std::uint8_t key) noexcept;
+  int KeyboardModifierRelease(std::uint8_t key) noexcept;
 
  private:
   Cgvhid cgvhid_;
   KeyboardState keyboard_state_;
+  MouseState mouse_state_;
 };

@@ -24,7 +24,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/program_options.hpp>
 
-#include "engine.h"
+#include "app.hpp"
 #include "sound_capturer.h"
 
 #include "umu/string.h"
@@ -54,26 +54,30 @@ namespace po = boost::program_options;
 
 using namespace std::literals::string_view_literals;
 
-constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.3 Beta"sv};
+constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.4 Beta"sv};
 constexpr auto kDefaultBindAddress{"::"sv};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
 constexpr std::array<std::string_view, 3> kValidAudioCodecs = {"libopus", "aac",
                                                                "opus"};
 constexpr size_t kDefaultAudioCodecIndex = 0;
-constexpr uint16_t kDefaultControlPort = 8080;
 constexpr bool kDefaultDonotPresent = false;
-
-// Should be the same order with KeyboardReplay
-constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
-    "none", "cgvhid"};
-constexpr size_t kDefaultKeyboardReplayIndex = 0;
 
 // Should be the same order with GamepadReplay
 constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods = {
     "none", "cgvhid", "vigem"};
 constexpr size_t kDefaultGamepadReplayIndex = 0;
 
-constexpr uint16_t kDefaultStreamPort = 8080;
+// Should be the same order with KeyboardReplay
+constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
+    "none", "cgvhid"};
+constexpr size_t kDefaultKeyboardReplayIndex = 0;
+
+// Should be the same order with MouseReplay
+constexpr std::array<std::string_view, 2> kValidMouseReplayMethods = {"none",
+                                                                      "cgvhid"};
+constexpr size_t kDefaultMouseReplayIndex = 0;
+
+constexpr uint16_t kDefaultPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
 constexpr auto kDefaultVideoCodec{"h264"sv};
 constexpr int kDefaultVideoGop = 180;
@@ -81,10 +85,9 @@ constexpr std::array<std::string_view, 3> kValidHardwareEncoders = {
     "amf", "nvenc", "qsv"};
 constexpr std::array<std::string_view, 3> kValidAmfPreset = {
     "speed", "balanced", "quality"};
-constexpr std::array<std::string_view, 19> kValidNvencPreset = {
-    "default", "slow", "medium", "fast",     "hp",         "hq", "bd",
-    "ll",      "llhq", "llhp",   "lossless", "losslesshp", "p1", "p2",
-    "p3",      "p4",   "p5",     "p6",       "p7"};
+constexpr std::array<std::string_view, 10> kValidNvencPreset = {
+    // NVENC_HAVE_NEW_PRESETS: slow=p7, medium=p4, fast=p1
+    "p1", "p2", "p3", "p4", "p5", "p6", "p7", "slow", "medium", "fast"};
 constexpr std::array<std::string_view, 7> kValidQsvPreset = {
     "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"};
 constexpr std::array<std::string_view, 10> kValidPreset = {
@@ -184,27 +187,28 @@ int main(int argc, char* argv[]) {
   std::string audio_codec;
   uint64_t audio_bitrate = 0;
   std::string bind_address;
-  uint16_t control_port = 0;
+  std::vector<uint8_t> disable_keys;
   bool donot_present = false;
+  GamepadReplay gamepad_replay;
   HardwareEncoder hardware_encoder = HardwareEncoder::None;
   KeyboardReplay keyboard_replay;
-  GamepadReplay gamepad_replay;
-  uint16_t stream_port = 0;
-  uint64_t video_bitrate = 0;
+  SeverityLevel log_level = SeverityLevel::kInfo;
+  MouseReplay mouse_replay;
+  std::uint16_t port = 0;
+  std::uint64_t video_bitrate = 0;
   AVCodecID video_codec_id = AV_CODEC_ID_NONE;
   int video_gop = 0;
   std::string video_preset;
-  uint32_t video_quality = 0;
-  std::vector<uint8_t> disable_keys;
-  SeverityLevel severity_level = SeverityLevel::kInfo;
+  std::uint32_t video_quality = 0;
 
   try {
-    std::string keyboard_replay_string;
-    std::string gamepad_replay_string;
-    std::string video_codec;
-    std::string hardware_encoder_string;
     std::string disable_keys_string;
-    std::string log_level;
+    std::string gamepad_replay_string;
+    std::string hardware_encoder_string;
+    std::string keyboard_replay_string;
+    std::string log_level_string;
+    std::string mouse_replay_string;
+    std::string video_codec;
 
     po::options_description desc("Usage");
     // clang-format off
@@ -219,9 +223,6 @@ int main(int argc, char* argv[]) {
       ("bind-address",
         po::value<std::string>(&bind_address)->default_value(kDefaultBindAddress.data()),
         "Set bind address for listening. eg: 0.0.0.0")
-      ("control-port",
-        po::value<uint16_t>(&control_port)->default_value(kDefaultControlPort),
-        "Set the UDP port for control flow")
       ("disable-keys",
         po::value<std::string>(&disable_keys_string),
         "Disable scan codes. eg: 226,230 disable ALT; 227,231 disable WIN")
@@ -232,25 +233,25 @@ int main(int argc, char* argv[]) {
         po::value<std::string>(&hardware_encoder_string),
         std::string("Set video hardware encoder. Select one of ")
         .append(umu::string::ArrayJoin(kValidHardwareEncoders)).data())
-      ("keyboard-replay",
-        po::value<std::string>(&keyboard_replay_string)->default_value(kValidKeyboardReplayMethods.at(kDefaultKeyboardReplayIndex).data()),
-        std::string("Set keyboard replay method. Select one of ")
-        .append(umu::string::ArrayJoin(kValidKeyboardReplayMethods)).data())
       ("gamepad-replay",
         po::value<std::string>(&gamepad_replay_string)->default_value(kValidGamepadReplayMethods.at(kDefaultGamepadReplayIndex).data()),
         std::string("Set gamepad replay method. Select one of ")
        .append(umu::string::ArrayJoin(kValidGamepadReplayMethods)).data())
+      ("keyboard-replay",
+        po::value<std::string>(&keyboard_replay_string)->default_value(kValidKeyboardReplayMethods.at(kDefaultKeyboardReplayIndex).data()),
+        std::string("Set keyboard replay method. Select one of ")
+        .append(umu::string::ArrayJoin(kValidKeyboardReplayMethods)).data())
+      ("mouse-replay",
+        po::value<std::string>(&mouse_replay_string)->default_value(kValidMouseReplayMethods.at(kDefaultMouseReplayIndex).data()),
+        std::string("Set mouse replay method. Select one of ")
+        .append(umu::string::ArrayJoin(kValidMouseReplayMethods)).data())
       ("log-level",
-        po::value<std::string>(&log_level)->default_value(kValidSeverityLevel.at(kDefaultSeverityLevelIndex).data()),
+        po::value<std::string>(&log_level_string)->default_value(kValidSeverityLevel.at(kDefaultSeverityLevelIndex).data()),
         std::string("Set logging severity level. Select one of ")
        .append(umu::string::ArrayJoin(kValidSeverityLevel)).data())
-      ("stream-port",
-        po::value<uint16_t>(&stream_port)->default_value(kDefaultStreamPort),
-        "Set the websocket port for streaming, if port is 0, disable stream "
-        "out via network. Capture and encode picture directly at startup but "
-        "not on connection establishing, and never stop this until cge exit. "
-        "stream port is not same as control port, this port is only for media "
-        "output.")
+      ("port,p",
+        po::value<uint16_t>(&port)->default_value(kDefaultPort),
+        "Set the service port")
       ("video-bitrate",
         po::value<uint64_t>(&video_bitrate)->default_value(kDefaultVideoBitrate),
         "Set video bitrate")
@@ -292,18 +293,6 @@ int main(int argc, char* argv[]) {
                                               audio_codec)) {
       throw std::invalid_argument("unsupported audio-codec!");
     }
-    if (0 == control_port) {
-      control_port = kDefaultControlPort;
-    }
-
-    auto keyboard_replay_pos =
-        std::find(kValidKeyboardReplayMethods.cbegin(),
-                  kValidKeyboardReplayMethods.cend(), keyboard_replay_string);
-    if (kValidKeyboardReplayMethods.cend() == keyboard_replay_pos) {
-      throw std::invalid_argument("unsupported keyboard-replay!");
-    }
-    keyboard_replay = static_cast<KeyboardReplay>(std::distance(
-        kValidKeyboardReplayMethods.cbegin(), keyboard_replay_pos));
 
     if (!disable_keys_string.empty()) {
       std::vector<std::string> arr;
@@ -329,10 +318,28 @@ int main(int argc, char* argv[]) {
     gamepad_replay = static_cast<GamepadReplay>(
         std::distance(kValidGamepadReplayMethods.cbegin(), gamepad_replay_pos));
 
-    if (!FromString(log_level, severity_level)) {
-      severity_level =
-          static_cast<decltype(severity_level)>(std::atoi(log_level.data()));
+    auto keyboard_replay_pos =
+        std::find(kValidKeyboardReplayMethods.cbegin(),
+                  kValidKeyboardReplayMethods.cend(), keyboard_replay_string);
+    if (kValidKeyboardReplayMethods.cend() == keyboard_replay_pos) {
+      throw std::invalid_argument("unsupported keyboard-replay!");
     }
+    keyboard_replay = static_cast<KeyboardReplay>(std::distance(
+        kValidKeyboardReplayMethods.cbegin(), keyboard_replay_pos));
+
+    if (!FromString(log_level_string, log_level)) {
+      log_level =
+          static_cast<decltype(log_level)>(std::atoi(log_level_string.data()));
+    }
+
+    auto mouse_replay_pos =
+        std::find(kValidMouseReplayMethods.cbegin(),
+                  kValidMouseReplayMethods.cend(), mouse_replay_string);
+    if (kValidMouseReplayMethods.cend() == mouse_replay_pos) {
+      throw std::invalid_argument("unsupported mouse-replay!");
+    }
+    mouse_replay = static_cast<MouseReplay>(
+        std::distance(kValidMouseReplayMethods.cbegin(), mouse_replay_pos));
 
     if (video_bitrate < kMinVideoBitrate) {
       throw std::out_of_range("video-bitrate too low!");
@@ -369,7 +376,7 @@ int main(int argc, char* argv[]) {
         break;
       case HardwareEncoder::NVENC:
         if (video_preset.empty()) {
-          video_preset = "llhp";
+          video_preset = "p1";
         } else if (kValidNvencPreset.cend() ==
                    std::find(kValidNvencPreset.cbegin(),
                              kValidNvencPreset.cend(), video_preset)) {
@@ -404,14 +411,14 @@ int main(int argc, char* argv[]) {
     std::cout << "audio-bitrate: " << audio_bitrate << '\n'
               << "audio-codec: " << audio_codec << '\n'
               << "bind-address: " << bind_address << '\n'
-              << "control-port: " << control_port << '\n'
               << "disable-keys: " << disable_keys_string << '\n'
               << "donot-present: " << std::boolalpha << donot_present << '\n'
+              << "gamepad-replay: " << gamepad_replay_string << '\n'
               << "hardware-encoder: " << hardware_encoder_string << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
-              << "gamepad-replay: " << gamepad_replay_string << '\n'
-              << "log-level: " << log_level << '\n'
-              << "stream-port: " << stream_port << '\n'
+              << "log-level: " << log_level_string << '\n'
+              << "mouse-replay: " << mouse_replay_string << '\n'
+              << "port: " << port << '\n'
               << "video-bitrate: " << video_bitrate << '\n'
               << "video-codec: " << video_codec << '\n'
               << "video-gop: " << video_gop << '\n'
@@ -432,7 +439,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  InitLogger(severity_level);
+  InitLogger(log_level);
 
   boost::asio::detail::winsock_init<2, 2> winsock;
   boost::system::error_code ec;
@@ -447,21 +454,20 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  Engine::GetInstance().SetPresentFlag(donot_present);
+  g_app.GetEngine().SetPresentFlag(donot_present);
 
-  net::signal_set signals(Engine::GetInstance().GetIoContext(), SIGINT, SIGTERM,
+  net::signal_set signals(g_app.GetEngine().GetIoContext(), SIGINT, SIGTERM,
                           SIGBREAK);
   signals.async_wait([&](const boost::system::error_code&, int sig) {
     APP_INFO() << "receive signal(" << sig << ").\n";
-    Engine::GetInstance().Stop();
+    g_app.GetEngine().Stop();
   });
-  Engine::GetInstance().Run(tcp::endpoint(kAddress, stream_port),
-                            udp::endpoint(kAddress, control_port),
-                            std::move(audio_codec), audio_bitrate, disable_keys,
-                            keyboard_replay, gamepad_replay, video_bitrate,
-                            video_codec_id, hardware_encoder, video_gop,
-                            std::move(video_preset), video_quality);
-  Engine::GetInstance().EncoderStop();
+  g_app.GetEngine().Run(tcp::endpoint(kAddress, port), std::move(audio_codec),
+                        audio_bitrate, disable_keys, gamepad_replay,
+                        keyboard_replay, mouse_replay, video_bitrate,
+                        video_codec_id, hardware_encoder, video_gop,
+                        std::move(video_preset), video_quality);
+  g_app.GetEngine().EncoderStop();
   logging::core::get()->flush();
   return EXIT_SUCCESS;
 }

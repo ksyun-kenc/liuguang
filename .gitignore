@@ -1,5 +1,8 @@
+# VS
 .vs/
 bin/
 tmp/
-
 *.vcxproj.user
+
+# macOS
+.DS_Store
