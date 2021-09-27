@@ -38,12 +38,14 @@ inline void Fail(beast::error_code ec,
 constexpr size_t kMaxClientCount = 8;
 
 #pragma region "GameService"
-GameService::GameService(const tcp::endpoint& endpoint,
+GameService::GameService(net::io_context& ioc,
+                         const tcp::endpoint& endpoint,
                          const std::vector<uint8_t>& disable_keys,
                          GamepadReplay gamepad_replay,
                          KeyboardReplay keyboard_replay,
                          MouseReplay mouse_replay) noexcept
-    : acceptor_(g_app.GetEngine().GetIoContext()),
+    : ioc_(ioc),
+      acceptor_(ioc),
       gamepad_replay_(gamepad_replay),
       keyboard_replay_(keyboard_replay),
       mouse_replay_(mouse_replay) {
@@ -79,9 +81,8 @@ GameService::GameService(const tcp::endpoint& endpoint,
 }
 
 void GameService::Accept() {
-  acceptor_.async_accept(
-      g_app.GetEngine().GetIoContext(),
-      beast::bind_front_handler(&GameService::OnAccept, shared_from_this()));
+  acceptor_.async_accept(ioc_, beast::bind_front_handler(&GameService::OnAccept,
+                                                         shared_from_this()));
 }
 
 bool GameService::Join(std::shared_ptr<GameSession> session) noexcept {
@@ -157,7 +158,8 @@ void GameService::OnAccept(beast::error_code ec, tcp::socket socket) {
   APP_INFO() << "Accept " << socket.remote_endpoint() << '\n';
 
   socket.set_option(tcp::no_delay(true));
-  std::make_shared<GameSession>(std::move(socket), shared_from_this())->Run();
+  std::make_shared<GameSession>(ioc_, std::move(socket), shared_from_this())
+      ->Run();
 
   Accept();
 }

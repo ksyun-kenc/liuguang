@@ -101,6 +101,10 @@ Usage:
 
 You can press `Ctrl+C` to stop it gracefully.
 
+### regame-authenticator
+
+`cge` uses [regame-authenticator](https://github.com/ksyun-kenc/regame-authenticator) to verify login.
+
 ### cgh
 
 Some hook dlls for capturing pictures from D3D game.

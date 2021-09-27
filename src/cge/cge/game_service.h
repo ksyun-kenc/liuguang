@@ -22,7 +22,8 @@
 
 class GameService : public std::enable_shared_from_this<GameService> {
  public:
-  GameService(const tcp::endpoint& endpoint,
+  GameService(net::io_context& ioc,
+              const tcp::endpoint& endpoint,
               const std::vector<uint8_t>& disable_keys,
               GamepadReplay gamepad_replay,
               KeyboardReplay keyboard_replay,
@@ -53,6 +54,7 @@ class GameService : public std::enable_shared_from_this<GameService> {
   friend class GameSession;
 
  private:
+  net::io_context& ioc_;
   tcp::acceptor acceptor_;
 
   std::array<bool, 256> disable_keys_{};

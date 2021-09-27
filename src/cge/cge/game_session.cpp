@@ -1,9 +1,28 @@
+/*
+ * Copyright 2020-present Ksyun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "pch.h"
 
 #include "game_session.h"
 
 #include "app.hpp"
+#include "authenticator.h"
 #include "game_service.h"
+
+#define USE_AUTHENTICATOR 1
 
 using namespace std::literals::chrono_literals;
 
@@ -44,6 +63,7 @@ void GameSession::Stop(bool restart) {
       ws_.control_callback();
       beast::error_code ec;
       ws_.close(websocket::close_code::going_away, ec);
+      APP_INFO() << "Closed " << remote_endpoint_ << '\n';
     }
   } else {
     game_service_->Leave(shared_from_this());
@@ -136,6 +156,7 @@ void GameSession::OnAuthorized(bool authorized) noexcept {
 
 void GameSession::OnStop(beast::error_code ec) {
   game_service_->Leave(shared_from_this());
+  APP_INFO() << "Async closed " << remote_endpoint_ << '\n';
 }
 
 void GameSession::OnRead(beast::error_code ec, std::size_t bytes_transferred) {
@@ -223,25 +244,37 @@ bool GameSession::ServeClient() {
                 packet_size);
           }
         } else if (SessionState::kNone == session_state_) {
-          bool authorized = false;
           if (regame::ClientAction::kLogin == action) {
             session_state_ = SessionState::kAuthorizing;
-            auto login =
+            auto cl =
                 reinterpret_cast<const regame::ClientLogin*>(client_packet);
-            if (login->verification_size > sizeof(login->verification_data)) {
+            if (cl->verification_size > sizeof(cl->verification_data)) {
               return false;
             }
-            std::string temp(login->username, sizeof(login->username));
+            std::string temp(cl->username, sizeof(cl->username));
             username_.assign(temp.data());
-            if (regame::VerificationType::Code == login->verification_type) {
-              std::string password(login->verification_data,
-                                   login->verification_size);
-              // TO-DO
-              authorized = username_ == "UMU" && password == "123456";
-            }
-          }
 
-          SetAuthorized(authorized);
+            Authenticator::Login login;
+            login.version = static_cast<std::int64_t>(cl->protocol_version);
+            login.username = username_;
+            login.type = static_cast<std::int64_t>(cl->verification_type);
+            login.data.assign(cl->verification_data, cl->verification_size);
+#if USE_AUTHENTICATOR
+            authenticator_ = std::make_shared<Authenticator>(
+                ioc_, std::move(weak_from_this()));
+            if (authenticator_) {
+              authenticator_->Init();
+              authenticator_->Verify(login);
+            }
+#else
+            // You should remove this backdoor.
+            bool authorized = false;
+            if (regame::VerificationType::Code == cl->verification_type) {
+              authorized = username_ == "UMU" && login.data == "123456";
+            }
+            SetAuthorized(authorized);
+#endif
+          }
         }
 
         read_buffer_.consume(total_size);

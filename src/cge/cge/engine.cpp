@@ -46,9 +46,9 @@ void Engine::Run(tcp::endpoint ws_endpoint,
       return;
     }
 
-    game_service_ =
-        std::make_shared<GameService>(ws_endpoint, disable_keys, gamepad_replay,
-                                      keyboard_replay, mouse_replay);
+    game_service_ = std::make_shared<GameService>(
+        ioc_, ws_endpoint, disable_keys, gamepad_replay, keyboard_replay,
+        mouse_replay);
     APP_INFO() << "Regame service via WebSocket on " << ws_endpoint << '\n';
     game_service_->Run();
   } catch (std::exception& e) {
@@ -59,7 +59,9 @@ void Engine::Run(tcp::endpoint ws_endpoint,
   running_ = true;
   auto io_thread = std::thread(&Engine::Loop, this);
   Loop();
-  io_thread.join();
+  if (io_thread.joinable()) {
+    io_thread.join();
+  }
   running_ = false;
 }
 

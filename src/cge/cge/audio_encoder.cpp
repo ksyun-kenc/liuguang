@@ -276,6 +276,11 @@ int AudioEncoder::Open(AVCodec* codec, AVDictionary** opts) {
       codec_context_->sample_rate, codec_context_->frame_size);
 
 #if _DEBUG
+  APP_DEBUG() << "channel layout: " << codec_context_->channel_layout << '\n';
+  APP_DEBUG() << "sample format: " << codec_context_->sample_fmt << '\n';
+  APP_DEBUG() << "sample rate: " << codec_context_->sample_rate << '\n';
+  APP_DEBUG() << "frame size: " << codec_context_->frame_size << '\n';
+
   if (source_audio_info_.channel_layout != codec_context_->channel_layout) {
     APP_DEBUG() << "resample channel layout "
                 << source_audio_info_.channel_layout << " to "

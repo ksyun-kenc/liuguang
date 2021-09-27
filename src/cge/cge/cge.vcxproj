@@ -311,6 +311,7 @@
     </ClCompile>
     <ClCompile Include="audio_encoder.cpp" />
     <ClCompile Include="audio_resampler.cpp" />
+    <ClCompile Include="authenticator.cpp" />
     <ClCompile Include="cge.cpp" />
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="game_control.cpp" />
@@ -332,6 +333,7 @@
     <ClInclude Include="app.hpp" />
     <ClInclude Include="audio_encoder.h" />
     <ClInclude Include="audio_resampler.h" />
+    <ClInclude Include="authenticator.h" />
     <ClInclude Include="encoder.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="ffmpeg.h" />

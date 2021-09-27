@@ -28,6 +28,7 @@ project cge
     <include>../../deps/ViGEmClient/include
     <target-os>windows,<toolset>msvc:<find-static-library>Setupapi
     <library>/boost//date_time
+    <library>/boost//json
     <library>/boost//log
     <library>/boost//log_setup
     <library>/boost//program_options
@@ -58,6 +59,7 @@ exe cge
   : pch deps
     audio_encoder.cpp
     audio_resampler.cpp
+    authenticator.cpp
     cge.cpp
     engine.cpp
     game_control.cpp

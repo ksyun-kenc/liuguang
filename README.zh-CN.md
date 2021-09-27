@@ -97,6 +97,10 @@ Usage:
 
 可以按 `Ctrl+C` 优雅退出。
 
+### regame-authenticator
+
+`cge` 使用 [regame-authenticator](https://github.com/ksyun-kenc/regame-authenticator) 验证登录。
+
 ### cgh
 
 一些用于捕捉 D3D 游戏画面的 Hook DLL。

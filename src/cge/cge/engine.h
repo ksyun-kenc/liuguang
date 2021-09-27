@@ -57,8 +57,6 @@ class Engine {
     return video_encoder_.GetSourceWindow();
   }
 
-  void PostAuthenticateRequest(std::string json);
-
  private:
   int WritePacket(void* opaque, std::span<uint8_t> packet) noexcept;
 
