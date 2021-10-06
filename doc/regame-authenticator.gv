@@ -1,0 +1,29 @@
+digraph G {
+
+	subgraph cluster_0 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		login;
+		label = "cgc";
+	}
+
+	subgraph cluster_1 {
+		style=filled;
+		color="#BFBFBF";
+		node [style=filled,color="#ADB9CA"];
+		"login-redirect";
+		label = "cge";
+	}
+
+	subgraph cluster_2 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		"login-verify";
+		label = "regame-authenticator";
+	}
+
+	login -> "login-redirect" -> "login-verify"[color="#F13929"];
+	"login-verify" -> "login-redirect" -> login[color="#F13929", style="dashed"];
+}

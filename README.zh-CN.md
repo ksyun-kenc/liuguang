@@ -101,6 +101,8 @@ Usage:
 
 `cge` 使用 [regame-authenticator](https://github.com/ksyun-kenc/regame-authenticator) 验证登录。
 
+[![regame-authenticator](doc/regame-authenticator.png)](doc/regame-authenticator.gv)
+
 ### cgh
 
 一些用于捕捉 D3D 游戏画面的 Hook DLL。
