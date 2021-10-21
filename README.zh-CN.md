@@ -122,8 +122,8 @@ Allowed options:
   -c [ --cd ] arg            Current directory for the executable
   -i [ --imagename ] arg     Image name of the process being injected.
   -w [ --wait ] arg (=1,000) Wait before injecting. unit: ms
-  --lx86 arg                 Path of x86 library path
-  --lx64 arg                 Path of x64 library path
+  --lx86 arg                 Path of x86 library to inject into process
+  --lx64 arg                 Path of x64 library to inject into process
 ```
 
 ### cgvhid

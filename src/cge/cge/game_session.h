@@ -26,7 +26,7 @@ class GameService;
 class GameSession : public std::enable_shared_from_this<GameSession> {
  public:
   explicit GameSession(net::io_context& ioc,
-                       tcp::socket && socket,
+                       tcp::socket&& socket,
                        std::shared_ptr<GameService>&& game_service) noexcept
       : ioc_(ioc),
         ws_(std::move(socket)),

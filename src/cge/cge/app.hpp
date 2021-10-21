@@ -64,8 +64,8 @@ extern App g_app;
 #define APP_FATAL() APP_LOG(SeverityLevel::kFatal)
 
 #if _DEBUG
-#define DEBUG_VERBOSE(x) APP_TRACE() << (x);
-#define DEBUG_PRINT(x) APP_DEBUG() << (x);
+#define DEBUG_VERBOSE(x) APP_TRACE() << (x)
+#define DEBUG_PRINT(x) APP_DEBUG() << (x)
 #else
 #define DEBUG_VERBOSE(x)
 #define DEBUG_PRINT(x)
