@@ -16,6 +16,12 @@
 
 - [01-国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.zhihu.com/zvideo/1314567244832530432) - 知乎
 
+- [09-鎏光 WebRTC 助力企业软件上云](https://www.bilibili.com/video/BV1g34y1U7RL) - 哔哩哔哩
+
+- [09-鎏光 WebRTC 助力企业软件上云](https://www.ixigua.com/7023285940831552031) - 西瓜视频
+
+- [09-鎏光 WebRTC 助力企业软件上云](https://www.zhihu.com/zvideo/1436363494992445440) - 知乎
+
 ## 1. 配置要求
 
 ### 服务端

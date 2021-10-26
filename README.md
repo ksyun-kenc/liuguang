@@ -20,6 +20,12 @@ Demo videos (Chinese):
 
 - [01-Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - zhihu
 
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.bilibili.com/video/BV1g34y1U7RL) - 哔哩哔哩
+
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.ixigua.com/7023285940831552031) - 西瓜视频
+
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.zhihu.com/zvideo/1436363494992445440) - 知乎
+
 ## 1. Requirements
 
 ### Server
