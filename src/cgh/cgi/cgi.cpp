@@ -88,8 +88,8 @@ int wmain(int argc, wchar_t* argv[]) {
         "Image name of the process being injected.")(
         "wait,w", po::value<uint32_t>(&wait)->default_value(1000),
         "Wait before injecting. unit: ms")("lx86", po::value<fs::path>(&lx86),
-                                           "Path of x86 library path")(
-        "lx64", po::value<fs::path>(&lx64), "Path of x64 library path");
+                                           "Path of x86 library to inject into process")(
+        "lx64", po::value<fs::path>(&lx64), "Path of x64 library to inject into process");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

@@ -63,8 +63,8 @@ class CaptureYuv {
           sizeof(SharedVideoFrameInfo),
           kSharedVideoFrameInfoFileMappingName.data(), nullptr, SA());
       if (FAILED(hr)) {
-        ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed with 0x%08x.\n",
-                  hr);
+        ATLTRACE2(atlTraceException, 0,
+                  "MapSharedMem(info) failed with 0x%08x.\n", hr);
         return false;
       }
     }
