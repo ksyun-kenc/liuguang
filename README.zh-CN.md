@@ -28,7 +28,7 @@
 
 | 目标 | 最小化 | 建议 |
 | --- | --- | --- |
-| 操作系统 | Windows 7, 8, 8.1, 10 | Windows 10 |
+| 操作系统 | Windows 7 或以上 | Windows 10, 11 |
 | GPU | NVIDIA GPU | 已测试 GTX 1080Ti, RTX 2070S |
 | 软件 | GeForce Experience | 最新的 GeForce Experience |
 | 驱动 | GeForce Game Ready Driver | 最新的 GeForce Game Ready Driver |
@@ -37,7 +37,7 @@
 
 | 目标 | 最小化 | 建议 |
 | --- | --- | --- |
-| 操作系统 | Windows 7, 8, 8.1, 10 | Windows 10 |
+| 操作系统 | Windows 7 或以上 | Windows 10, 11 |
 | CPU | 任意 | amd64 |
 
 ## 2. 基本信息
@@ -253,6 +253,10 @@ Boost 的编译命令，参考：
 ### 4.5 WDK
 
 编译 cgvhid, cgvidd 时需要的。
+
+### 4.6 额外工具
+
+DbgView: 包含于 [Sysinternals Suite](https://www.microsoft.com/store/productId/9P7KNL5RWT25)
 
 ## 5. 编译和测试
 

@@ -32,7 +32,7 @@ Demo videos (Chinese):
 
 | Target | Minimum | Recommended |
 | --- | --- | --- |
-| System | Windows 7, 8, 8.1, 10 | Windows 10 |
+| System | Windows 7 and later | Windows 10, 11 |
 | GPU | NVIDIA GPU | GTX 1080Ti, RTX 2070S tested |
 | Software | GeForce Experience | latest GeForce Experience |
 | Driver | GeForce Game Ready Driver | latest GeForce Game Ready Driver |
@@ -41,7 +41,7 @@ Demo videos (Chinese):
 
 | Target | Minimum | Recommended |
 | --- | --- | --- |
-| System | Windows 7, 8, 8.1, 10 | Windows 10 |
+| System | Windows 7 and later | Windows 10, 11 |
 | CPU | ANY | amd64 |
 
 ## 2. Basic
@@ -257,6 +257,10 @@ The folder tree should be like:
 ### 4.5 WDK
 
 Required by cgvhid, cgvidd.
+
+### 4.6 Extra
+
+DbgView: Included in [Sysinternals Suite](https://www.microsoft.com/store/productId/9P7KNL5RWT25)
 
 ## 5. Building and Testing
 
