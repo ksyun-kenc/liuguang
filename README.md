@@ -211,7 +211,7 @@ Boost compile command:
 
 Video Reference (Chinese):
 
-- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://youtu.be/u3OEDOlhGxo) - Youtube
+- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://youtu.be/daQjeYPZD6o) - Youtube
 
 - [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.bilibili.com/video/BV1P5411J7L8/) - bilibili
 
