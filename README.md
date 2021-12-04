@@ -14,17 +14,21 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 Demo videos (Chinese):
 
+- [01-Regame Cloud Gaming Demo - Street Fighter](https://youtu.be/9LYxeXfJ0og) - Youtube
+
 - [01-Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
 
 - [01-Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - ixigua
 
 - [01-Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - zhihu
 
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.bilibili.com/video/BV1g34y1U7RL) - 哔哩哔哩
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://youtu.be/r98-VwSDOjg) - Youtube
 
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.ixigua.com/7023285940831552031) - 西瓜视频
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.bilibili.com/video/BV1g34y1U7RL) - bilibili
 
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.zhihu.com/zvideo/1436363494992445440) - 知乎
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.ixigua.com/7023285940831552031) - ixigua
+
+- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.zhihu.com/zvideo/1436363494992445440) - zhihu
 
 ## 1. Requirements
 
@@ -154,6 +158,8 @@ It also can be used to test latency.
 
 Video Reference (Chinese):
 
+- [05-Regame Cloud Gaming Engine: Latency Test](https://youtu.be/u3OEDOlhGxo) - Youtube
+
 - [05-Regame Cloud Gaming Engine: Latency Test](https://www.bilibili.com/video/BV1KU4y147ks/) - bilibili
 
 - [05-Regame Cloud Gaming Engine: Latency Test](https://www.ixigua.com/6918363287298146823) - ixigua
@@ -205,6 +211,8 @@ Boost compile command:
 
 Video Reference (Chinese):
 
+- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://youtu.be/u3OEDOlhGxo) - Youtube
+
 - [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.bilibili.com/video/BV1P5411J7L8/) - bilibili
 
 - [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.ixigua.com/6922104314932986376) - ixigua
@@ -232,6 +240,8 @@ The folder tree should be like:
 ```
 
 Video Reference (Chinese):
+
+- [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://youtu.be/fdAg5vHR_pE) - Youtube
 
 - [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
 
@@ -297,6 +307,8 @@ Assume you want to test USF4.
 **Note** that only support D3D9, D3D11, D3D12 games now.
 
 Video Reference (Chinese):
+
+- [02-Regame Cloud Gaming Engine Test Steps](https://youtu.be/8pEhg379ASo) - Youtube
 
 - [02-Regame Cloud Gaming Engine Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
 
