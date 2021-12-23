@@ -216,8 +216,7 @@ int AudioEncoder::AddStream(AVCodec*& codec) {
   codec_context_->bits_per_raw_sample = source_audio_info_.sample_bits;
   codec_context_->bit_rate = bitrate_;
   codec_context_->sample_rate = source_audio_info_.sample_rate;
-  const int* ssr = codec->supported_samplerates;
-  if (nullptr != ssr) {
+  if (const int* ssr = codec->supported_samplerates; nullptr != ssr) {
     int min_diff = -1;
     for (int i = 0; 0 != ssr[i]; ++i) {
       if (-1 == min_diff) {
@@ -358,8 +357,7 @@ int AudioEncoder::Encode() {
   }
   BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_free(&packet); };
 
-  HANDLE events[] = {stop_event_, shared_frame_ready_event_};
-  for (;;) {
+  for (HANDLE events[] = {stop_event_, shared_frame_ready_event_};;) {
     DWORD wait =
         WaitForMultipleObjects(_countof(events), events, FALSE, INFINITE);
     if (WAIT_OBJECT_0 == wait) {

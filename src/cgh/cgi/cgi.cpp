@@ -124,6 +124,7 @@ int wmain(int argc, wchar_t* argv[]) {
       std::vector<DWORD> pids;
 
       if (!ProcessNamesToProcessIds(image_names, pids)) {
+        exec = fs::absolute(exec);
         // sanity check
         ChechExec(exec, cd, arguments);
 

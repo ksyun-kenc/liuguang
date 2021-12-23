@@ -487,8 +487,7 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
   }
   BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_free(&packet); };
 
-  int written = -1;
-  for (;;) {
+  for (int written = -1;;) {
     error_code = avcodec_receive_packet(codec_context_, packet);
     if (error_code < 0) {
       if (AVERROR(EAGAIN) == error_code && written == 0) {
