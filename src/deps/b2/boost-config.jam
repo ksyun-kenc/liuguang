@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-local boost-version = 1.77 ;
+local boost-version = 1.78 ;
 
 import os ;
   local boost-root = [ os.environ BOOST_ROOT ] ;
@@ -55,5 +55,8 @@ if $(boost-root) && [ path.exists $(boost-root) ] {
 
 project.pop-current ;
 
-import boost-modified ;
-  boost-modified.use-project ;
+# before 1.78
+#import boost-modified ;
+#  boost-modified.use-project ;
+import boost ;
+  boost.use-project ;

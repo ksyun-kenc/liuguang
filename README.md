@@ -192,11 +192,11 @@ A WebRTC server works together with `cge`, to serve web clients.
 
 ## 4. Setting Up Your Build Environment
 
-### 4.1 VS2019
+### 4.1 VS2022
 
 [Reference .vsconfig](doc/.vsconfig)
 
-![VS2019](doc/vs2019.jpg)
+![VS2022](doc/vs2022.jpg)
 
 ### 4.2 Boost
 

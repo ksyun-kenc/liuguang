@@ -182,11 +182,11 @@ WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 
 ## 4. 搭建编译环境
 
-### 4.1 VS2019
+### 4.1 VS2022
 
 [参考配置](doc/.vsconfig)
 
-![VS2019](doc/vs2019.jpg)
+![VS2022](doc/vs2022.jpg)
 
 ### 4.2 Boost
 

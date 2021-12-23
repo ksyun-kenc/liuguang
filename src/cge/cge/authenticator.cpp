@@ -135,13 +135,11 @@ void Authenticator::OnRead(beast::error_code ec,
     json_parser_.reset();
     Close();
 
-    if (result.is_object()) {
-      auto& jo = result.as_object();
-      DEBUG_VERBOSE(std::format("Authenticator: {}\n", json::serialize(jo)));
-      auto result = jo.if_contains("result");
-      if (nullptr != result) {
+    if (auto jo = result.if_object(); nullptr != jo) {
+      DEBUG_VERBOSE(std::format("Authenticator: {}\n", json::serialize(*jo)));
+      if (auto result = jo->if_contains("result"); nullptr != result) {
         auto b = result->if_bool();
-        authorized = (nullptr != b) && b;
+        authorized = (nullptr != b) && *b;
       }
     }
   }
