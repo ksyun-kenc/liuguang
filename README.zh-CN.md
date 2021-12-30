@@ -48,6 +48,8 @@
 
 - `cgc` 使用 FFmpeg 解码音视频流，并用 SDL2 播放它们。
 
+[![regame-components](doc/regame-components.png)](doc/regame-components.gv)
+
 [![Data Flow](doc/cg.png)](doc/cg.gv)
 
 ## 3. 快速体验
@@ -66,48 +68,56 @@
 KSYUN Edge Cloud Gaming Engine v0.4 Beta
 
 Usage:
-  -h [ --help ]                  Produce help message
-  --audio-bitrate arg (=128000)  Set audio bitrate
-  --audio-codec arg (=libopus)   Set audio codec. Select one of {libopus, aac,
-                                 opus}
-  --bind-address arg (=::)       Set bind address for listening. eg: 0.0.0.0
-  --disable-keys arg             Disable scan codes. eg: 226,230 disable ALT;
-                                 227,231 disable WIN
-  --donot-present arg (=0)       Tell cgh don't present
-  --hardware-encoder arg         Set video hardware encoder. Select one of
-                                 {amf, nvenc, qsv}
-  --gamepad-replay arg (=none)   Set gamepad replay method. Select one of
-                                 {none, cgvhid, vigem}
-  --keyboard-replay arg (=none)  Set keyboard replay method. Select one of
-                                 {none, cgvhid}
-  --mouse-replay arg (=none)     Set mouse replay method. Select one of {none,
-                                 cgvhid}
-  --log-level arg (=info)        Set logging severity level. Select one of
-                                 {trace, debug, info, warning, error, fatal}
-  -p [ --port ] arg (=8080)      Set the service port
-  --video-bitrate arg (=1000000) Set video bitrate
-  --video-codec arg (=h264)      Set video codec. Select one of {h264, h265,
-                                 hevc}, h265 == hevc
-  --video-gop arg (=180)         Set video gop. [1, 500]
-  --video-preset arg             Set preset for video encoder. For AMF, select
-                                 one of {speed, balanced, quality}; For NVENC,
-                                 select one of {p1, p2, p3, p4, p5, p6, p7,
-                                 slow, medium, fast}; For QSV, select one of
-                                 {veryfast, faster, fast, medium, slow, slower,
-                                 veryslow}; otherwise, select one of
-                                 {ultrafast, superfast, veryfast, faster, fast,
-                                 medium, slow, slower, veryslow, placebo}
-  --video-quality arg (=23)      Set video quality. [0, 51], lower is better, 0
-                                 is lossless
+  -h [ --help ]                         Produce help message
+  --audio-bitrate arg (=128000)         Set audio bitrate
+  --audio-codec arg (=libopus)          Set audio codec. Select one of
+                                        {libopus, aac, opus}
+  --bind-address arg (=::)              Set bind address for listening. eg:
+                                        0.0.0.0
+  --disable-keys arg                    Disable virtual keys. eg: 164,165
+                                        disable ALT; 91,92 disable WIN
+  --donot-present arg (=0)              Tell cgh don't present
+  --hardware-encoder arg                Set video hardware encoder. Select one
+                                        of {amf, nvenc, qsv}
+  --gamepad-replay arg (=none)          Set gamepad replay method. Select one
+                                        of {none, cgvhid, vigem}
+  --keyboard-replay arg (=none)         Set keyboard replay method. Select one
+                                        of {none, cgvhid, sendinput, message}
+  --mouse-replay arg (=none)            Set mouse replay method. Select one of
+                                        {none, cgvhid, sendinput, message}
+  --log-level arg (=info)               Set logging severity level. Select one
+                                        of {trace, debug, info, warning, error,
+                                        fatal}
+  -p [ --port ] arg (=8080)             Set the service port
+  --video-bitrate arg (=1000000)        Set video bitrate
+  --video-codec arg (=h264)             Set video codec. Select one of {h264,
+                                        h265, hevc}, h265 == hevc
+  --video-gop arg (=180)                Set video gop. [1, 500]
+  --video-preset arg                    Set preset for video encoder. For AMF,
+                                        select one of {speed, balanced,
+                                        quality}; For NVENC, select one of {p1,
+                                        p2, p3, p4, p5, p6, p7, slow, medium,
+                                        fast}; For QSV, select one of
+                                        {veryfast, faster, fast, medium, slow,
+                                        slower, veryslow}; otherwise, select
+                                        one of {ultrafast, superfast, veryfast,
+                                        faster, fast, medium, slow, slower,
+                                        veryslow, placebo}
+  --video-quality arg (=23)             Set video quality. [0, 51], lower is
+                                        better, 0 is lossless
+  --user-service arg (=http://127.0.0.1:8545/)
+                                        Set address for user service.
 ```
 
 可以按 `Ctrl+C` 优雅退出。
 
-### regame-authenticator
+### regame-user-service
 
-`cge` 使用 [regame-authenticator](https://github.com/ksyun-kenc/regame-authenticator) 验证登录。
+`cge` 使用 [regame-user-service](https://github.com/ksyun-kenc/regame-user-service) 来维护用户状态，比如验证登录。
 
 [![regame-authenticator](doc/regame-authenticator.png)](doc/regame-authenticator.gv)
+
+![regame-user-manager](doc/regame-user-manager.png)
 
 ### cgh
 

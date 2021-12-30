@@ -1,0 +1,52 @@
+digraph G {
+    subgraph cluster_0 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		"Native UI" wsc0;
+		label = "cgc";
+	}
+	
+    subgraph cluster_1 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		"Web UI" "WebRTC Client";
+		label = "WebBrowser";
+	}
+	
+    subgraph cluster_2 {
+		style=filled;
+		color="#BFBFBF";
+		node [style=filled,color="#ADB9CA"];
+		"WebRTC Server" wsc1;
+		label = "cgs";
+	}
+
+	subgraph cluster_3 {
+		style=filled;
+		color="#3FBFFF";
+		node [style=filled,color="#ADB9CA"];
+		"WebSocket Server" "JSONRPC Client";
+		label = "cge";
+	}
+
+	subgraph cluster_4 {
+		style=filled;
+		color="#BFBFBF";
+		node [style=filled,color="#ADB9CA"];
+		"JSONRPC Server";
+		label = "User Service";
+	}
+
+    start -> "Native UI";
+    start -> "Web UI";
+    "WebRTC Client" -> "WebRTC Server";
+    wsc0 -> "WebSocket Server";
+	wsc1 -> "WebSocket Server";
+	"JSONRPC Client" -> "JSONRPC Server";
+	
+	start [shape=Mdiamond, label="Palyer"];
+	wsc0 [label="WebSocket Client"];
+	wsc1 [label="WebSocket Client"];
+}
