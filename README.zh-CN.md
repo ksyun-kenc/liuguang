@@ -196,7 +196,7 @@ WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 
 [参考配置](doc/.vsconfig)
 
-![VS2022](doc/vs2022.jpg)
+![VS2022](doc/vs2022.png)
 
 ### 4.2 Boost
 

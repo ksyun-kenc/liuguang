@@ -206,7 +206,7 @@ A WebRTC server works together with `cge`, to serve web clients.
 
 [Reference .vsconfig](doc/.vsconfig)
 
-![VS2022](doc/vs2022.jpg)
+![VS2022](doc/vs2022.png)
 
 ### 4.2 Boost
 
