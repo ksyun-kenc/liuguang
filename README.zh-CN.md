@@ -144,13 +144,13 @@ Allowed options:
 
 ### cgvhid
 
-全称为 Cloud gameing Virtual HID driver. 用于在服务端重放键盘灯外设消息。
+全称为 Cloud gaming Virtual HID driver. 用于在服务端重放键盘灯外设消息。
 
 ![Hook game](doc/cgvhid.png)
 
 ### cgvidd
 
-全称为 Cloud gameing Virtual Indirect Display Driver. 用于抓取服务器桌面。
+全称为 Cloud gaming Virtual Indirect Display Driver. 用于抓取服务器桌面。
 
 ### video_source
 

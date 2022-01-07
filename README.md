@@ -152,13 +152,13 @@ Allowed options:
 
 ### cgvhid
 
-Cloud gameing Virtual HID driver. For replaying controller event on server.
+Cloud gaming Virtual HID driver. For replaying controller event on server.
 
 ![Hook game](doc/cgvhid.png)
 
 ### cgvidd
 
-Cloud gameing Virtual Indirect Display Driver. For capturing screen on server.
+Cloud gaming Virtual Indirect Display Driver. For capturing screen on server.
 
 ### video_source
 
