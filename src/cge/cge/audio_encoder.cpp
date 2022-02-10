@@ -94,7 +94,7 @@ int AudioEncoder::EncodingThread() {
 
   sound_capturer_.GetAudioInfo(&source_audio_info_);
 
-  AVCodec* codec = nullptr;
+  const AVCodec* codec = nullptr;
   error_code = AddStream(codec);
   if (error_code < 0) {
     return error_code;
@@ -173,7 +173,7 @@ void AudioEncoder::Free(bool wait_thread) {
   }
 }
 
-int AudioEncoder::AddStream(AVCodec*& codec) {
+int AudioEncoder::AddStream(const AVCodec*& codec) {
   assert(!codec_name_.empty());
   assert(nullptr == codec_context_);
   assert(source_audio_info_.sample_bits > 0);
@@ -251,7 +251,7 @@ int AudioEncoder::AddStream(AVCodec*& codec) {
   return 0;
 }
 
-int AudioEncoder::Open(AVCodec* codec, AVDictionary** opts) {
+int AudioEncoder::Open(const AVCodec* codec, AVDictionary** opts) {
   assert(nullptr != codec_context_);
   assert(nullptr != stream_);
 

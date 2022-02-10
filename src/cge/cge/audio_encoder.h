@@ -33,8 +33,8 @@ class AudioEncoder : public Encoder {
  private:
   int EncodingThread();
   void Free(bool wait_thread);
-  int AddStream(AVCodec*& codec);
-  int Open(AVCodec* codec, AVDictionary** opts);
+  int AddStream(const AVCodec*& codec);
+  int Open(const AVCodec* codec, AVDictionary** opts);
   int InitFrame(AVFrame*& frame) const noexcept;
   int Encode();
 

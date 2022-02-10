@@ -156,7 +156,7 @@ int VideoEncoder::EncodingThread() {
     }
   }
 
-  AVCodec* codec = nullptr;
+  const AVCodec* codec = nullptr;
   error_code = AddStream(codec);
   if (error_code < 0) {
     return error_code;
@@ -238,7 +238,7 @@ void VideoEncoder::Free(bool wait_thread) {
   }
 }
 
-int VideoEncoder::AddStream(AVCodec*& codec) {
+int VideoEncoder::AddStream(const AVCodec*& codec) {
   assert(nullptr == codec_context_);
 
   const char* codec_name = nullptr;
@@ -291,7 +291,7 @@ int VideoEncoder::AddStream(AVCodec*& codec) {
   return 0;
 }
 
-int VideoEncoder::Open(AVCodec* codec, AVDictionary** opts) {
+int VideoEncoder::Open(const AVCodec* codec, AVDictionary** opts) {
   assert(nullptr == codec_context_);
   assert(nullptr != stream_);
 

@@ -47,8 +47,8 @@ class VideoEncoder : public Encoder {
  private:
   int EncodingThread();
   void Free(bool wait_thread);
-  int AddStream(AVCodec*& codec);
-  int Open(AVCodec* codec, AVDictionary** opts);
+  int AddStream(const AVCodec*& codec);
+  int Open(const AVCodec* codec, AVDictionary** opts);
   int InitFrame(AVFrame*& frame) const noexcept;
   int EncodeFrame(AVFrame* frame) noexcept;
   int EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept;
