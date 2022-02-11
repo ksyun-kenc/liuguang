@@ -32,11 +32,11 @@ class Encoder {
   void SaveHeader(std::span<std::uint8_t> buffer) noexcept {
     if (header_.empty()) {
       header_.resize(sizeof(regame::PackageHead) +
-                     sizeof(regame::ServerPacket));
+                     sizeof(regame::ServerPacketHead));
       auto head = reinterpret_cast<regame::PackageHead*>(header_.data());
-      head->size =
-          htonl(static_cast<int>(sizeof(regame::ServerPacket) + buffer.size()));
-      auto packet = reinterpret_cast<regame::ServerPacket*>(head + 1);
+      head->size = htonl(
+          static_cast<int>(sizeof(regame::ServerPacketHead) + buffer.size()));
+      auto packet = reinterpret_cast<regame::ServerPacketHead*>(head + 1);
       packet->action = GetServerAction();
     } else {
       auto head = reinterpret_cast<regame::PackageHead*>(header_.data());
@@ -53,7 +53,7 @@ class Encoder {
   void SetCodecID(AVCodecID codec_id) noexcept { codec_id_ = codec_id; }
 
  private:
-  AVCodecID codec_id_ = AV_CODEC_ID_NONE;
+  AVCodecID codec_id_{AV_CODEC_ID_NONE};
   std::string header_;
   regame::ServerAction action_;
 };

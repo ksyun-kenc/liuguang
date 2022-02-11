@@ -43,6 +43,14 @@ class VideoEncoder : public Encoder {
   HWND GetSourceWindow() const noexcept {
     return reinterpret_cast<HWND>(saved_frame_info_.window);
   }
+  std::uint32_t GetSourceWidth() const noexcept {
+    return saved_frame_info_.width;
+  }
+  std::uint32_t GetSourceHeight() const noexcept {
+    return saved_frame_info_.height;
+  }
+
+  void ProduceKeyframe() noexcept { produce_keyframe_ = true; }
 
  private:
   int EncodingThread();
@@ -74,4 +82,6 @@ class VideoEncoder : public Encoder {
   AVFormatContext* format_context_ = nullptr;
 
   std::chrono::steady_clock::time_point startup_time_;
+
+  mutable std::atomic<bool> produce_keyframe_{false};
 };

@@ -22,6 +22,10 @@
 #endif
 #define _WIN32_WINNT _WIN32_WINNT_WIN7
 
+#define BOOST_ASIO_NO_DEPRECATED
+#define BOOST_URL_NO_LIB
+#define BOOST_URL_NO_SOURCE_LOCATION
+
 #include <atlbase.h>
 #include <atlfile.h>
 
@@ -37,8 +41,6 @@
 #include <thread>
 
 #include <boost/algorithm/string.hpp>
-#define BOOST_ASIO_NO_DEPRECATED
 #include <boost/asio.hpp>
 #include <boost/pool/pool.hpp>
 #include <boost/scope_exit.hpp>
-

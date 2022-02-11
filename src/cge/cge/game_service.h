@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <unordered_set>
+#include <set>
 
 #include "game_session.h"
 
@@ -24,7 +24,6 @@ class GameService : public std::enable_shared_from_this<GameService> {
  public:
   GameService(net::io_context& ioc,
               const tcp::endpoint& endpoint,
-              const std::vector<uint8_t>& disable_keys,
               GamepadReplay gamepad_replay,
               KeyboardReplay keyboard_replay,
               MouseReplay mouse_replay) noexcept;
@@ -34,9 +33,6 @@ class GameService : public std::enable_shared_from_this<GameService> {
   size_t Send(std::string buffer);
   void CloseAllClients();
 
-  const std::array<bool, 256>& GetDisableKeys() const noexcept {
-    return disable_keys_;
-  }
   GamepadReplay GetGamepadReplay() const noexcept { return gamepad_replay_; }
   KeyboardReplay GetKeyboardReplay() const noexcept { return keyboard_replay_; }
   MouseReplay GetMouseReplay() const noexcept { return mouse_replay_; }
@@ -57,12 +53,11 @@ class GameService : public std::enable_shared_from_this<GameService> {
   net::io_context& ioc_;
   tcp::acceptor acceptor_;
 
-  std::array<bool, 256> disable_keys_{};
   GamepadReplay gamepad_replay_;
   KeyboardReplay keyboard_replay_;
   MouseReplay mouse_replay_;
 
   std::mutex session_mutex_;
-  std::unordered_set<std::shared_ptr<GameSession>> sessions_;
-  std::unordered_set<std::shared_ptr<GameSession>> authorized_sessions_;
+  std::set<std::shared_ptr<GameSession>> sessions_;
+  std::set<std::shared_ptr<GameSession>> authorized_sessions_;
 };

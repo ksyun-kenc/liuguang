@@ -40,7 +40,6 @@ constexpr size_t kMaxClientCount = 8;
 #pragma region "GameService"
 GameService::GameService(net::io_context& ioc,
                          const tcp::endpoint& endpoint,
-                         const std::vector<uint8_t>& disable_keys,
                          GamepadReplay gamepad_replay,
                          KeyboardReplay keyboard_replay,
                          MouseReplay mouse_replay) noexcept
@@ -73,10 +72,6 @@ GameService::GameService(net::io_context& ioc,
   if (ec) {
     Fail(ec, "listen");
     return;
-  }
-
-  for (const auto& e : disable_keys) {
-    disable_keys_[e] = true;
   }
 }
 
@@ -113,7 +108,7 @@ bool GameService::AddAuthorized(std::shared_ptr<GameSession> session) noexcept {
   }
   if (inserted) {
     if (first) {
-      g_app.GetEngine().EncoderRun();
+      g_app.Engine().EncoderRun();
     }
   } else {
     session->Stop(true);
@@ -131,7 +126,7 @@ void GameService::Leave(std::shared_ptr<GameSession> session) noexcept {
     }
   }
   if (last_authorized) {
-    g_app.GetEngine().EncoderStop();
+    g_app.Engine().EncoderStop();
   }
 }
 

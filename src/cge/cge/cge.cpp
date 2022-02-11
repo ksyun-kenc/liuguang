@@ -23,6 +23,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/program_options.hpp>
+#include <boost/url/src.hpp>
 
 #include "app.hpp"
 #include "sound_capturer.h"
@@ -56,6 +57,7 @@ using namespace std::literals::string_view_literals;
 
 constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.4 Beta"sv};
 constexpr auto kDefaultBindAddress{"::"sv};
+constexpr auto kDefaultUserService{"http://127.0.0.1:8545/"sv};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
 constexpr std::array<std::string_view, 3> kValidAudioCodecs = {"libopus", "aac",
                                                                "opus"};
@@ -68,13 +70,13 @@ constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods = {
 constexpr size_t kDefaultGamepadReplayIndex = 0;
 
 // Should be the same order with KeyboardReplay
-constexpr std::array<std::string_view, 2> kValidKeyboardReplayMethods = {
-    "none", "cgvhid"};
+constexpr std::array<std::string_view, 4> kValidKeyboardReplayMethods = {
+    "none", "cgvhid", "sendinput", "message"};
 constexpr size_t kDefaultKeyboardReplayIndex = 0;
 
 // Should be the same order with MouseReplay
-constexpr std::array<std::string_view, 2> kValidMouseReplayMethods = {"none",
-                                                                      "cgvhid"};
+constexpr std::array<std::string_view, 4> kValidMouseReplayMethods = {
+    "none", "cgvhid", "sendinput", "message"};
 constexpr size_t kDefaultMouseReplayIndex = 0;
 
 constexpr uint16_t kDefaultPort = 8080;
@@ -200,6 +202,7 @@ int main(int argc, char* argv[]) {
   int video_gop = 0;
   std::string video_preset;
   std::uint32_t video_quality = 0;
+  std::string user_service;
 
   try {
     std::string disable_keys_string;
@@ -225,7 +228,7 @@ int main(int argc, char* argv[]) {
         "Set bind address for listening. eg: 0.0.0.0")
       ("disable-keys",
         po::value<std::string>(&disable_keys_string),
-        "Disable scan codes. eg: 226,230 disable ALT; 227,231 disable WIN")
+        "Disable virtual keys. eg: 164,165 disable ALT; 91,92 disable WIN")
       ("donot-present",
         po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
         "Tell cgh don't present")
@@ -273,7 +276,10 @@ int main(int argc, char* argv[]) {
        .append(umu::string::ArrayJoin(kValidPreset)).data())
       ("video-quality",
         po::value<uint32_t>(&video_quality)->default_value(kDefaultVideoQuality),
-        "Set video quality. [0, 51], lower is better, 0 is lossless");
+        "Set video quality. [0, 51], lower is better, 0 is lossless")
+      ("user-service",
+        po::value<std::string>(&user_service)->default_value(kDefaultUserService.data()),
+        "Set address for user service.");
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -423,7 +429,8 @@ int main(int argc, char* argv[]) {
               << "video-codec: " << video_codec << '\n'
               << "video-gop: " << video_gop << '\n'
               << "video-preset: " << video_preset << '\n'
-              << "video-quality: " << video_quality << '\n';
+              << "video-quality: " << video_quality << '\n'
+              << "user-service: " << user_service << '\n';
 #endif
   } catch (const std::invalid_argument& e) {
     std::cerr << "Invalid argument: " << e.what() << '\n';
@@ -443,7 +450,7 @@ int main(int argc, char* argv[]) {
 
   boost::asio::detail::winsock_init<2, 2> winsock;
   boost::system::error_code ec;
-  const auto kAddress = net::ip::make_address(bind_address, ec);
+  const auto kBindAddress = net::ip::make_address(bind_address, ec);
   if (ec) {
     APP_ERROR() << "Invalid bind-address: " << ec.message() << "\n";
     return EXIT_FAILURE;
@@ -454,20 +461,20 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  g_app.GetEngine().SetPresentFlag(donot_present);
+  g_app.Engine().SetPresentFlag(donot_present);
 
-  net::signal_set signals(g_app.GetEngine().GetIoContext(), SIGINT, SIGTERM,
+  net::signal_set signals(g_app.Engine().GetIoContext(), SIGINT, SIGTERM,
                           SIGBREAK);
   signals.async_wait([&](const boost::system::error_code&, int sig) {
     APP_INFO() << "receive signal(" << sig << ").\n";
-    g_app.GetEngine().Stop();
+    g_app.Engine().Stop();
   });
-  g_app.GetEngine().Run(tcp::endpoint(kAddress, port), std::move(audio_codec),
-                        audio_bitrate, disable_keys, gamepad_replay,
-                        keyboard_replay, mouse_replay, video_bitrate,
-                        video_codec_id, hardware_encoder, video_gop,
-                        std::move(video_preset), video_quality);
-  g_app.GetEngine().EncoderStop();
+  g_app.Engine().Run(tcp::endpoint(kBindAddress, port), std::move(audio_codec),
+                     audio_bitrate, disable_keys, gamepad_replay,
+                     keyboard_replay, mouse_replay, video_bitrate,
+                     video_codec_id, hardware_encoder, video_gop,
+                     std::move(video_preset), video_quality, user_service);
+  g_app.Engine().EncoderStop();
   logging::core::get()->flush();
   return EXIT_SUCCESS;
 }

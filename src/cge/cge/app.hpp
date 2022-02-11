@@ -39,15 +39,15 @@ class App {
     }
   }
 
-  Engine& GetEngine() noexcept { return engine_; }
+  class Engine& Engine() noexcept { return engine_; }
   LARGE_INTEGER GetFrequency() const noexcept { return frequency_; }
   const SECURITY_ATTRIBUTES* GetSA() const noexcept { return &sa_; }
   SECURITY_ATTRIBUTES* SA() noexcept { return &sa_; }
 
-  src::severity_logger<SeverityLevel>& GetLogger() noexcept { return logger_; }
+  src::severity_logger<SeverityLevel>& Logger() noexcept { return logger_; }
 
  private:
-  Engine engine_;
+  class Engine engine_;
   LARGE_INTEGER frequency_{};
   SECURITY_ATTRIBUTES sa_{};
   src::severity_logger<SeverityLevel> logger_;
@@ -55,7 +55,7 @@ class App {
 
 extern App g_app;
 
-#define APP_LOG(level) BOOST_LOG_SEV(g_app.GetLogger(), level)
+#define APP_LOG(level) BOOST_LOG_SEV(g_app.Logger(), level)
 #define APP_TRACE() APP_LOG(SeverityLevel::kTrace)
 #define APP_DEBUG() APP_LOG(SeverityLevel::kDebug)
 #define APP_INFO() APP_LOG(SeverityLevel::kInfo)

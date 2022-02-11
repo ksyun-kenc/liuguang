@@ -19,10 +19,10 @@
 #include "game_session.h"
 
 #include "app.hpp"
-#include "authenticator.h"
 #include "game_service.h"
+#include "user_manager.h"
 
-#define USE_AUTHENTICATOR 1
+#define USER_MANAGER 1
 
 using namespace std::literals::chrono_literals;
 
@@ -52,6 +52,10 @@ void GameSession::OnRun() {
 }
 
 void GameSession::Stop(bool restart) {
+  if (user_manager_) {
+    user_manager_->Logout();
+  }
+
   if (ws_.is_open()) {
     APP_INFO() << "Closing " << remote_endpoint_ << '\n';
     if (restart) {
@@ -71,20 +75,23 @@ void GameSession::Stop(bool restart) {
 }
 
 void GameSession::Write(std::string buffer) {
+  if (buffer.empty()) {
+    return;
+  }
   std::lock_guard<std::mutex> lock(queue_mutex_);
-  const auto server_data = reinterpret_cast<regame::ServerPacket*>(
+  const auto server_data = reinterpret_cast<regame::ServerPacketHead*>(
       buffer.data() + sizeof(regame::PackageHead));
   switch (server_data->action) {
     case regame::ServerAction::kAudio:
       if (!is_audio_header_sent_) {
         is_audio_header_sent_ = true;
-        buffer = g_app.GetEngine().GetAudioHeader() + buffer;
+        buffer = g_app.Engine().GetAudioHeader() + buffer;
       }
       break;
     case regame::ServerAction::kVideo:
       if (!is_video_header_sent_) {
         is_video_header_sent_ = true;
-        buffer = g_app.GetEngine().GetVideoHeader() + buffer;
+        buffer = g_app.Engine().GetVideoHeader() + buffer;
       }
       break;
     default:
@@ -92,7 +99,7 @@ void GameSession::Write(std::string buffer) {
   }
   write_queue_.emplace(buffer);
 
-  if (write_queue_.size() > 1) {
+  if (1 < write_queue_.size()) {
     return;
   }
 
@@ -123,12 +130,12 @@ void GameSession::OnAccept(beast::error_code ec) {
   Read();
 }
 
-void GameSession::OnAuthorized(bool authorized) noexcept {
-  if (!authorized) {
+void GameSession::OnLogin(bool result) noexcept {
+  if (!result) {
     session_state_ = SessionState::kFailed;
     Stop(true);
-    APP_ERROR() << username_ << " login failed from " << remote_endpoint_
-                << '\n';
+    APP_ERROR() << user_manager_->GetUsername() << " from " << remote_endpoint_
+                << " login failed !\n";
     return;
   }
 
@@ -143,15 +150,28 @@ void GameSession::OnAuthorized(bool authorized) noexcept {
   auto head = reinterpret_cast<regame::PackageHead*>(buffer.data());
   head->size = htonl(sizeof(regame::ServerLoginResult));
   auto& login_result = *reinterpret_cast<regame::ServerLoginResult*>(head + 1);
-  login_result.action = regame::ServerAction::kLoginResult;
+  login_result.head.action = regame::ServerAction::kLoginResult;
   login_result.protocol_version = regame::kProtocolVersion;
   login_result.error_code = htonl(0);
-  login_result.audio_codec = htonl(g_app.GetEngine().GetAudioCodecID());
-  login_result.video_codec = htonl(g_app.GetEngine().GetVideoCodecID());
+  login_result.audio_codec = htonl(g_app.Engine().GetAudioCodecID());
+  login_result.video_codec = htonl(g_app.Engine().GetVideoCodecID());
   Write(std::move(buffer));
 
-  APP_INFO() << "Authorized " << remote_endpoint_ << '\n';
+  APP_INFO() << "Authorized " << user_manager_->GetUsername() << " from "
+             << remote_endpoint_ << '\n';
   game_control_.Initialize();
+
+  g_app.Engine().VideoProduceKeyframe();
+}
+
+void GameSession::OnKeepAlive(bool result) noexcept {
+  if (!result) {
+    session_state_ = SessionState::kFailed;
+    Stop(true);
+    APP_ERROR() << user_manager_->GetUsername() << " from "
+                << remote_endpoint_ << " keepalive failed!\n";
+    return;
+  }
 }
 
 void GameSession::OnStop(beast::error_code ec) {
@@ -234,7 +254,7 @@ bool GameSession::ServeClient() {
 
         // whole
         auto client_packet =
-            reinterpret_cast<const regame::ClientPacket*>(head + 1);
+            reinterpret_cast<const regame::ClientPacketHead*>(head + 1);
         auto action = client_packet->action;
         if (SessionState::kAuthorized <= session_state_) {
           if (regame::ClientAction::kPing == action) {
@@ -251,26 +271,30 @@ bool GameSession::ServeClient() {
             if (cl->verification_size > sizeof(cl->verification_data)) {
               return false;
             }
-            std::string temp(cl->username, sizeof(cl->username));
-            username_.assign(temp.data());
 
-            Authenticator::Login login;
-            login.version = static_cast<std::int64_t>(cl->protocol_version);
-            login.username = username_;
-            login.type = static_cast<std::int64_t>(cl->verification_type);
-            login.data.assign(cl->verification_data, cl->verification_size);
-#if USE_AUTHENTICATOR
-            authenticator_ = std::make_shared<Authenticator>(
+            UserManager::Verification verification;
+            verification.version =
+                static_cast<std::int64_t>(cl->protocol_version);
+            verification.username.assign(cl->username, sizeof(cl->username));
+            verification.username.resize(
+                decltype(verification.username)::traits_type::length(
+                    verification.username.data()));
+            verification.type =
+                static_cast<std::int64_t>(cl->verification_type);
+            verification.data.assign(cl->verification_data,
+                                     cl->verification_size);
+#if USER_MANAGER
+            user_manager_ = std::make_shared<UserManager>(
                 ioc_, std::move(weak_from_this()));
-            if (authenticator_) {
-              authenticator_->Init();
-              authenticator_->Verify(login);
+            if (user_manager_) {
+              user_manager_->Init();
+              user_manager_->Login(verification);
             }
 #else
             // You should remove this backdoor.
             bool authorized = false;
             if (regame::VerificationType::Code == cl->verification_type) {
-              authorized = username_ == "UMU" && login.data == "123456";
+              authorized = login.username == "UMU" && login.data == "123456";
             }
             SetAuthorized(authorized);
 #endif

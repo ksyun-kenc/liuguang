@@ -87,9 +87,10 @@ void VideoEncoder::Stop() {
 
 int VideoEncoder::EncodingThread() {
   bool restart = false;
-  BOOST_SCOPE_EXIT_ALL(&) {
+  BOOST_SCOPE_EXIT_ALL(&restart, this) {
     if (restart) {
-      g_app.GetEngine().NotifyRestartVideoEncoder();
+      shared_frames_.Unmap();
+      g_app.Engine().NotifyRestartVideoEncoder();
     } else {
       Free(false);
     }
@@ -124,14 +125,14 @@ int VideoEncoder::EncodingThread() {
     return error_code;
   }
 
-  auto shared_frame_info =
-      static_cast<SharedVideoFrameInfo*>(shared_frame_info_);
+  SharedVideoFrameInfo* shared_frame_info = shared_frame_info_;
   saved_frame_info_ = *shared_frame_info;
   APP_INFO() << "Video timestamp: " << saved_frame_info_.timestamp
              << ", type: " << static_cast<uint32_t>(saved_frame_info_.type)
              << ", dimension: " << saved_frame_info_.width << " * "
              << saved_frame_info_.height
-             << ", format: " << saved_frame_info_.format << '\n';
+             << ", format: " << saved_frame_info_.format
+             << ", window: " << saved_frame_info_.window << '\n';
 
   if (VideoFrameType::kYuv == saved_frame_info_.type) {
     size_t yuv_size = 4 * saved_frame_info_.width * saved_frame_info_.height;
@@ -143,6 +144,7 @@ int VideoEncoder::EncodingThread() {
         kSharedVideoYuvFramesFileMappingName.data(), frames_size);
     if (FAILED(hr)) {
       APP_ERROR() << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
+      restart = true;
       return hr;
     }
 
@@ -152,6 +154,7 @@ int VideoEncoder::EncodingThread() {
       APP_ERROR() << "Invild data size " << yuv_frames->data_size
                   << ", should be " << sizeof(PackedVideoYuvFrame) + yuv_size
                   << '\n';
+      restart = true;
       return -1;
     }
   }
@@ -192,12 +195,17 @@ int VideoEncoder::EncodingThread() {
       return -1;
     }
 
+    ATLTRACE2(atlTraceUtil, 0, "%s: %u * %u.\n", __func__,
+              shared_frame_info->width, shared_frame_info->height);
     if (shared_frame_info->width != saved_frame_info_.width ||
         shared_frame_info->height != saved_frame_info_.height) {
       APP_INFO() << "Video dimension changed to " << shared_frame_info->width
                  << " * " << shared_frame_info->height << ".\n";
       restart = true;
       return 0;
+    }
+    if (saved_frame_info_.window != shared_frame_info->window) {
+      saved_frame_info_.window = shared_frame_info->window;
     }
   }
 
@@ -431,6 +439,13 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
   assert(nullptr != frame);
   assert(nullptr != shared_frame_info_);
   assert(nullptr != shared_frames_);
+
+  if (produce_keyframe_) {
+    produce_keyframe_ = false;
+    frame->pict_type = AV_PICTURE_TYPE_I;
+  } else {
+    frame->pict_type = AV_PICTURE_TYPE_NONE;
+  }
 
   int error_code = 0;
 

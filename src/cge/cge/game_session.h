@@ -20,8 +20,8 @@
 
 #include "game_control.h"
 
-class Authenticator;
 class GameService;
+class UserManager;
 
 class GameSession : public std::enable_shared_from_this<GameSession> {
  public:
@@ -50,16 +50,21 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
 
   void Write(std::string buffer);
 
-  void SetAuthorized(bool authorized) {
+  void NotifyLoginResult(bool result) {
     net::dispatch(ioc_,
-                  beast::bind_front_handler(&GameSession::OnAuthorized,
-                                            shared_from_this(), authorized));
+                  beast::bind_front_handler(&GameSession::OnLogin,
+                                                  shared_from_this(), result));
+  }
+  void NotifyKeepAliveResult(bool result) {
+    net::dispatch(ioc_, beast::bind_front_handler(&GameSession::OnKeepAlive,
+                                                  shared_from_this(), result));
   }
 
  private:
   void OnRun();
   void OnAccept(beast::error_code ec);
-  void OnAuthorized(bool authorized) noexcept;
+  void OnLogin(bool result) noexcept;
+  void OnKeepAlive(bool result) noexcept;
   void OnStop(beast::error_code ec);
   void OnRead(beast::error_code ec, std::size_t bytes_transferred);
   void OnWrite(beast::error_code ec, std::size_t bytes_transferred);
@@ -76,9 +81,9 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
   std::queue<std::string> write_queue_;
   bool is_audio_header_sent_ = false;
   bool is_video_header_sent_ = false;
+  bool is_video_keyframe_sent_ = false;
 
-  std::shared_ptr<Authenticator> authenticator_;
-  std::string username_;
+  std::shared_ptr<UserManager> user_manager_;
 
   enum class ParseState {
     kNone,

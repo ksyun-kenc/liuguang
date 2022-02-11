@@ -18,6 +18,12 @@
 
 namespace regame {
 
+constexpr std::uint8_t kProtocolVersion = 0;
+constexpr std::uint8_t kMinUsernameSize = 3;
+constexpr std::uint8_t kMaxUsernameSize = 32;
+constexpr std::uint8_t kMinVerificationSize = 6;
+constexpr std::uint8_t kMaxVerificationSize = 32;
+
 enum class ClientAction : std::uint8_t {
   kLogin = 0,
   kControl,
@@ -38,12 +44,6 @@ enum class ServerAction : std::uint8_t {
 
 enum class VerificationType : std::uint8_t { Code = 0, SM3 };
 
-constexpr std::uint8_t kProtocolVersion = 0;
-constexpr std::uint8_t kMinUsernameSize = 3;
-constexpr std::uint8_t kMaxUsernameSize = 32;
-constexpr std::uint8_t kMinVerificationSize = 6;
-constexpr std::uint8_t kMaxVerificationSize = 32;
-
 #pragma pack(push, 2)
 struct PackageHead {
   // Package = std::uint32_t size + std::byte data[size]
@@ -52,11 +52,12 @@ struct PackageHead {
   std::uint32_t size;
 };
 
-struct ClientPacket {
+struct ClientPacketHead {
   ClientAction action;
 };
 
-struct ClientLogin : public ClientPacket {
+struct ClientLogin {
+  ClientPacketHead head;
   std::uint8_t protocol_version;
   char username[kMaxUsernameSize];  // Mobile phone or Email(max 256, but why
                                     // that long?)
@@ -86,20 +87,23 @@ enum class ControlType : std::uint8_t {
 
 enum class ButtonState : std::uint8_t { Released = 0, Pressed = 1 };
 
-struct ClientControl : public ClientPacket {
+struct ClientControl {
+  ClientPacketHead head;
   ControlType type;  // 2-aligned
   std::uint32_t timestamp;
 };
 static_assert((sizeof(ClientControl) & 1) == 0);
 
-struct ClientKeyboard : public ClientControl {
-  std::uint16_t key_code;
+struct ClientKeyboard {
+  ClientControl control;
+  std::uint16_t key_code; // SDL scancode or VK
   ButtonState state;
   std::byte reserved;  // padding
 };
 static_assert((sizeof(ClientKeyboard) & 1) == 0);
 
-struct ClientMouseButton : public ClientControl {
+struct ClientMouseButton {
+  ClientControl control;
   std::uint8_t button;
   ButtonState state;
   std::uint16_t x;
@@ -107,26 +111,30 @@ struct ClientMouseButton : public ClientControl {
 };
 static_assert((sizeof(ClientMouseButton) & 1) == 0);
 
-struct ClientMouseMove : public ClientControl {
+struct ClientMouseMove {
+  ClientControl control;
   std::uint16_t x;
   std::uint16_t y;
 };
 static_assert((sizeof(ClientMouseMove) & 1) == 0);
 
-struct ClientMouseWheel : public ClientControl {
-  std::uint8_t x;
-  std::uint8_t y;
+struct ClientMouseWheel {
+  ClientControl control;
+  std::int8_t x;
+  std::int8_t y;
 };
 static_assert((sizeof(ClientMouseWheel) & 1) == 0);
 
-struct ClientJoystickAxis : public ClientControl {
+struct ClientJoystickAxis {
+  ClientControl control;
   std::uint8_t which;
   std::uint8_t axis;
   std::uint16_t value;  // -32768(0x8000) to 32767(0x7fff)
 };
 static_assert((sizeof(ClientJoystickAxis) & 1) == 0);
 
-struct ClientJoystickBall : public ClientControl {
+struct ClientJoystickBall {
+  ClientControl control;
   std::uint8_t which;
   std::uint8_t ball;
   std::int16_t x;
@@ -134,14 +142,16 @@ struct ClientJoystickBall : public ClientControl {
 };
 static_assert((sizeof(ClientJoystickBall) & 1) == 0);
 
-struct ClientJoystickButton : public ClientControl {
+struct ClientJoystickButton {
+  ClientControl control;
   std::uint8_t which;
   std::uint8_t button;
   ButtonState state;
 };
 static_assert((sizeof(ClientJoystickButton) & 1) == 0);
 
-struct ClientJoystickHat : public ClientControl {
+struct ClientJoystickHat {
+  ClientControl control;
   std::uint8_t which;
   std::uint8_t hat;  // CgvhidGamepadHat
 };
@@ -150,26 +160,14 @@ static_assert((sizeof(ClientJoystickHat) & 1) == 0);
 struct ClientGamepadAxis : public ClientJoystickAxis {};
 
 struct ClientGamepadButton : public ClientJoystickButton {};
-
-union ClientControls {
-  ClientControl base;
-  ClientGamepadAxis gamepad_axis;
-  ClientGamepadButton gamepad_button;
-  ClientJoystickAxis joystick_axis;
-  ClientJoystickButton joystick_button;
-  ClientJoystickHat joystick_hat;
-  ClientKeyboard keyboard;
-  ClientMouseButton mouse_button;
-  ClientMouseMove mouse_move;
-  ClientMouseWheel mouse_wheel;
-};
 #pragma endregion()
 
-struct ServerPacket {
+struct ServerPacketHead {
   ServerAction action;
 };
 
-struct ServerLoginResult : public ServerPacket {
+struct ServerLoginResult {
+  ServerPacketHead head;
   std::uint8_t protocol_version;
   int error_code;
   uint32_t audio_codec;

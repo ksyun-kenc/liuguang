@@ -28,7 +28,8 @@ class Engine {
            HardwareEncoder hardware_encoder,
            int video_gop,
            std::string video_preset,
-           uint32_t video_quality);
+           uint32_t video_quality,
+           const std::string& user_service);
   void Stop();
 
   void EncoderRun();
@@ -53,8 +54,13 @@ class Engine {
   void NotifyRestartAudioEncoder() noexcept;
   void NotifyRestartVideoEncoder() noexcept;
 
-  HWND GetSourceWindow() const noexcept {
-    return video_encoder_.GetSourceWindow();
+  void VideoProduceKeyframe() noexcept { video_encoder_.ProduceKeyframe(); }
+  
+  const tcp::endpoint& GetUserServiceEndpoint() noexcept {
+    return user_service_endpoint_;
+  }
+  const std::string& GetUserServiceTarget() noexcept {
+    return user_service_target_;
   }
 
  private:
@@ -74,4 +80,7 @@ class Engine {
   VideoEncoder video_encoder_;
 
   CHandle donot_present_event_;
+
+  tcp::endpoint user_service_endpoint_;
+  std::string user_service_target_;
 };

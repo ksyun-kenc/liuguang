@@ -63,7 +63,19 @@
     <ClCompile Include="game_control.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="authenticator.cpp">
+    <ClCompile Include="user_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_control_sendinput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_control_cgvhid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_control_vigem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_control_message.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -113,7 +125,13 @@
     <ClInclude Include="game_control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="authenticator.h">
+    <ClInclude Include="user_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="windows_scancode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
