@@ -10,17 +10,13 @@
 
 演示视频：
 
-- [01-国产开源项目【鎏光云游戏引擎】试玩街霸](https://www.bilibili.com/video/bv1jt4y1r7GT) - 哔哩哔哩
+- 01-国产开源项目【鎏光云游戏引擎】试玩街霸
 
-- [01-国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.ixigua.com/6898563893564703239) - 西瓜视频
+  - [哔哩哔哩](https://www.bilibili.com/video/bv1jt4y1r7GT), [西瓜视频](https://www.ixigua.com/6898563893564703239), [知乎](https://www.zhihu.com/zvideo/1314567244832530432)
 
-- [01-国内首款开源云游戏引擎【鎏光】演示街头霸王对战](https://www.zhihu.com/zvideo/1314567244832530432) - 知乎
+- 09-鎏光 WebRTC 助力企业软件上云
 
-- [09-鎏光 WebRTC 助力企业软件上云](https://www.bilibili.com/video/BV1g34y1U7RL) - 哔哩哔哩
-
-- [09-鎏光 WebRTC 助力企业软件上云](https://www.ixigua.com/7023285940831552031) - 西瓜视频
-
-- [09-鎏光 WebRTC 助力企业软件上云](https://www.zhihu.com/zvideo/1436363494992445440) - 知乎
+  - [哔哩哔哩](https://www.bilibili.com/video/BV1g34y1U7RL), [西瓜视频](https://www.ixigua.com/7023285940831552031), [知乎](https://www.zhihu.com/zvideo/1436363494992445440)
 
 ## 1. 配置要求
 
@@ -160,9 +156,9 @@ Allowed options:
 
 参考视频：
 
-- [05-国产开源项目【鎏光云游戏引擎】延迟测试](https://www.bilibili.com/video/BV1KU4y147ks/) - bilibili
+- 05-国产开源项目【鎏光云游戏引擎】延迟测试
 
-- [05-国产开源项目【鎏光云游戏引擎】延迟测试](https://www.ixigua.com/6918363287298146823) - ixigua
+  - [哔哩哔哩](https://www.bilibili.com/video/BV1KU4y147ks/), [西瓜视频](https://www.ixigua.com/6918363287298146823) 
 
 ### cgc
 
@@ -211,9 +207,9 @@ Boost 的编译命令，参考：
 
 参考视频：
 
-- [06-鎏光云游戏引擎 FAQ：编译 Boost](https://www.bilibili.com/video/BV1P5411J7L8/) - bilibili
+- 06-鎏光云游戏引擎 FAQ：编译 Boost
 
-- [06-鎏光云游戏引擎 FAQ：编译 Boost](https://www.ixigua.com/6922104314932986376) - ixigua
+  - [哔哩哔哩](https://www.bilibili.com/video/BV1P5411J7L8/), [西瓜视频](https://www.ixigua.com/6922104314932986376)
 
 ### 4.3 FFmpeg
 
@@ -239,9 +235,9 @@ Boost 的编译命令，参考：
 
 参考视频：
 
-- [04-鎏光云游戏引擎 FAQ：FFmpeg 配置](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
+- 04-鎏光云游戏引擎 FAQ：FFmpeg 配置
 
-- [04-鎏光云游戏引擎 FAQ：FFmpeg 配置](https://www.ixigua.com/6917303228136849933) - ixigua
+  - [bilibili](https://www.bilibili.com/video/BV1Dh41127xo/), [ixigua](https://www.ixigua.com/6917303228136849933)
 
 ### 4.4 SDL
 
@@ -304,11 +300,9 @@ git submodule update --init
 
 参考视频：
 
-- [02-国产开源项目【鎏光云游戏引擎】测试流程](https://www.bilibili.com/video/BV17T4y1N7bk/) - 哔哩哔哩
+- 02-国产开源项目【鎏光云游戏引擎】测试流程
 
-- [02-国产开源项目【鎏光云游戏引擎】测试流程](https://www.ixigua.com/6909415761098310158) - 西瓜视频
-
-- [02-国产开源项目【鎏光云游戏引擎】测试流程](https://www.zhihu.com/zvideo/1325164569828806656) - 知乎
+  - [哔哩哔哩](https://www.bilibili.com/video/BV17T4y1N7bk/), [西瓜视频](https://www.ixigua.com/6909415761098310158), [知乎](https://www.zhihu.com/zvideo/1325164569828806656)
 
 ## 6. 联系方式
 

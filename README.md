@@ -14,21 +14,17 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 Demo videos (Chinese):
 
-- [01-Regame Cloud Gaming Demo - Street Fighter](https://youtu.be/9LYxeXfJ0og) - Youtube
+- 01-Regame Cloud Gaming Demo - Street Fighter
 
-- [01-Regame Cloud Gaming Demo - Street Fighter](https://www.bilibili.com/video/bv1jt4y1r7GT) - bilibili
+  - [Youtube](https://youtu.be/9LYxeXfJ0og)
 
-- [01-Regame Cloud Gaming Demo - Street Fighter](https://www.ixigua.com/6898563893564703239) - ixigua
+  - [bilibili](https://www.bilibili.com/video/bv1jt4y1r7GT), [ixigua](https://www.ixigua.com/6898563893564703239), [zhihu](https://www.zhihu.com/zvideo/1314567244832530432)
 
-- [01-Regame Cloud Gaming Demo - Street Fighter](https://www.zhihu.com/zvideo/1314567244832530432) - zhihu
+- 09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle
 
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://youtu.be/r98-VwSDOjg) - Youtube
+  - [Youtube](https://youtu.be/r98-VwSDOjg)
 
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.bilibili.com/video/BV1g34y1U7RL) - bilibili
-
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.ixigua.com/7023285940831552031) - ixigua
-
-- [09-Regame WebRTC - Accelerate the cloud trip of enterprise business - English subtitle](https://www.zhihu.com/zvideo/1436363494992445440) - zhihu
+  - [bilibili](https://www.bilibili.com/video/BV1g34y1U7RL), [ixigua](https://www.ixigua.com/7023285940831552031) , [zhihu](https://www.zhihu.com/zvideo/1436363494992445440)
 
 ## 1. Requirements
 
@@ -168,11 +164,11 @@ It also can be used to test latency.
 
 Video Reference (Chinese):
 
-- [05-Regame Cloud Gaming Engine: Latency Test](https://youtu.be/u3OEDOlhGxo) - Youtube
+- 05-Regame Cloud Gaming Engine: Latency Test
 
-- [05-Regame Cloud Gaming Engine: Latency Test](https://www.bilibili.com/video/BV1KU4y147ks/) - bilibili
+  - [Youtube](https://youtu.be/u3OEDOlhGxo)
 
-- [05-Regame Cloud Gaming Engine: Latency Test](https://www.ixigua.com/6918363287298146823) - ixigua
+  - [bilibili](https://www.bilibili.com/video/BV1KU4y147ks/), [ixigua](https://www.ixigua.com/6918363287298146823)
 
 ### cgc
 
@@ -221,11 +217,11 @@ Boost compile command:
 
 Video Reference (Chinese):
 
-- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://youtu.be/daQjeYPZD6o) - Youtube
+- 06-Regame Cloud Gaming Engine FAQ: Compile Boost
 
-- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.bilibili.com/video/BV1P5411J7L8/) - bilibili
+  - [Youtube](https://youtu.be/daQjeYPZD6o)
 
-- [06-Regame Cloud Gaming Engine FAQ: Compile Boost](https://www.ixigua.com/6922104314932986376) - ixigua
+  - [bilibili](https://www.bilibili.com/video/BV1P5411J7L8/), [ixigua](https://www.ixigua.com/6922104314932986376)
 
 ### 4.3 FFmpeg
 
@@ -251,11 +247,11 @@ The folder tree should be like:
 
 Video Reference (Chinese):
 
-- [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://youtu.be/fdAg5vHR_pE) - Youtube
+- 04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration
 
-- [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.bilibili.com/video/BV1Dh41127xo/) - bilibili
+  - [Youtube](https://youtu.be/fdAg5vHR_pE)
 
-- [04-Regame Cloud Gaming Engine FAQ: FFmpeg configuration](https://www.ixigua.com/6917303228136849933) - ixigua
+  - [bilibili](https://www.bilibili.com/video/BV1Dh41127xo/), [ixigua](https://www.ixigua.com/6917303228136849933)
 
 ### 4.4 SDL
 
@@ -318,13 +314,11 @@ Assume you want to test USF4.
 
 Video Reference (Chinese):
 
-- [02-Regame Cloud Gaming Engine Test Steps](https://youtu.be/8pEhg379ASo) - Youtube
+- 02-Regame Cloud Gaming Engine Test Steps
 
-- [02-Regame Cloud Gaming Engine Test Steps](https://www.bilibili.com/video/BV17T4y1N7bk/) - bilibili
+  - [Youtube](https://youtu.be/8pEhg379ASo)
 
-- [02-Regame Cloud Gaming Engine Test Steps](https://www.ixigua.com/6909415761098310158) - ixigua
-
-- [02-Regame Cloud Gaming Engine Test Steps](https://www.zhihu.com/zvideo/1325164569828806656) - zhihu
+  - [bilibili](https://www.bilibili.com/video/BV17T4y1N7bk/), [ixigua](https://www.ixigua.com/6909415761098310158), [zhihu](https://www.zhihu.com/zvideo/1325164569828806656)
 
 ## 6. Contact Us
 
