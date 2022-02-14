@@ -198,7 +198,13 @@ A WebRTC server works together with `cge`, to serve web clients.
 
 ## 4. Setting Up Your Build Environment
 
-### 4.1 VS2022
+### 4.1 Visual Studio
+
+#### 4.1.1  VS2019
+
+Only required by WDK.
+
+#### 4.1.2 VS2022
 
 [Reference .vsconfig](doc/.vsconfig)
 
@@ -270,7 +276,7 @@ The folder tree should be like:
     └─x86
 ```
 
-### 4.5 WDK
+### 4.5 WDK and VS2019
 
 Required by cgvhid, cgvidd.
 

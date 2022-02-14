@@ -188,7 +188,13 @@ WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 
 ## 4. 搭建编译环境
 
-### 4.1 VS2022
+### 4.1 Visual Studio
+
+#### 4.1.1  VS2019
+
+只有开发驱动时需要，因为目前 WDK 还不支持 VS2022。
+
+#### 4.1.2 VS2022
 
 [参考配置](doc/.vsconfig)
 
@@ -237,7 +243,7 @@ Boost 的编译命令，参考：
 
 - 04-鎏光云游戏引擎 FAQ：FFmpeg 配置
 
-  - [bilibili](https://www.bilibili.com/video/BV1Dh41127xo/), [ixigua](https://www.ixigua.com/6917303228136849933)
+  - [哔哩哔哩](https://www.bilibili.com/video/BV1Dh41127xo/), [西瓜视频](https://www.ixigua.com/6917303228136849933)
 
 ### 4.4 SDL
 
@@ -256,9 +262,9 @@ Boost 的编译命令，参考：
     └─x86
 ```
 
-### 4.5 WDK
+### 4.5 WDK and VS2019
 
-编译 cgvhid, cgvidd 时需要的。
+编译 cgvhid, cgvidd 时需要的。VS2022 暂时不能编译驱动。
 
 ### 4.6 额外工具
 
