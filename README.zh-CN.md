@@ -115,6 +115,10 @@ Usage:
 
 ![regame-user-manager](doc/regame-user-manager.png)
 
+### regame-web-client
+
+简单的[鎏光网页客户端](https://github.com/ksyun-kenc/regame-web-client)。您可以帮助我们完善它！
+
 ### cgh
 
 一些用于捕捉 D3D 游戏画面的 Hook DLL。

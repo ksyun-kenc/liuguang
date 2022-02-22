@@ -123,6 +123,10 @@ You can press `Ctrl+C` to stop it gracefully.
 
 ![regame-user-manager](doc/regame-user-manager.png)
 
+### regame-web-client
+
+A simple [web client of Regame](https://github.com/ksyun-kenc/regame-web-client). You can help us to improve it!
+
 ### cgh
 
 Some hook dlls for capturing pictures from D3D game.
