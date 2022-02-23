@@ -1,0 +1,5 @@
+# VS
+.vs/
+bin/
+tmp/
+*.vcxproj.user

@@ -21,7 +21,7 @@
 #include <hidsdi.h>
 #include <setupapi.h>
 
-#include "vhid_common.h"
+#include "regame/vhid_common.h"
 
 /**
  * USB HID Keyboard scan codes as per USB spec 1.11

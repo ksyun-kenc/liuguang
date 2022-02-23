@@ -17,7 +17,6 @@
 #pragma once
 
 #include "cgvhid.h"
-#include "vhid_common.h"
 
 struct MouseState {
   int display_width;

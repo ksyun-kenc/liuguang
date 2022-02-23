@@ -1,8 +1,7 @@
-# VS
-.vs/
-bin/
+bak/
 tmp/
-*.vcxproj.user
+*.bak
+*.tmp
 
 # macOS
 .DS_Store

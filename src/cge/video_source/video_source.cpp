@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-// C
+// C, SDL
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-// C++, SDL
+// C++, STL
+#include <cassert>
 #include <string>
+#include <thread>
 
 // C++, ATL
 #include <atlbase.h>
-#include <atlpath.h>
 #include <atlstr.h>
 
 // C++, Boost
 #include <boost/scope_exit.hpp>
 
-#include "../sdl_hack/sdl_hack.h"
+#include "sdl_hack/sdl_hack.h"
+#include "regame/sdl_internal.h"
 
-// UMU
 #include "umu/env.h"
+
+#pragma comment(lib, "dxguid.lib")
 
 #pragma comment(lib, "sdl2.lib")
 #pragma comment(lib, "sdl2main.lib")
@@ -40,100 +43,30 @@
 
 #pragma comment(lib, "yuv.lib")
 
-namespace {
+static TTF_Font* font = nullptr;
+static SDL_Window* sdl_win = nullptr;
+static SDL_Renderer* renderer = nullptr;
+static int render_driver = -1;
 
-TTF_Font* font = nullptr;
-SDL_Window* sdl_win = nullptr;
-SDL_Renderer* renderer = nullptr;
-int render_driver = -1;
+static uint64_t last_time = 0;
+static uint64_t time_freq = 0;
 
-SdlHack sdl_hack;
+static void Refresh();
 
-void refresh(SDL_KeyboardEvent key) {
-  char text[32];
-  snprintf(text, std::size(text) - 1, "%c", key.keysym.sym);
-
-  SDL_Rect rect = {50, 50, 120, 200};
-  SDL_Color color = {255, 0, 0, 128};
-  SDL_Surface* surface = TTF_RenderText_Blended(font, text, color);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-  if (nullptr == texture) {
-    SDL_DestroyRenderer(renderer);
-    renderer = SDL_GetRenderer(sdl_win);
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (nullptr == texture) {
-      SDL_FreeSurface(surface);
-      return;
-    }
-  }
-  SDL_RenderClear(renderer);
-  SDL_RenderCopy(renderer, texture, nullptr, &rect);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(surface);
-
-  snprintf(text, std::size(text) - 1, "@ %u", key.timestamp);
-
-  rect = {200, 120, 360, 100};
-  color = {255, 255, 255, 128};
-  surface = TTF_RenderText_Blended(font, text, color);
-  texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_RenderCopy(renderer, texture, nullptr, &rect);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(surface);
-
-  if (sdl_hack.IsStarted() && -1 != render_driver) {
-    sdl_hack.GetTexture(renderer);
-  }
-
-  SDL_RenderPresent(renderer);
-}
-
-void mouse(std::string_view message, int x, int y) {
-  SDL_Rect rect = {30, 20, 150, 100};
-  SDL_Color color = {255, 0, 0, 128};
-  SDL_Surface* surface = TTF_RenderText_Blended(font, message.data(), color);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-  if (nullptr == texture) {
-    SDL_DestroyRenderer(renderer);
-    renderer = SDL_GetRenderer(sdl_win);
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (nullptr == texture) {
-      SDL_FreeSurface(surface);
-      return;
-    }
-  }
-  SDL_RenderClear(renderer);
-  SDL_RenderCopy(renderer, texture, nullptr, &rect);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(surface);
-
-  char text[40];
-  snprintf(text, std::size(text) - 1, "%d,%d", x, y);
-
-  rect = {190, 20, 420, 100};
-  color = {255, 255, 255, 128};
-  surface = TTF_RenderText_Blended(font, text, color);
-  texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_RenderCopy(renderer, texture, nullptr, &rect);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(surface);
-
-  if (sdl_hack.IsStarted() && -1 != render_driver) {
-    sdl_hack.GetTexture(renderer);
-  }
-
-  SDL_RenderPresent(renderer);
-}
-
-}  // namespace
+static SdlHack sdl_hack;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_opt_ HINSTANCE hPrevInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow) {
+  UNREFERENCED_PARAMETER(hPrevInstance);
+  UNREFERENCED_PARAMETER(lpCmdLine);
+
   if (!sdl_hack.Init()) {
     return -1;
   }
+
+  time_freq = SDL_GetPerformanceFrequency();
 
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
     return -1;
@@ -149,11 +82,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
   }
   BOOST_SCOPE_EXIT_ALL(&) { TTF_Quit(); };
 
-  CPath windir;
   font = TTF_OpenFont(
       umu::env::ExpandEnvironmentStringA("%windir%\\Fonts\\simhei.ttf").data(),
       80);
-  if (nullptr == font) {
+  if (!font) {
     CString error_text;
     error_text.Format(_T("TTF_OpenFont(simhei.ttf) failed: %s\n"),
                       CA2T(TTF_GetError()).m_psz);
@@ -163,7 +95,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
   BOOST_SCOPE_EXIT_ALL(&) { TTF_CloseFont(font); };
 
   CStringA title("SDL Text - ");
-  sdl_win = SDL_CreateWindow(title, 400, 200, 640, 300, 0);
+  sdl_win = SDL_CreateWindow(title, 400, 200, 640, 300, SDL_WINDOW_RESIZABLE);
   if (nullptr == sdl_win) {
     CString error_text;
     error_text.Format(_T("SDL_CreateWindow() failed: %s\n"),
@@ -190,7 +122,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
   }
 
-  renderer = SDL_CreateRenderer(sdl_win, render_driver, 0);
+  renderer =
+      SDL_CreateRenderer(sdl_win, render_driver,
+                         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (nullptr == renderer) {
     CString error_text;
     error_text.Format(_T("SDL_CreateRenderer() failed: %s\n"),
@@ -211,32 +145,74 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
   }
   SDL_SetWindowTitle(sdl_win, title);
 
-  SDL_RenderClear(renderer);
-  SDL_RenderPresent(renderer);
-
   for (;;) {
     SDL_Event sdl_event;
     if (SDL_PollEvent(&sdl_event)) {
-      switch (sdl_event.type) {
-        case SDL_QUIT:
-          return 0;
-        case SDL_KEYDOWN:
-          refresh(sdl_event.key);
+      if (SDL_QUIT == sdl_event.type) {
+        break;
+      } else if (SDL_KEYDOWN == sdl_event.type) {
+        if (SDLK_ESCAPE == sdl_event.key.keysym.sym) {
           break;
-        case SDL_MOUSEMOTION:
-          mouse("Motion", sdl_event.motion.xrel, sdl_event.motion.yrel);
-          break;
-        case SDL_MOUSEWHEEL:
-          mouse("Wheel", sdl_event.wheel.x, sdl_event.wheel.y);
-          break;
-        case SDL_MOUSEBUTTONDOWN:
-          mouse("Down", sdl_event.button.x, sdl_event.button.y);
-          break;
-        case SDL_MOUSEBUTTONUP:
-          mouse("Up", sdl_event.button.x, sdl_event.button.y);
-          break;
+        }
       }
+    } else {
+      Refresh();
     }
   }
+
   return 0;
+}
+
+static void Refresh() {
+  auto text = std::to_string(SDL_GetPerformanceCounter());
+
+  SDL_Rect rect = {90, 10, 480, 80};
+  SDL_Color color = {255, 255, 255};
+  SDL_Surface* surface = TTF_RenderText_Blended(font, text.data(), color);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+  if (nullptr == texture) {
+    SDL_DestroyRenderer(renderer);
+    renderer = SDL_GetRenderer(sdl_win);
+    texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (nullptr == texture) {
+      SDL_FreeSurface(surface);
+      return;
+    }
+  }
+
+  SDL_RenderClear(renderer);
+  SDL_RenderCopy(renderer, texture, NULL, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(surface);
+
+  rect = {5, 100, 210, 210};
+  color = {255, 0, 0, 128};
+  surface = TTF_RenderText_Blended(font, "R", color);
+  texture = SDL_CreateTextureFromSurface(renderer, surface);
+  SDL_RenderCopy(renderer, texture, NULL, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(surface);
+
+  rect = {215, 100, 210, 210};
+  color = {0, 255, 0, 192};
+  surface = TTF_RenderText_Blended(font, "G", color);
+  texture = SDL_CreateTextureFromSurface(renderer, surface);
+  SDL_RenderCopy(renderer, texture, NULL, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(surface);
+
+  rect = {425, 100, 210, 210};
+  color = {0, 0, 255, 255};
+  surface = TTF_RenderText_Blended(font, "B", color);
+  texture = SDL_CreateTextureFromSurface(renderer, surface);
+  SDL_RenderCopy(renderer, texture, NULL, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(surface);
+
+  if (sdl_hack.IsStarted() && -1 != render_driver &&
+      !IsIconic(static_cast<SDL_WindowData*>(sdl_win->driverdata)->hwnd)) {
+    sdl_hack.GetTexture(renderer);
+  }
+
+  SDL_RenderPresent(renderer);
 }

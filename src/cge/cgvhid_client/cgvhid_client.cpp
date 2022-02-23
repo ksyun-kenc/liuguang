@@ -308,6 +308,9 @@ uint8_t CgvhidClient::VkToScancode(uint8_t vk) noexcept {
   return keymap[vk];
 }
 
+constexpr std::uint32_t kMouseLogicalMax = MOUSE_LOGICAL_MAX + 1;
+constexpr std::uint32_t kMouseLogicalMin = MOUSE_LOGICAL_MIN;
+
 void CgvhidClient::Init(int display_width, int display_height) noexcept {
   if (!cgvhid_.Init()) {
     ATLTRACE2(atlTraceException, 0, "!Init()\n");

@@ -58,4 +58,6 @@ class SdlHack {
   CAtlFileMapping<char> shared_frames_;
   CHandle shared_frame_ready_event_;
   SDL_version linked_;
+  UINT width_ = 0;
+  UINT height_ = 0;
 };

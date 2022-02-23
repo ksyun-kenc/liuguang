@@ -34,7 +34,12 @@ freely, subject to the following restrictions:
  * limitations under the License.
  */
 
-// Note: Only for SDL 2.0.14
+/*
+ * Supported SDL version:
+ * 2.0.12
+ * 2.0.14
+ * 2.0.16
+ */
 
 #pragma once
 

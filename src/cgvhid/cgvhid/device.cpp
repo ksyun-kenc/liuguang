@@ -16,7 +16,7 @@
 
 #include "driver.h"
 
-#include "vhid_common.h"
+#include "regame/vhid_common.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, CgvhidCreateDevice)

@@ -48,7 +48,7 @@
     </WixExtension>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\cgvhid\Cgvhid.vcxproj">
+    <ProjectReference Include="..\cgvhid\cgvhid.vcxproj">
       <Name>cgvhid</Name>
       <Project>{4646ad72-33d4-4edc-bad3-c7c5acfcab68}</Project>
       <Private>True</Private>

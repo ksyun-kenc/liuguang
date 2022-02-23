@@ -21,7 +21,7 @@
 
 #include <boost/scope_exit.hpp>
 
-#include "sdl_internal.h"
+#include "regame/sdl_internal.h"
 
 //#include "umu/apppath_t.h"
 #include "umu/com_initializer.hpp"
@@ -323,11 +323,14 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
   }
 
   if (should_update) {
+    width_ = desc.Width & ~1;
+    height_ = desc.Height & ~1;
+
     SharedVideoFrameInfo* svfi = shared_frame_info_;
     svfi->timestamp = tick.QuadPart;
     svfi->type = VideoFrameType::kYuv;
-    svfi->width = desc.Width;
-    svfi->height = desc.Height;
+    svfi->width = width_;
+    svfi->height = height_;
     svfi->format = desc.Format;
     HWND window = nullptr;
     hr = render_data->swapChain->GetHwnd(&window);
@@ -335,6 +338,19 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
       ATLTRACE2(atlTraceException, 0, "!GetHwnd(), #0x%08X\n", hr);
     }
     svfi->window = reinterpret_cast<std::uint64_t>(window);
+  } else {
+    UINT width = desc.Width & ~1;
+    UINT height = desc.Height & ~1;
+    if (width != width_ || height != height_) {
+      width_ = width;
+      height_ = height;
+
+      SharedVideoFrameInfo* svfi = shared_frame_info_;
+      svfi->timestamp = tick.QuadPart;
+      svfi->width = width_;
+      svfi->height = height_;
+      SetEvent(shared_frame_ready_event_);
+    }
   }
 
   CComPtr<IDXGISurface> surface;
@@ -348,13 +364,13 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
   stats.timestamp = tick.QuadPart;
   stats.elapsed.preprocess = umu::TimeMeasure::Delta(tick.QuadPart);
 
-  DXGI_SURFACE_DESC sd = {};
-  hr = surface->GetDesc(&sd);
-  if (FAILED(hr)) {
-    ATLTRACE2(atlTraceException, 0, "%p->GetDesc() failed with 0x%08X.\n",
-              surface, hr);
-    return;
-  }
+  // DXGI_SURFACE_DESC sd = {};
+  // hr = surface->GetDesc(&sd);
+  // if (FAILED(hr)) {
+  //  ATLTRACE2(atlTraceException, 0, "%p->GetDesc() failed with 0x%08X.\n",
+  //            surface, hr);
+  //  return;
+  //}
 
   DXGI_MAPPED_RECT mapped_rect = {};
   {
@@ -376,7 +392,7 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
     surface->Unmap();
   };
 
-  size_t pixel_size = sd.Width * sd.Height;
+  size_t pixel_size = width_ * height_;
   size_t frame_size = 4 * pixel_size;
   size_t data_size = sizeof(PackedVideoYuvFrame) + frame_size;
   ATLTRACE2(atlTraceUtil, 0, "Frame[%zu] %u * %u, %zu + %zu = %zu\n",
@@ -386,45 +402,55 @@ void SdlHack::GetTexture(SDL_Renderer* renderer) {
   bool need_create_file_mapping = false;
   if (nullptr == shared_frames_) {
     need_create_file_mapping = true;
-  } else if (data_size * 2 > shared_frames_.GetMappingSize()) {
-    shared_frames_.Unmap();
+  } else if (sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames >
+             shared_frames_.GetMappingSize()) {
+    hr = shared_frames_.Unmap();
     need_create_file_mapping = true;
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "Unmap() failed 0x%08X.\n", hr);
+      return;
+    }
+    ATLTRACE2(atlTraceUtil, 0, "Shared frames Unmap().\n");
   }
 
   if (need_create_file_mapping) {
-    HRESULT hr = shared_frames_.MapSharedMem(
+    BOOL already_existed;
+    hr = shared_frames_.MapSharedMem(
         sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames,
-        kSharedVideoYuvFramesFileMappingName.data(), nullptr, &sa_);
+        kSharedVideoYuvFramesFileMappingName.data(), &already_existed, &sa_);
     if (FAILED(hr)) {
+      if (already_existed) {
+        SetEvent(shared_frame_ready_event_);
+        return;
+      }
       SetEvent(stop_event_);
-      ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed.\n");
+      ATLTRACE2(atlTraceException, 0, "MapSharedMem() failed 0x%08X.\n", hr);
       return;
     }
 
     ATLTRACE2(atlTraceUtil, 0, "MapSharedMem size = %zu + %zu * 2 = %zu\n",
               sizeof(SharedVideoYuvFrames), data_size,
               sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames);
-
-    auto frames = static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
-    frames->data_size = static_cast<uint32_t>(data_size);
   }
+  auto frames = static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
+  frames->data_size = static_cast<uint32_t>(data_size);
 
   auto frame = reinterpret_cast<PackedVideoYuvFrame*>(
       static_cast<char*>(shared_frames_) + sizeof(SharedVideoYuvFrames) +
       (frame_count_ % kNumberOfSharedFrames) * data_size);
-  const int uv_stride = (desc.Width + 1) / 2;
+  const int uv_stride = width_ >> 1;
   uint8_t* y = reinterpret_cast<uint8_t*>(frame->data);
   uint8_t* u = y + pixel_size;
-  uint8_t* v = u + (pixel_size / 4);
+  uint8_t* v = u + (pixel_size >> 2);
 
   {
     umu::TimeMeasure tm(stats.elapsed.yuv_convert);
     if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
-      ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, desc.Width, u,
-                 uv_stride, v, uv_stride, desc.Width, desc.Height);
+      ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u, uv_stride,
+                 v, uv_stride, width_, height_);
     } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
-      ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, desc.Width, u,
-                 uv_stride, v, uv_stride, desc.Width, desc.Height);
+      ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u, uv_stride,
+                 v, uv_stride, width_, height_);
     } else {
       ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cgvhid_client.h"
+#include "cgvhid_client/cgvhid_client.h"
 
 int main() {
   CgvhidClient cgvhid_client;

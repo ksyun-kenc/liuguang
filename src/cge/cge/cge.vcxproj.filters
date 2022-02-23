@@ -45,16 +45,16 @@
     <ClCompile Include="audio_resampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cgvhid\cgvhid_client\cgvhid.cpp">
+    <ClCompile Include="..\cgvhid_client\cgvhid.cpp">
       <Filter>Source Files\cgvhid_client</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cgvhid\cgvhid_client\cgvhid_client.cpp">
+    <ClCompile Include="..\cgvhid_client\cgvhid_client.cpp">
       <Filter>Source Files\cgvhid_client</Filter>
     </ClCompile>
     <ClCompile Include="vigem_client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\deps\ViGEmClient\src\ViGEmClient.cpp">
+    <ClCompile Include="..\third_party\ViGEmClient\src\ViGEmClient.cpp">
       <Filter>Source Files\ViGEmClient</Filter>
     </ClCompile>
     <ClCompile Include="game_session.cpp">

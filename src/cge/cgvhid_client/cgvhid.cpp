@@ -183,8 +183,23 @@ int Cgvhid::AbsoluteMouseUpdate(std::uint8_t button,
                                 std::int16_t y,
                                 std::uint8_t hwheel,
                                 std::uint8_t vwheel) noexcept {
-  // Enterprise version
-  return 0;
+  static_assert(CONTROL_REPORT_SIZE >
+                    sizeof(VhidControlReport) + sizeof(VhidAbsoluteMouseReport),
+                "CONTROL_REPORT_SIZE is too small");
+
+  auto control_report = GetControlReport();
+  control_report->id = REPORT_ID_CONTROL;
+  control_report->len = sizeof(VhidKeyboardReport);
+
+  auto mouse_report = GetAbsoluteMouseReport();
+  mouse_report->id = REPORT_ID_MOUSE;
+  mouse_report->btn = button;
+  mouse_report->x = x;
+  mouse_report->y = y;
+  mouse_report->wheel = vwheel;
+  mouse_report->hwheel = hwheel;
+
+  return WriteControlReport();
 }
 
 int Cgvhid::RelativeMouseUpdate(std::uint8_t button,
@@ -192,8 +207,23 @@ int Cgvhid::RelativeMouseUpdate(std::uint8_t button,
                                 std::int16_t y,
                                 std::uint8_t hwheel,
                                 std::uint8_t vwheel) noexcept {
-  // Enterprise version
-  return 0;
+  static_assert(CONTROL_REPORT_SIZE >
+                    sizeof(VhidControlReport) + sizeof(VhidRelativeMouseReport),
+                "CONTROL_REPORT_SIZE is too small");
+
+  auto control_report = GetControlReport();
+  control_report->id = REPORT_ID_CONTROL;
+  control_report->len = sizeof(VhidKeyboardReport);
+
+  auto mouse_report = GetRelativeMouseReport();
+  mouse_report->id = REPORT_ID_RMOUSE;
+  mouse_report->btn = button;
+  mouse_report->x = x;
+  mouse_report->y = y;
+  mouse_report->wheel = vwheel;
+  mouse_report->hwheel = hwheel;
+
+  return WriteControlReport();
 }
 
 int Cgvhid::WriteControlReport() noexcept {

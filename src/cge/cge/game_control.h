@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cgvhid_client.h"
+#include "cgvhid_client/cgvhid_client.h"
 #include "regame/protocol.h"
 #include "vigem_client.h"
 
