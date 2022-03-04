@@ -148,9 +148,9 @@ Allowed options:
 
 ![Hook game](doc/cgvhid.png)
 
-### cgvidd
+### cgvd
 
-全称为 Cloud gaming Virtual Indirect Display Driver. 用于抓取服务器桌面。
+全称为 Cloud gaming Virtual Display。它是一个用于抓取服务器桌面的 Indirect Display Driver。
 
 ### video_source
 
@@ -322,7 +322,7 @@ git submodule update --init
 
 - 如果您愿意告诉我们，您的公司名，沟通会更高效。
 
-- 同样欢迎个人开发者。
+- 同样欢迎自由职业者和独立个人开发者。
 
 ## 7. 已知用户
 

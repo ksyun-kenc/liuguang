@@ -156,9 +156,9 @@ Cloud gaming Virtual HID driver. For replaying controller event on server.
 
 ![Hook game](doc/cgvhid.png)
 
-### cgvidd
+### cgvd
 
-Cloud gaming Virtual Indirect Display Driver. For capturing screen on server.
+Cloud gaming Virtual Display. It's an Indirect Display Driver for capturing screen on server.
 
 ### video_source
 
@@ -338,7 +338,7 @@ WeChat: UMUTech
 
 - Will be more efficient if you could tell me the name of your company.
 
-- Individual develops are also welcome.
+- Freelancers and independent develops are also welcome.
 
 ## 7. Known Users
 

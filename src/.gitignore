@@ -3,3 +3,4 @@
 bin/
 tmp/
 *.vcxproj.user
+*.aps
