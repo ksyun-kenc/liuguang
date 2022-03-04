@@ -5,7 +5,7 @@
 [Version]
 Signature="$WINDOWS NT$"
 Class=CGVD
-ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171}
+ClassGuid={F4CDE6A8-9842-4BAF-9884-0D535A5DBC2F}
 Provider=%ManufacturerName%
 CatalogFile=cgvhid.cat
 DriverVer= ; TODO: set DriverVer in stampinf property pages

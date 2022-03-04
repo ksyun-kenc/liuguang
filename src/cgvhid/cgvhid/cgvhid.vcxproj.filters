@@ -25,7 +25,7 @@
     <ClInclude Include="device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\vhid_common.h">
+    <ClInclude Include="..\..\deps\include\regame\vhid_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

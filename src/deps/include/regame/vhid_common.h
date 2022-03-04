@@ -56,9 +56,9 @@ typedef unsigned long long uint64_t;
 #define MOUSE_WHEEL_LOGICAL_MIN 0x81
 
 // 8bit
-//#define RMOUSE_LOGICAL_MAX 0x7F
-//#define RMOUSE_LOGICAL_MIN 0x81
-// 
+#define RMOUSE_LOGICAL_MAX 0x7F
+#define RMOUSE_LOGICAL_MIN 0x81
+
 // 16bit
 #define RMOUSE_LOGICAL_MIN_HIGHT 0x80
 #define RMOUSE_LOGICAL_MIN_LOW 0x01
