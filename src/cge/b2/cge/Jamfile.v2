@@ -22,10 +22,13 @@ project cge
     <cxxstd>latest
     <define>UNICODE <define>_UNICODE
     <implicit-dependency>/boost//headers
-    <include>../cge
-    <include>../../cgvhid/include
-    <include>../../deps/include
-    <include>../../deps/ViGEmClient/include
+    <include>../../cge
+    <include>../..
+    <include>../../third_party/ViGEmClient/include
+    <include>../../../deps
+    <include>../../../deps/include
+    <address-model>32:<library-path>../../../deps/lib/x86
+    <address-model>64:<library-path>../../../deps/lib/x64
     <target-os>windows,<toolset>msvc:<find-static-library>Setupapi
     <library>/boost//date_time
     <library>/boost//json
@@ -42,14 +45,14 @@ project cge
     <threading>multi
   : default-build release
   : build-dir ./bin
-  : source-location ../cge
+  : source-location ../../cge
   ;
 
 lib deps
   :
-  ../../cgvhid/cgvhid_client/cgvhid.cpp
-  ../../cgvhid/cgvhid_client/cgvhid_client.cpp
-  ../../deps/ViGEmClient/src/ViGEmClient.cpp
+  ../cgvhid_client/cgvhid.cpp
+  ../cgvhid_client/cgvhid_client.cpp
+  ../third_party/ViGEmClient/src/ViGEmClient.cpp
   ;
 
 cpp-pch pch : pch.h ;
@@ -59,13 +62,18 @@ exe cge
   : pch deps
     audio_encoder.cpp
     audio_resampler.cpp
-    authenticator.cpp
     cge.cpp
     engine.cpp
     game_control.cpp
+    game_control_cgvhid.cpp
+    game_control_message.cpp
+    game_control_sendinput.cpp
+    game_control_vigem.cpp
     game_service.cpp
     game_session.cpp
+    object_namer.cpp
     sound_capturer.cpp
+    user_manager.cpp
     video_encoder.cpp
     vigem_client.cpp
   ;

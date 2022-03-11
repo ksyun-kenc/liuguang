@@ -6,7 +6,7 @@
 
 云游戏引擎是一种将普通游戏云化的技术，分为服务端引擎和客户端引擎两部分，其中服务端最为复杂。鎏光还处于开发期，目前已经开源最为复杂的服务端引擎部分，客户端完善之后也将开源。
 
-[按这里下载鎏光 v0.4](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip)
+[按这里下载鎏光 v0.4](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip)（此链接指向的资源会不定时更新！）
 
 演示视频：
 
@@ -73,18 +73,23 @@ Usage:
   --disable-keys arg                    Disable virtual keys. eg: 164,165
                                         disable ALT; 91,92 disable WIN
   --donot-present arg (=0)              Tell cgh don't present
-  --hardware-encoder arg                Set video hardware encoder. Select one
-                                        of {amf, nvenc, qsv}
+  --desktop-mode arg (=0)               Set desktop mode
+  -g [ --global-mode ] arg (=0)         In global mode, will prefix object
+                                        names with Global\.
   --gamepad-replay arg (=none)          Set gamepad replay method. Select one
                                         of {none, cgvhid, vigem}
+  --hardware-encoder arg                Set video hardware encoder. Select one
+                                        of {amf, nvenc, qsv}
   --keyboard-replay arg (=none)         Set keyboard replay method. Select one
                                         of {none, cgvhid, sendinput, message}
-  --mouse-replay arg (=none)            Set mouse replay method. Select one of
-                                        {none, cgvhid, sendinput, message}
   --log-level arg (=info)               Set logging severity level. Select one
                                         of {trace, debug, info, warning, error,
                                         fatal}
+  --mouse-replay arg (=none)            Set mouse replay method. Select one of
+                                        {none, cgvhid, sendinput, message}
   -p [ --port ] arg (=8080)             Set the service port
+  --user-service arg (=http://127.0.0.1:8545/)
+                                        Set address for user service.
   --video-bitrate arg (=1000000)        Set video bitrate
   --video-codec arg (=h264)             Set video codec. Select one of {h264,
                                         h265, hevc}, h265 == hevc
@@ -100,9 +105,7 @@ Usage:
                                         faster, fast, medium, slow, slower,
                                         veryslow, placebo}
   --video-quality arg (=23)             Set video quality. [0, 51], lower is
-                                        better, 0 is lossless
-  --user-service arg (=http://127.0.0.1:8545/)
-                                        Set address for user service.
+                                        better, 0 is lossless.
 ```
 
 可以按 `Ctrl+C` 优雅退出。
@@ -144,11 +147,11 @@ Allowed options:
 
 ### cgvhid
 
-全称为 Cloud gaming Virtual HID driver. 用于在服务端重放键盘灯外设消息。
+全称为 Cloud gaming Virtual HID driver. 用于在服务端重放键盘等外设消息。
 
 ![Hook game](doc/cgvhid.png)
 
-### cgvd
+### cgvd (仅限企业版)
 
 全称为 Cloud gaming Virtual Display。它是一个用于抓取服务器桌面的 Indirect Display Driver。
 
@@ -186,7 +189,7 @@ Usage:
   --volume arg (=100)                   Set volume, [0, 100]
 ```
 
-### cgs
+### cgs (仅限企业版)
 
 WebRTC 服务端，配合 `cge` 使用，给 Web 客户端提供服务。
 

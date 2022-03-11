@@ -115,7 +115,7 @@ CgvhidMouseButton MouseButtonMap(std::uint8_t sdl_button) {
       return kCgvhidMouseButtonNone;
   }
 }
-}
+}  // namespace
 
 void GameControl::Cgvhid::ReplayKeyboard(const regame::ClientKeyboard& k) {
   std::uint16_t key_code = ntohs(k.key_code);
@@ -164,5 +164,20 @@ void GameControl::Cgvhid::ReplayMouseButton(
 }
 
 void GameControl::Cgvhid::ReplayMouseWheel(const regame::ClientMouseWheel& mw) {
+  // Enterprise version
+}
+
+void GameControl::Cgvhid::ReplayRelativeMouseMove(
+    const regame::ClientRelativeMouseMove& rmm) {
+  // Enterprise version
+}
+
+void GameControl::Cgvhid::ReplayRelativeMouseButton(
+    const regame::ClientRelativeMouseButton& rmb) {
+  // Enterprise version
+}
+
+void GameControl::Cgvhid::ReplayRelativeMouseWheel(
+    const regame::ClientRelativeMouseWheel& rmw) {
   // Enterprise version
 }

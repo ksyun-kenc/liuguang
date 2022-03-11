@@ -4,6 +4,7 @@
 
 #include "audio_encoder.h"
 #include "game_service.h"
+#include "object_namer.h"
 #include "video_encoder.h"
 
 class Engine {
@@ -63,6 +64,13 @@ class Engine {
     return user_service_target_;
   }
 
+  ObjectNamer& GetObjectNamer() noexcept { return object_namer_; }
+
+  void SetDesktopMode(bool is_desktop_mode) noexcept {
+    is_desktop_mode_ = is_desktop_mode;
+  }
+  const bool IsDesktopMode() const noexcept { return is_desktop_mode_; }
+
  private:
   int WritePacket(void* opaque, std::span<uint8_t> packet) noexcept;
 
@@ -76,11 +84,14 @@ class Engine {
   net::io_context ioc_{2};
   std::shared_ptr<GameService> game_service_;
 
-  AudioEncoder audio_encoder_;
-  VideoEncoder video_encoder_;
+  ObjectNamer object_namer_;
+  AudioEncoder audio_encoder_{object_namer_};
+  VideoEncoder video_encoder_{object_namer_};
 
   CHandle donot_present_event_;
 
   tcp::endpoint user_service_endpoint_;
   std::string user_service_target_;
+
+  bool is_desktop_mode_{false};
 };

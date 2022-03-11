@@ -21,12 +21,15 @@
 
 #include "regame/shared_mem_info.h"
 
+class ObjectNamer;
+
 class AudioEncoder : public Encoder {
  public:
-  AudioEncoder() : Encoder(regame::ServerAction::kAudio) {}
+  AudioEncoder(ObjectNamer& object_namer)
+      : Encoder(regame::ServerAction::kAudio), object_namer_(object_namer) {}
   ~AudioEncoder() = default;
 
-  bool Init(std::string codec_name, uint64_t bitrate) noexcept;
+  bool Initialize(std::string codec_name, uint64_t bitrate) noexcept;
   int Run();
   void Stop();
 
@@ -35,10 +38,11 @@ class AudioEncoder : public Encoder {
   void Free(bool wait_thread);
   int AddStream(const AVCodec*& codec);
   int Open(const AVCodec* codec, AVDictionary** opts);
-  int InitFrame(AVFrame*& frame) const noexcept;
+  int InitializeFrame(AVFrame*& frame) const noexcept;
   int Encode();
 
  private:
+  ObjectNamer& object_namer_;
   std::string codec_name_;
   uint64_t bitrate_;
 
@@ -46,10 +50,10 @@ class AudioEncoder : public Encoder {
   CHandle stop_event_;
   std::thread thread_;
 
-  SoundCapturer sound_capturer_;
+  SoundCapturer sound_capturer_{object_namer_};
   AudioInfo source_audio_info_;
 
-  CAtlFileMapping<SharedAudioFrames> shared_frames_;
+  CAtlFileMapping<regame::SharedAudioFrames> shared_frames_;
   CHandle shared_frame_ready_event_;
 
   AVStream* stream_ = nullptr;

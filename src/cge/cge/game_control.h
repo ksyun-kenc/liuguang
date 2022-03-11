@@ -65,6 +65,11 @@ class GameControl {
     void ReplayMouseButton(const regame::ClientMouseButton& mb);
     void ReplayMouseWheel(const regame::ClientMouseWheel& mw);
 
+    void ReplayRelativeMouseMove(const regame::ClientRelativeMouseMove& rmm);
+    void ReplayRelativeMouseButton(
+        const regame::ClientRelativeMouseButton& rmb);
+    void ReplayRelativeMouseWheel(const regame::ClientRelativeMouseWheel& rmw);
+
     CgvhidClient client_;
   } cgvhid_;
 
@@ -89,6 +94,11 @@ class GameControl {
     void ReplayMouseMove(const regame::ClientMouseMove& mm);
     void ReplayMouseButton(const regame::ClientMouseButton& mb);
     void ReplayMouseWheel(const regame::ClientMouseWheel& mw);
+
+    void ReplayRelativeMouseMove(const regame::ClientRelativeMouseMove& rmm);
+    void ReplayRelativeMouseButton(
+        const regame::ClientRelativeMouseButton& rmb);
+    void ReplayRelativeMouseWheel(const regame::ClientRelativeMouseWheel& rmw);
   } send_input_;
 
   struct ViGEm {

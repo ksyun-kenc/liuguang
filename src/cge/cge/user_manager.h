@@ -31,7 +31,7 @@ class UserManager : public std::enable_shared_from_this<UserManager> {
         keep_alive_timer_(ioc) {}
   ~UserManager();
 
-  void Init();
+  void Initialize();
   void Close();
 
   const std::string& GetUsername() noexcept { return username_; }

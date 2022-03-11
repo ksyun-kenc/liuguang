@@ -21,15 +21,22 @@
 #include "app.hpp"
 #include "sound_capturer.h"
 
+using namespace regame;
+
 const int kTargetChannels = 2;
 const int64_t kTargetChannelLayout = AV_CH_LAYOUT_STEREO;
 
-bool AudioEncoder::Init(std::string codec_name, uint64_t bitrate) noexcept {
+bool AudioEncoder::Initialize(std::string codec_name,
+                              uint64_t bitrate) noexcept {
+  if (!sound_capturer_.Initialize()) {
+    return false;
+  }
+
   codec_name_ = std::move(codec_name);
   bitrate_ = bitrate;
 
-  HANDLE ev =
-      CreateEvent(g_app.SA(), TRUE, FALSE, kAudioStartedEventName.data());
+  HANDLE ev = CreateEvent(g_app.SA(), TRUE, FALSE,
+                          object_namer_.Get(kAudioStartedEventName).data());
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
@@ -37,7 +44,8 @@ bool AudioEncoder::Init(std::string codec_name, uint64_t bitrate) noexcept {
   }
   started_event_.Attach(ev);
 
-  ev = CreateEvent(g_app.SA(), TRUE, FALSE, kAudioStoppedEventName.data());
+  ev = CreateEvent(g_app.SA(), TRUE, FALSE,
+                   object_namer_.Get(kAudioStoppedEventName).data());
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
@@ -46,7 +54,7 @@ bool AudioEncoder::Init(std::string codec_name, uint64_t bitrate) noexcept {
   stop_event_.Attach(ev);
 
   ev = CreateEvent(g_app.SA(), FALSE, FALSE,
-                   kSharedAudioFrameReadyEventName.data());
+                   object_namer_.Get(kSharedAudioFrameReadyEventName).data());
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
@@ -114,7 +122,8 @@ int AudioEncoder::EncodingThread() {
                            frame_bytes * kNumberOfSharedFrames;
   // UMU: In Pro version, may get audio from other process.
   HRESULT hr = shared_frames_.MapSharedMem(
-      shared_mem_size, kSharedAudioFrameFileMappingName.data(), nullptr,
+      shared_mem_size,
+      object_namer_.Get(kSharedAudioFrameFileMappingName).data(), nullptr,
       g_app.SA());
   if (FAILED(hr)) {
     APP_ERROR() << "MapSharedMem() failed with 0x" << std::hex << hr << ".\n";
@@ -313,7 +322,7 @@ int AudioEncoder::Open(const AVCodec* codec, AVDictionary** opts) {
   return error;
 }
 
-int AudioEncoder::InitFrame(AVFrame*& frame) const noexcept {
+int AudioEncoder::InitializeFrame(AVFrame*& frame) const noexcept {
   assert(nullptr != codec_context_);
   assert(0 != codec_context_->frame_size);
 
@@ -344,7 +353,7 @@ int AudioEncoder::Encode() {
   BOOST_SCOPE_EXIT_ALL(this) { sound_capturer_.Stop(); };
 
   AVFrame* frame = nullptr;
-  int error_code = InitFrame(frame);
+  int error_code = InitializeFrame(frame);
   if (error_code < 0) {
     APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
@@ -357,7 +366,7 @@ int AudioEncoder::Encode() {
   }
   BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_free(&packet); };
 
-  for (HANDLE events[] = {stop_event_, shared_frame_ready_event_};;) {
+  for (HANDLE events[]{stop_event_, shared_frame_ready_event_};;) {
     DWORD wait =
         WaitForMultipleObjects(_countof(events), events, FALSE, INFINITE);
     if (WAIT_OBJECT_0 == wait) {

@@ -18,8 +18,14 @@
 
 #include <string_view>
 
-const size_t kNumberOfSharedFrames = 2;
-const size_t kNumberOfDataPointers = 8;
+namespace regame {
+
+const std::size_t kNumberOfSharedFrames = 2;
+const std::size_t kNumberOfDataPointers = 8;
+
+// Prefix_InstanceId_TextureId, InstanceId can be process ID
+// std::format(kSharedTextureHandleNameFormat, instance_id, texture_id);
+constexpr std::wstring_view kSharedTextureHandleNameFormat{L"Regame_{}_{}"};
 
 #pragma warning(push)
 #pragma warning(disable : 200)
@@ -81,6 +87,17 @@ struct SharedVideoYuvFrames {
   std::uint32_t data_size;
   std::uint8_t data[0];  // PackedVideoYuvFrame
 };
+
+struct PackedVideoTextureFrame {
+  VideoFrameStats stats;
+  std::uint64_t instance_id;
+  std::uint64_t texture_id;
+};
+
+struct SharedVideoTextureFrames {
+  std::uint32_t data_size;  // sizeof(frames)
+  PackedVideoTextureFrame frames[kNumberOfSharedFrames];
+};
 #pragma warning(pop)
 
 constexpr std::wstring_view kAudioStartedEventName{
@@ -107,3 +124,5 @@ constexpr std::wstring_view kSharedVideoTextureFramesFileMappingName{
 
 constexpr std::wstring_view kDoNotPresentEventName{
     L"{E7E2141B-4312-4609-BDEB-5B722CC01B96}"};
+
+}  // namespace regame

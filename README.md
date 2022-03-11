@@ -10,7 +10,7 @@ Cloud gaming engine is a core technology to host ordinary games on remote server
 
 `Regame` is still under development. It would be great if you could help.
 
-[Download Regame v0.4 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip)
+[Download Regame v0.4 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip) \(It will be updated from time to time!\)
 
 Demo videos (Chinese):
 
@@ -81,18 +81,23 @@ Usage:
   --disable-keys arg                    Disable virtual keys. eg: 164,165
                                         disable ALT; 91,92 disable WIN
   --donot-present arg (=0)              Tell cgh don't present
-  --hardware-encoder arg                Set video hardware encoder. Select one
-                                        of {amf, nvenc, qsv}
+  --desktop-mode arg (=0)               Set desktop mode
+  -g [ --global-mode ] arg (=0)         In global mode, will prefix object
+                                        names with Global\.
   --gamepad-replay arg (=none)          Set gamepad replay method. Select one
                                         of {none, cgvhid, vigem}
+  --hardware-encoder arg                Set video hardware encoder. Select one
+                                        of {amf, nvenc, qsv}
   --keyboard-replay arg (=none)         Set keyboard replay method. Select one
                                         of {none, cgvhid, sendinput, message}
-  --mouse-replay arg (=none)            Set mouse replay method. Select one of
-                                        {none, cgvhid, sendinput, message}
   --log-level arg (=info)               Set logging severity level. Select one
                                         of {trace, debug, info, warning, error,
                                         fatal}
+  --mouse-replay arg (=none)            Set mouse replay method. Select one of
+                                        {none, cgvhid, sendinput, message}
   -p [ --port ] arg (=8080)             Set the service port
+  --user-service arg (=http://127.0.0.1:8545/)
+                                        Set address for user service.
   --video-bitrate arg (=1000000)        Set video bitrate
   --video-codec arg (=h264)             Set video codec. Select one of {h264,
                                         h265, hevc}, h265 == hevc
@@ -108,9 +113,7 @@ Usage:
                                         faster, fast, medium, slow, slower,
                                         veryslow, placebo}
   --video-quality arg (=23)             Set video quality. [0, 51], lower is
-                                        better, 0 is lossless
-  --user-service arg (=http://127.0.0.1:8545/)
-                                        Set address for user service.
+                                        better, 0 is lossless.
 ```
 
 You can press `Ctrl+C` to stop it gracefully.
@@ -156,9 +159,9 @@ Cloud gaming Virtual HID driver. For replaying controller event on server.
 
 ![Hook game](doc/cgvhid.png)
 
-### cgvd
+### cgvd (Enterprise version only)
 
-Cloud gaming Virtual Display. It's an Indirect Display Driver for capturing screen on server.
+Cloud gaming Virtual Display. It's an Indirect Display Driver for capturing screen on server. After installing `cgvd`, run `cge -g` to interact with cgvd.
 
 ### video_source
 
@@ -196,7 +199,7 @@ Usage:
   --volume arg (=100)                   Set volume, [0, 100]
 ```
 
-### cgs
+### cgs (Enterprise version only)
 
 A WebRTC server works together with `cge`, to serve web clients.
 

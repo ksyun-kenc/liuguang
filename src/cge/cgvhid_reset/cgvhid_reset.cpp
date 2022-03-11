@@ -19,7 +19,7 @@
 int main() {
   CgvhidClient cgvhid_client;
 
-  cgvhid_client.Init(3300, 2200);
+  cgvhid_client.Initialize(3300, 2200);
   cgvhid_client.KeyboardReset();
   cgvhid_client.MouseReset();
 

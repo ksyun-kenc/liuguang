@@ -18,7 +18,7 @@
 
 namespace regame {
 
-constexpr std::uint8_t kProtocolVersion = 0;
+constexpr std::uint8_t kProtocolVersion = 1;
 constexpr std::uint8_t kMinUsernameSize = 3;
 constexpr std::uint8_t kMaxUsernameSize = 32;
 constexpr std::uint8_t kMinVerificationSize = 6;
@@ -67,7 +67,7 @@ struct ClientLogin {
 };
 static_assert((sizeof(ClientLogin) & 1) == 0);
 
-#pragma region("ClientControl")
+#pragma region ClientControl
 enum class ControlType : std::uint8_t {
   kKeyboard = 0,
   kKeyboardVk,
@@ -75,6 +75,9 @@ enum class ControlType : std::uint8_t {
   kMouseMove = 10,
   kMouseButton,
   kMouseWheel,
+  kRelativeMouseMove,
+  kRelativeMouseButton,
+  kRelativeMouseWheel,
 
   kGamepadAxis = 20,
   kGamepadButton,
@@ -96,7 +99,7 @@ static_assert((sizeof(ClientControl) & 1) == 0);
 
 struct ClientKeyboard {
   ClientControl control;
-  std::uint16_t key_code; // SDL scancode or VK
+  std::uint16_t key_code;  // SDL scancode or VK
   ButtonState state;
   std::byte reserved;  // padding
 };
@@ -124,6 +127,27 @@ struct ClientMouseWheel {
   std::int8_t y;
 };
 static_assert((sizeof(ClientMouseWheel) & 1) == 0);
+
+struct ClientRelativeMouseButton {
+  ClientControl control;
+  std::uint8_t button;
+  ButtonState state;
+};
+static_assert((sizeof(ClientRelativeMouseButton) & 1) == 0);
+
+struct ClientRelativeMouseMove {
+  ClientControl control;
+  std::int16_t x;
+  std::int16_t y;
+};
+static_assert((sizeof(ClientRelativeMouseMove) & 1) == 0);
+
+struct ClientRelativeMouseWheel {
+  ClientControl control;
+  std::int8_t x;
+  std::int8_t y;
+};
+static_assert((sizeof(ClientRelativeMouseWheel) & 1) == 0);
 
 struct ClientJoystickAxis {
   ClientControl control;
@@ -166,12 +190,19 @@ struct ServerPacketHead {
   ServerAction action;
 };
 
+enum WorkMode : std::uint16_t {
+  kDesktop = 1,
+};
+
 struct ServerLoginResult {
+  // version >= 0
   ServerPacketHead head;
   std::uint8_t protocol_version;
-  int error_code;
-  uint32_t audio_codec;
-  uint32_t video_codec;
+  std::int32_t error_code;
+  std::uint32_t audio_codec;
+  std::uint32_t video_codec;
+  // version >= 1
+  WorkMode work_modes;
 };
 static_assert((sizeof(ServerLoginResult) & 1) == 0);
 #pragma pack(pop)

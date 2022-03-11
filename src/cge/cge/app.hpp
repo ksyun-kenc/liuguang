@@ -23,7 +23,7 @@
 
 class App {
  public:
-  bool Init() noexcept {
+  bool Initialize() noexcept {
     auto sec_desc = _T("D:P(A;;GA;;;WD)");
     if (!ConvertStringSecurityDescriptorToSecurityDescriptor(
             sec_desc, SDDL_REVISION_1, &sa_.lpSecurityDescriptor, nullptr)) {
@@ -39,7 +39,9 @@ class App {
     }
   }
 
-  class Engine& Engine() noexcept { return engine_; }
+  class Engine& Engine() noexcept {
+    return engine_;
+  }
   LARGE_INTEGER GetFrequency() const noexcept { return frequency_; }
   const SECURITY_ATTRIBUTES* GetSA() const noexcept { return &sa_; }
   SECURITY_ATTRIBUTES* SA() noexcept { return &sa_; }

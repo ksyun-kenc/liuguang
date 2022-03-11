@@ -23,16 +23,16 @@ class AudioResampler {
   AudioResampler() noexcept {}
   ~AudioResampler() noexcept { Free(); }
 
-  int Init(int64_t in_channel_layout,
-           enum AVSampleFormat in_sample_format,
-           int in_sample_rate,
-           int64_t out_channel_layout,
-           enum AVSampleFormat out_sample_format,
-           int out_sample_rate,
-           int frame_size) noexcept;
+  int Initialize(int64_t in_channel_layout,
+                 enum AVSampleFormat in_sample_format,
+                 int in_sample_rate,
+                 int64_t out_channel_layout,
+                 enum AVSampleFormat out_sample_format,
+                 int out_sample_rate,
+                 int frame_size) noexcept;
   void Free() noexcept;
   int Store(const uint8_t* in, int in_samples, int* sample_count = nullptr);
-  int InitFrame(AVFrame*& frame, int frame_size) const noexcept;
+  int InitializeFrame(AVFrame*& frame, int frame_size) const noexcept;
   int ReadFrame(AVFrame* frame);
 
  private:

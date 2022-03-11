@@ -336,7 +336,7 @@ void GameControl::SendInput::ReplayKeyboard(const regame::ClientKeyboard& k) {
   WindowsScancode sc =
       SdlScancodeToWindows(static_cast<SDL_Scancode>(key_code));
   if (WindowsScancode::kNone == sc) {
-    APP_WARNING() << "Unknown key code: " << static_cast<int>(sc) << '\n';
+    APP_WARNING() << "Unknown key code: " << key_code << '\n';
     return;
   }
   // TO-DO
@@ -395,18 +395,20 @@ void GameControl::SendInput::ReplayMouseButton(
 
 void GameControl::SendInput::ReplayMouseWheel(
     const regame::ClientMouseWheel& mw) {
-  if (0 != mw.x || 0 != mw.y) {
-    INPUT input = {};
-    input.type = INPUT_MOUSE;
-    // input.mi.dx = mouse_last_pos_.x;
-    // input.mi.dy = mouse_last_pos_.y;
-    if (0 != mw.x) {
-      input.mi.mouseData = 120 * mw.x;
-      input.mi.dwFlags = MOUSEEVENTF_HWHEEL;
-    } else if (0 != mw.y) {
-      input.mi.mouseData = 120 * mw.y;
-      input.mi.dwFlags = MOUSEEVENTF_WHEEL;
-    }
-    ::SendInput(1, &input, sizeof(INPUT));
-  }
+  // Enterprise version
+}
+
+void GameControl::SendInput::ReplayRelativeMouseMove(
+    const regame::ClientRelativeMouseMove& rmm) {
+  // Enterprise version
+}
+
+void GameControl::SendInput::ReplayRelativeMouseButton(
+    const regame::ClientRelativeMouseButton& rmb) {
+  // Enterprise version
+}
+
+void GameControl::SendInput::ReplayRelativeMouseWheel(
+    const regame::ClientRelativeMouseWheel& rmw) {
+  // Enterprise version
 }

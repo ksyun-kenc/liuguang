@@ -37,7 +37,7 @@ enum class SeverityLevel {
   kFatal,
   kLast
 };
-constexpr std::array<std::string_view, 6> kValidSeverityLevel = {
+constexpr std::array<std::string_view, 6> kValidSeverityLevel{
     "trace", "debug", "info", "warning", "error", "fatal"};
 constexpr size_t kDefaultSeverityLevelIndex = 2;
 

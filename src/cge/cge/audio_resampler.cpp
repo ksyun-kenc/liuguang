@@ -18,13 +18,13 @@
 
 #include "audio_resampler.h"
 
-int AudioResampler::Init(int64_t in_channel_layout,
-                         AVSampleFormat in_sample_format,
-                         int in_sample_rate,
-                         int64_t out_channel_layout,
-                         AVSampleFormat out_sample_format,
-                         int out_sample_rate,
-                         int frame_size) noexcept {
+int AudioResampler::Initialize(int64_t in_channel_layout,
+                               AVSampleFormat in_sample_format,
+                               int in_sample_rate,
+                               int64_t out_channel_layout,
+                               AVSampleFormat out_sample_format,
+                               int out_sample_rate,
+                               int frame_size) noexcept {
   assert(nullptr == resampler_context_);
   assert(nullptr == fifo_);
 
@@ -186,7 +186,8 @@ int AudioResampler::Store(const uint8_t* in,
   return 0;
 }
 
-int AudioResampler::InitFrame(AVFrame*& frame, int frame_size) const noexcept {
+int AudioResampler::InitializeFrame(AVFrame*& frame,
+                                    int frame_size) const noexcept {
   frame = av_frame_alloc();
   if (nullptr == frame) {
     return AVERROR(ENOMEM);

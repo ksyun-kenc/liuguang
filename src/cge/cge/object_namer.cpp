@@ -15,3 +15,14 @@
  */
 
 #include "pch.h"
+
+#include "object_namer.h"
+
+std::wstring ObjectNamer::Get(std::wstring_view name) const noexcept {
+  std::wstring result;
+  if (is_global_) {
+    result.assign(L"Global\\");
+  }
+  result.append(name);
+  return result;
+}

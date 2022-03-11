@@ -49,7 +49,7 @@ void GameControl::Initialize() noexcept {
 
   if (KeyboardReplay::kCgvhid == keyboard_replay_ ||
       MouseReplay::kCgvhid == mouse_replay_) {
-    cgvhid_.client_.Init(0, 0);
+    cgvhid_.client_.Initialize(0, 0);
   }
 
   if (KeyboardReplay::kCgvhid == keyboard_replay_) {
@@ -167,6 +167,25 @@ void GameControl::Replay(const regame::ClientControl* cc,
                                 static_cast<int>(cc->type)));
       }
       break;
+    case regame::ControlType::kRelativeMouseMove:
+      if (sizeof(regame::ClientRelativeMouseMove) == size) {
+        const auto& rmm =
+            *reinterpret_cast<const regame::ClientRelativeMouseMove*>(cc);
+        DEBUG_VERBOSE(std::format("RelativeMouseMove: ({}, {})\n", ntohs(rmm.x),
+                                  ntohs(rmm.y)));
+        switch (mouse_replay_) {
+          case MouseReplay::kCgvhid:
+            cgvhid_.ReplayRelativeMouseMove(rmm);
+            break;
+          case MouseReplay::kSendInput:
+            send_input_.ReplayRelativeMouseMove(rmm);
+            break;
+        }
+      } else {
+        DEBUG_PRINT(std::format("Size {} not matched for type {}\n", size,
+                                static_cast<int>(cc->type)));
+      }
+      break;
     case regame::ControlType::kMouseButton:
       if (sizeof(regame::ClientMouseButton) == size) {
         const auto& mb =
@@ -190,6 +209,25 @@ void GameControl::Replay(const regame::ClientControl* cc,
                                 static_cast<int>(cc->type)));
       }
       break;
+    case regame::ControlType::kRelativeMouseButton:
+      if (sizeof(regame::ClientRelativeMouseButton) == size) {
+        const auto& rmb =
+            *reinterpret_cast<const regame::ClientRelativeMouseButton*>(cc);
+        DEBUG_VERBOSE(std::format("RelativeMouseButton: button {}, state {}\n",
+                                  rmb.button, static_cast<int>(rmb.state)));
+        switch (mouse_replay_) {
+          case MouseReplay::kCgvhid:
+            cgvhid_.ReplayRelativeMouseButton(rmb);
+            break;
+          case MouseReplay::kSendInput:
+            send_input_.ReplayRelativeMouseButton(rmb);
+            break;
+        }
+      } else {
+        DEBUG_PRINT(std::format("Size {} not matched for type {}\n", size,
+                                static_cast<int>(cc->type)));
+      }
+      break;
     case regame::ControlType::kMouseWheel:
       if (sizeof(regame::ClientMouseWheel) == size) {
         const auto& mw = *reinterpret_cast<const regame::ClientMouseWheel*>(cc);
@@ -203,6 +241,25 @@ void GameControl::Replay(const regame::ClientControl* cc,
             break;
           case MouseReplay::kMessage:
             message_.ReplayMouseWheel(mw);
+            break;
+        }
+      } else {
+        DEBUG_PRINT(std::format("Size {} not matched for type {}\n", size,
+                                static_cast<int>(cc->type)));
+      }
+      break;
+    case regame::ControlType::kRelativeMouseWheel:
+      if (sizeof(regame::ClientRelativeMouseWheel) == size) {
+        const auto& rmw =
+            *reinterpret_cast<const regame::ClientRelativeMouseWheel*>(cc);
+        DEBUG_VERBOSE(
+            std::format("RelativeMouseWheel: ({}, {})\n", rmw.x, rmw.y));
+        switch (mouse_replay_) {
+          case MouseReplay::kCgvhid:
+            cgvhid_.ReplayRelativeMouseWheel(rmw);
+            break;
+          case MouseReplay::kSendInput:
+            send_input_.ReplayRelativeMouseWheel(rmw);
             break;
         }
       } else {

@@ -23,27 +23,40 @@
 
 #include <SDL2/SDL.h>
 
+#include <array>
 #include <atomic>
 #include <thread>
 
+#include "regame/sdl_internal.h"
 #include "regame/shared_mem_info.h"
 
 struct PooledSurface {
-  VideoFrameStats stats;
+  regame::VideoFrameStats stats;
   IDXGISurface* surface;
+};
+
+struct SharedTexture {
+  CComPtr<ID3D11Texture2D> texture;
+  CComPtr<IDXGIResource1> resource;
+  HANDLE handle;
 };
 
 class SdlHack {
  public:
   SdlHack() = default;
-  ~SdlHack();
+  ~SdlHack() { Free(); };
 
-  bool Init() noexcept;
+  bool Initialize() noexcept;
+  bool Run(bool global_mode, regame::VideoFrameType frame_type) noexcept;
+  void Free() noexcept;
   bool IsStarted() const noexcept;
-  void GetTexture(SDL_Renderer* renderer);
+  void CopyTexture(SDL_Renderer* renderer);
+  std::wstring GetName(std::wstring_view name) noexcept;
 
  private:
   int WaitingThread();
+  void CopyTextureToSharedTexture(D3D11_RenderData* render_data);
+  void CopyTextureToSharedYuv(D3D11_RenderData* render_data);
 
  private:
   SECURITY_ATTRIBUTES sa_{};
@@ -54,10 +67,16 @@ class SdlHack {
   CHandle encoder_started_event_;
   CHandle encoder_stopped_event_;
   CHandle stop_event_;
-  CAtlFileMapping<SharedVideoFrameInfo> shared_frame_info_;
-  CAtlFileMapping<char> shared_frames_;
+  CAtlFileMapping<regame::SharedVideoFrameInfo> shared_frame_info_;
+  CAtlFileMapping<char> shared_yuv_frames_;
+  CAtlFileMapping<regame::SharedVideoTextureFrames> shared_texture_frames_;
+  std::array<SharedTexture, regame::kNumberOfSharedFrames> shared_textures_;
+  std::uint64_t texture_id_{0};
+
   CHandle shared_frame_ready_event_;
   SDL_version linked_;
   UINT width_ = 0;
   UINT height_ = 0;
+  bool global_mode_{false};
+  regame::VideoFrameType frame_type_{regame::VideoFrameType::kNone};
 };

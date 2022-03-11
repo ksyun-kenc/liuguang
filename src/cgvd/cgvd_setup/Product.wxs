@@ -11,12 +11,12 @@
 	<?define ArchDir = "x86" ?>
 	<?define WixQuietExec="WixQuietExec"?>
 	<?endif ?>
-	<?define ProductName = "Cloud Gaming Virtual HID Driver" ?>
-	<?define UpgradeCode = "4f1d433d-9e2b-49d1-8b57-4cfa6752dfdd" ?>
+	<?define ProductName = "Cloud Gaming Virtual Indirect Display Driver" ?>
+	<?define UpgradeCode = "bdd4e7ee-ae2e-4143-905c-e7751a1b45da" ?>
 
 	<!-- use driver file version for installer -->
-	<?define VERSION = "!(bind.FileVersion.cgvhid.sys)" ?>
-	
+	<?define VERSION = !(bind.FileVersion.cgvd.dll) ?>
+
 	<Product Id="*" Name="$(var.ProductName)" Language="1033" Version="$(var.VERSION)" Manufacturer="Ksyun" UpgradeCode="$(var.UpgradeCode)">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
@@ -34,7 +34,7 @@
 				Property="PREVIOUSVERSIONSINSTALLED"
 				IncludeMinimum="yes" IncludeMaximum="no" />
 		</Upgrade>
-			
+
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 		<MediaTemplate EmbedCab="yes" />
 
@@ -57,7 +57,7 @@
 		<!-- build installation command -->
 		<CustomAction Id="DevconInstallPropertyAssign"
 					  Property="DevconInstallQuiet"
-					  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; install &quot;[INSTALLFOLDER]cgvhid.inf&quot; Root\cgvhid"
+					  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; install &quot;[INSTALLFOLDER]cgvd.inf&quot; Root\CgvdController"
 					  Execute="immediate" />
 
 		<!-- execute installation with suppressed UI -->
@@ -67,7 +67,7 @@
 		<!-- build removal command -->
 		<CustomAction Id="DevconRemovePropertyAssign"
 					  Property="DevconRemoveQuiet"
-					  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; /r remove &quot;Root\cgvhid&quot;"
+					  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; /r remove Root\CgvdController"
 					  Execute="immediate" />
 
 		<!-- execute removal with suppressed UI -->
@@ -102,10 +102,10 @@
 
 	<Fragment>
 		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-			<Component Id="ProductComponent" Guid="636509EE-0C5C-4A0E-A4F3-2C5DE67D955E" Win64="$(var.Win64)">
-				<File Name="cgvhid.sys" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvhid\cgvhid.sys" />
-				<File Name="cgvhid.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvhid\cgvhid.inf" />
-				<File Name="cgvhid.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvhid\cgvhid.cat" />
+			<Component Id="ProductComponent" Guid="4D36E968-E325-11CE-BFC1-08002BE10318" Win64="$(var.Win64)">
+				<File Name="cgvd.dll" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvd\cgvd.dll" />
+				<File Name="cgvd.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvd\cgvd.inf" />
+				<File Name="cgvd.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\$(var.Configuration)\cgvd\cgvd.cat" />
 				<File Name="devcon.exe" Source="$(var.SolutionDir)..\deps\bin\devcon\$(var.ArchDir)\devcon.exe" />
 				<File Name="devcon-LICENSE" Source="$(var.SolutionDir)..\deps\bin\devcon\devcon-LICENSE" />
 				<File Name="LICENSE.rtf" Source="$(var.ProjectDir)LICENSE.rtf" />

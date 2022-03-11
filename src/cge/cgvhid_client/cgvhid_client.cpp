@@ -46,7 +46,7 @@ uint8_t GetModifier(uint8_t scan_code) {
 
 uint8_t CgvhidClient::VkToScancode(uint8_t vk) noexcept {
   // clang-format off
-  static uint8_t keymap[] = {
+  static uint8_t keymap[]{
     /* VK_LBUTTON                         */ KEY_NONE,              // 0x01 Left mouse button
     /* VK_RBUTTON                         */ KEY_NONE,              // 0x02 Right mouse button
     /* VK_CANCEL                          */ KEY_NONE,              // 0x03 Control-break processing
@@ -311,15 +311,15 @@ uint8_t CgvhidClient::VkToScancode(uint8_t vk) noexcept {
 constexpr std::uint32_t kMouseLogicalMax = MOUSE_LOGICAL_MAX + 1;
 constexpr std::uint32_t kMouseLogicalMin = MOUSE_LOGICAL_MIN;
 
-void CgvhidClient::Init(int display_width, int display_height) noexcept {
-  if (!cgvhid_.Init()) {
+void CgvhidClient::Initialize(int display_width, int display_height) noexcept {
+  if (!cgvhid_.Initialize()) {
     ATLTRACE2(atlTraceException, 0, "!Init()\n");
   }
 }
 
 int CgvhidClient::KeyboardReset() noexcept {
   keyboard_state_ = {};
-  uint8_t key_codes[KEYBD_MAX_KEY_COUNT] = {};
+  uint8_t key_codes[KEYBD_MAX_KEY_COUNT]{};
   return cgvhid_.KeyboardUpdate(0, key_codes);
 }
 

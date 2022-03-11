@@ -14,4 +14,20 @@
  * limitations under the License.
  */
 
-#include "pch.h"
+#pragma once
+
+class ObjectNamer {
+ public:
+  ObjectNamer() = default;
+  ~ObjectNamer() = default;
+
+  ObjectNamer& SetGlobalMode(bool is_global) noexcept {
+    is_global_ = is_global;
+    return *this;
+  }
+
+  std::wstring Get(std::wstring_view name) const noexcept;
+
+ private:
+  bool is_global_{false};
+};

@@ -78,6 +78,9 @@
     <ClCompile Include="game_control_message.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="object_namer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_service.h">
@@ -132,6 +135,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="windows_scancode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="object_namer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

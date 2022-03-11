@@ -4,9 +4,9 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>3.10</ProductVersion>
-    <ProjectGuid>e1a5b6ac-f386-4d49-86af-fea918ed1188</ProjectGuid>
+    <ProjectGuid>82b03c42-fa95-4b52-b698-2c24e6d6ca01</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>cgvhid_setup_$(Platform)</OutputName>
+    <OutputName>cgvd_setup_$(Platform)</OutputName>
     <OutputType>Package</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -21,30 +21,27 @@
     <LeaveTemporaryFiles>True</LeaveTemporaryFiles>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
-    <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntermediateOutputPath>
     <DefineConstants>Debug</DefineConstants>
     <LeaveTemporaryFiles>True</LeaveTemporaryFiles>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <LeaveTemporaryFiles>True</LeaveTemporaryFiles>
+    <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Product.wxs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cloud_gaming.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <WixExtension Include="WixUIExtension">
-      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
-      <Name>WixUIExtension</Name>
-    </WixExtension>
     <WixExtension Include="WixUtilExtension">
       <HintPath>$(WixExtDir)\WixUtilExtension.dll</HintPath>
       <Name>WixUtilExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
     </WixExtension>
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />

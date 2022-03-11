@@ -18,6 +18,9 @@
 
 #include <atlfile.h>
 
+#include <d3d11_1.h>
+#include <dxgi.h>
+
 #include <chrono>
 
 #include "encoder.h"
@@ -26,17 +29,26 @@
 
 enum class HardwareEncoder { None = 0, AMF, NVENC, QSV };
 
+struct SharedTexture {
+  std::uint64_t instance_id;
+  std::uint64_t texture_id;
+  CComPtr<ID3D11Texture2D> texture;
+};
+
+class ObjectNamer;
+
 class VideoEncoder : public Encoder {
  public:
-  VideoEncoder() noexcept : Encoder(regame::ServerAction::kVideo) {}
+  VideoEncoder(ObjectNamer& object_namer)
+      : Encoder(regame::ServerAction::kVideo), object_namer_(object_namer) {}
   ~VideoEncoder() noexcept = default;
 
-  bool Init(uint64_t bitrate,
-            AVCodecID codec_id,
-            HardwareEncoder hardware_encoder,
-            int gop,
-            std::string video_preset,
-            uint32_t quality) noexcept;
+  bool Initialize(uint64_t bitrate,
+                  AVCodecID codec_id,
+                  HardwareEncoder hardware_encoder,
+                  int gop,
+                  std::string video_preset,
+                  uint32_t quality) noexcept;
   int Run();
   void Stop();
 
@@ -57,11 +69,13 @@ class VideoEncoder : public Encoder {
   void Free(bool wait_thread);
   int AddStream(const AVCodec*& codec);
   int Open(const AVCodec* codec, AVDictionary** opts);
-  int InitFrame(AVFrame*& frame) const noexcept;
+  int InitializeFrame(AVFrame*& frame) const noexcept;
   int EncodeFrame(AVFrame* frame) noexcept;
   int EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept;
+  HRESULT GetSharedTexture() noexcept;
 
  private:
+  ObjectNamer& object_namer_;
   HardwareEncoder hardware_encoder_;
   uint64_t bitrate_;
   int gop_;
@@ -72,10 +86,18 @@ class VideoEncoder : public Encoder {
   CHandle stop_event_;
   std::thread thread_;
 
-  CAtlFileMapping<SharedVideoFrameInfo> shared_frame_info_;
-  SharedVideoFrameInfo saved_frame_info_;
-  CAtlFileMapping<uint8_t> shared_frames_;
+  CAtlFileMapping<regame::SharedVideoFrameInfo> shared_frame_info_;
+  regame::SharedVideoFrameInfo saved_frame_info_;
+  CAtlFileMapping<uint8_t> shared_yuv_frames_;
+  CAtlFileMapping<regame::SharedVideoTextureFrames> shared_texture_frames_;
   CHandle shared_frame_ready_event_;
+
+  CComPtr<ID3D11DeviceContext> context_;
+  CComPtr<ID3D11Device> device_;
+  CComPtr<ID3D11Device1> device1_;
+  std::array<SharedTexture, regame::kNumberOfSharedFrames> shared_textures_;
+  CComPtr<ID3D11Texture2D> staging_texture_;
+  std::vector<uint8_t> yuv_frame_data_;
 
   AVStream* stream_ = nullptr;
   AVCodecContext* codec_context_ = nullptr;

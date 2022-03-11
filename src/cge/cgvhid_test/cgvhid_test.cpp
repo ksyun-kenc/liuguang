@@ -27,6 +27,37 @@ void TestKeyboard(CgvhidClient& cgvhid_client) {
     std::cout << "KeyboardReset() = " << ec << '\n';
   }
 
+  // CAD
+  ec = cgvhid_client.KeyboardVkPress(VK_LCONTROL);
+  if (0 != ec) {
+    std::cout << "KeyboardVkPress() = " << ec << '\n';
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  ec = cgvhid_client.KeyboardVkPress(VK_LMENU);
+  if (0 != ec) {
+    std::cout << "KeyboardVkPress() = " << ec << '\n';
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  ec = cgvhid_client.KeyboardVkPress(VK_DELETE);
+  if (0 != ec) {
+    std::cout << "KeyboardVkPress() = " << ec << '\n';
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  ec = cgvhid_client.KeyboardVkRelease(VK_DELETE);
+  if (0 != ec) {
+    std::cout << "KeyboardVkRelease() = " << ec << '\n';
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  ec = cgvhid_client.KeyboardVkRelease(VK_LMENU);
+  if (0 != ec) {
+    std::cout << "KeyboardVkRelease() = " << ec << '\n';
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  ec = cgvhid_client.KeyboardVkRelease(VK_LCONTROL);
+  if (0 != ec) {
+    std::cout << "KeyboardVkRelease() = " << ec << '\n';
+  }
+
   ec = cgvhid_client.KeyboardVkPress(VK_LWIN);
   if (0 != ec) {
     std::cout << "KeyboardVkPress() = " << ec << '\n';
@@ -248,7 +279,7 @@ void TestMouse(CgvhidClient& cgvhid_client) {
 int main() {
   CgvhidClient cgvhid_client;
 
-  cgvhid_client.Init(3300, 2200);
+  cgvhid_client.Initialize(3300, 2200);
 
   // TestKeyboard(cgvhid_client);
   TestMouse(cgvhid_client);

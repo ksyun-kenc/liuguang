@@ -342,7 +342,7 @@ class Cgvhid {
   Cgvhid() = default;
   ~Cgvhid() = default;
 
-  bool Init() noexcept;
+  bool Initialize() noexcept;
   void Free() noexcept;
 
   int KeyboardUpdate(std::uint8_t modifiers,

@@ -22,6 +22,8 @@
 
 #include <boost/url.hpp>
 
+using namespace regame;
+
 void Engine::Run(tcp::endpoint ws_endpoint,
                  std::string audio_codec,
                  uint64_t audio_bitrate,
@@ -88,14 +90,14 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                 << user_service_target_ << '\n';
 #endif
 
-    if (!audio_encoder_.Init(std::move(audio_codec), audio_bitrate)) {
+    if (!audio_encoder_.Initialize(std::move(audio_codec), audio_bitrate)) {
       APP_ERROR() << "Initialize audio encoder failed!\n";
       return;
     }
 
-    if (!video_encoder_.Init(video_bitrate, video_codec_id, hardware_encoder,
-                             video_gop, std::move(video_preset),
-                             video_quality)) {
+    if (!video_encoder_.Initialize(video_bitrate, video_codec_id,
+                                   hardware_encoder, video_gop,
+                                   std::move(video_preset), video_quality)) {
       APP_ERROR() << "Initialize video encoder failed!\n";
       return;
     }
@@ -187,8 +189,8 @@ int Engine::WritePacket(void* opaque, std::span<uint8_t> packet) noexcept {
 }
 
 void Engine::SetPresentFlag(bool donot_present) {
-  HANDLE ev =
-      CreateEvent(g_app.SA(), TRUE, FALSE, kDoNotPresentEventName.data());
+  HANDLE ev = CreateEvent(g_app.SA(), TRUE, FALSE,
+                          object_namer_.Get(kDoNotPresentEventName).data());
   if (nullptr == ev) {
     APP_ERROR() << "CreateEvent() failed with " << GetLastError() << '\n';
     return;

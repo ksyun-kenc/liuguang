@@ -22,6 +22,8 @@
 
 #include "app.hpp"
 
+using namespace regame;
+
 // unit: 100-nanosecond, 1s == 1000 * 1000 * 10 unit
 constexpr REFERENCE_TIME kReferenceTimePerSecond = 10000000;
 constexpr REFERENCE_TIME kReferenceTimePerMilliSecond = 10000;
@@ -81,15 +83,16 @@ AVSampleFormat GetSampleFormat(const WAVEFORMATEX* wave_format) noexcept {
 }
 }  // namespace
 
-SoundCapturer::SoundCapturer() noexcept {
+bool SoundCapturer::Initialize() noexcept {
   // ManualReset
   HANDLE ev = CreateEvent(g_app.SA(), TRUE, FALSE, nullptr);
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
-    return;
+    return false;
   }
   stop_event_.Attach(ev);
+  return true;
 }
 
 SoundCapturer::~SoundCapturer() {
@@ -254,7 +257,7 @@ HRESULT SoundCapturer::CaptureThread() {
   assert(0 != out_channel_layout_);
   assert(AV_SAMPLE_FMT_NONE != out_sample_format_);
   assert(0 != out_sample_rate_);
-  int error_code = audio_resampler_.Init(
+  int error_code = audio_resampler_.Initialize(
       GetChannelLayout(wave_format), GetSampleFormat(wave_format),
       wave_format->nSamplesPerSec, out_channel_layout_, out_sample_format_,
       out_sample_rate_, frame_size_);
@@ -263,7 +266,8 @@ HRESULT SoundCapturer::CaptureThread() {
     return error_code;
   }
 
-  hr = shared_frame_.OpenMapping(kSharedAudioFrameFileMappingName.data(), 0);
+  hr = shared_frame_.OpenMapping(
+      object_namer_.Get(kSharedAudioFrameFileMappingName).data(), 0);
   if (FAILED(hr)) {
     APP_ERROR() << "OpenMapping() failed with " << hr << ".\n";
     return hr;
@@ -275,8 +279,9 @@ HRESULT SoundCapturer::CaptureThread() {
     APP_ERROR() << "Invalid audio frame format.\n";
     return -1;
   }
-  HANDLE ev = OpenEvent(EVENT_MODIFY_STATE, FALSE,
-                        kSharedAudioFrameReadyEventName.data());
+  HANDLE ev =
+      OpenEvent(EVENT_MODIFY_STATE, FALSE,
+                object_namer_.Get(kSharedAudioFrameReadyEventName).data());
   shared_frame_ready_event_.Attach(ev);
 
   UINT32 silent_samples =

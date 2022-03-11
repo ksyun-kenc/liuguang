@@ -38,10 +38,13 @@ struct AudioInfo {
   AVSampleFormat sample_format;
 };
 
+class ObjectNamer;
+
 class SoundCapturer {
  public:
-  SoundCapturer() noexcept;
+  SoundCapturer(ObjectNamer& object_namer) : object_namer_(object_namer) {}
   ~SoundCapturer();
+  bool Initialize() noexcept;
   void Run();
   void Stop();
   void SetOutputInfo(int64_t channel_layout,
@@ -64,9 +67,10 @@ class SoundCapturer {
   HRESULT CaptureThread();
 
  private:
+  ObjectNamer& object_namer_;
   std::thread thread_;
   CHandle stop_event_;
-  CAtlFileMapping<SharedAudioFrames> shared_frame_;
+  CAtlFileMapping<regame::SharedAudioFrames> shared_frame_;
   CHandle shared_frame_ready_event_;
   UINT32 frames_ = 0;
 

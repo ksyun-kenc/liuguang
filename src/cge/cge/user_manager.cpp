@@ -59,7 +59,7 @@ UserManager::~UserManager() {
   Close();
 }
 
-void UserManager::Init() {
+void UserManager::Initialize() {
   request_.version(11);
   request_.method(http::verb::post);
   request_.target(g_app.Engine().GetUserServiceTarget());

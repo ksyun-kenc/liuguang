@@ -155,6 +155,11 @@ void GameSession::OnLogin(bool result) noexcept {
   login_result.error_code = htonl(0);
   login_result.audio_codec = htonl(g_app.Engine().GetAudioCodecID());
   login_result.video_codec = htonl(g_app.Engine().GetVideoCodecID());
+  std::uint16_t work_modes = 0;
+  if (g_app.Engine().IsDesktopMode()) {
+    work_modes |= regame::WorkMode::kDesktop;
+  }
+  login_result.work_modes = static_cast<regame::WorkMode>(htons(work_modes));
   Write(std::move(buffer));
 
   APP_INFO() << "Authorized " << user_manager_->GetUsername() << " from "
@@ -168,8 +173,8 @@ void GameSession::OnKeepAlive(bool result) noexcept {
   if (!result) {
     session_state_ = SessionState::kFailed;
     Stop(true);
-    APP_ERROR() << user_manager_->GetUsername() << " from "
-                << remote_endpoint_ << " keepalive failed!\n";
+    APP_ERROR() << user_manager_->GetUsername() << " from " << remote_endpoint_
+                << " keepalive failed!\n";
     return;
   }
 }
@@ -287,7 +292,7 @@ bool GameSession::ServeClient() {
             user_manager_ = std::make_shared<UserManager>(
                 ioc_, std::move(weak_from_this()));
             if (user_manager_) {
-              user_manager_->Init();
+              user_manager_->Initialize();
               user_manager_->Login(verification);
             }
 #else

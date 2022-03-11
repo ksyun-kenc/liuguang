@@ -122,7 +122,7 @@ HANDLE Cgvhid::OpenInterface(HDEVINFO dev_info,
   return INVALID_HANDLE_VALUE;
 }
 
-bool Cgvhid::Init() noexcept {
+bool Cgvhid::Initialize() noexcept {
   if (!control_) {
     HANDLE h = Open(0xff00, 0x0001);
     if (INVALID_HANDLE_VALUE == h) {

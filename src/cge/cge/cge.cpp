@@ -33,6 +33,9 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "avrt.lib")
 
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "yuv.lib")
+
 //#ifdef _DEBUG
 //#pragma comment(lib, "avutild.lib")
 //#pragma comment(lib, "avcodecd.lib")
@@ -56,26 +59,28 @@ namespace po = boost::program_options;
 using namespace std::literals::string_view_literals;
 
 constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.4 Beta"sv};
+constexpr bool kDefaultGlobalMode = false;
+constexpr bool kDefaultDesktopMode = false;
 constexpr auto kDefaultBindAddress{"::"sv};
 constexpr auto kDefaultUserService{"http://127.0.0.1:8545/"sv};
 constexpr uint64_t kDefaultAudioBitrate = 128000;
-constexpr std::array<std::string_view, 3> kValidAudioCodecs = {"libopus", "aac",
-                                                               "opus"};
+constexpr std::array<std::string_view, 3> kValidAudioCodecs{"libopus", "aac",
+                                                            "opus"};
 constexpr size_t kDefaultAudioCodecIndex = 0;
 constexpr bool kDefaultDonotPresent = false;
 
 // Should be the same order with GamepadReplay
-constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods = {
+constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods{
     "none", "cgvhid", "vigem"};
 constexpr size_t kDefaultGamepadReplayIndex = 0;
 
 // Should be the same order with KeyboardReplay
-constexpr std::array<std::string_view, 4> kValidKeyboardReplayMethods = {
+constexpr std::array<std::string_view, 4> kValidKeyboardReplayMethods{
     "none", "cgvhid", "sendinput", "message"};
 constexpr size_t kDefaultKeyboardReplayIndex = 0;
 
 // Should be the same order with MouseReplay
-constexpr std::array<std::string_view, 4> kValidMouseReplayMethods = {
+constexpr std::array<std::string_view, 4> kValidMouseReplayMethods{
     "none", "cgvhid", "sendinput", "message"};
 constexpr size_t kDefaultMouseReplayIndex = 0;
 
@@ -83,16 +88,16 @@ constexpr uint16_t kDefaultPort = 8080;
 constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
 constexpr auto kDefaultVideoCodec{"h264"sv};
 constexpr int kDefaultVideoGop = 180;
-constexpr std::array<std::string_view, 3> kValidHardwareEncoders = {
-    "amf", "nvenc", "qsv"};
-constexpr std::array<std::string_view, 3> kValidAmfPreset = {
-    "speed", "balanced", "quality"};
-constexpr std::array<std::string_view, 10> kValidNvencPreset = {
+constexpr std::array<std::string_view, 3> kValidHardwareEncoders{"amf", "nvenc",
+                                                                 "qsv"};
+constexpr std::array<std::string_view, 3> kValidAmfPreset{"speed", "balanced",
+                                                          "quality"};
+constexpr std::array<std::string_view, 10> kValidNvencPreset{
     // NVENC_HAVE_NEW_PRESETS: slow=p7, medium=p4, fast=p1
     "p1", "p2", "p3", "p4", "p5", "p6", "p7", "slow", "medium", "fast"};
-constexpr std::array<std::string_view, 7> kValidQsvPreset = {
+constexpr std::array<std::string_view, 7> kValidQsvPreset{
     "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"};
-constexpr std::array<std::string_view, 10> kValidPreset = {
+constexpr std::array<std::string_view, 10> kValidPreset{
     "ultrafast", "superfast", "veryfast", "faster",   "fast",
     "medium",    "slow",      "slower",   "veryslow", "placebo"};
 constexpr uint32_t kDefaultVideoQuality = 23;
@@ -163,7 +168,7 @@ void Formatter(const boost::log::record_view& rec,
      << ss.str() << " " << rec[expr::message];
 }
 
-void InitLogger(SeverityLevel severity_level) {
+void InitializeLogger(SeverityLevel severity_level) {
   typedef sinks::asynchronous_sink<sinks::text_ostream_backend> TextSink;
 
   // console
@@ -186,6 +191,8 @@ void InitLogger(SeverityLevel severity_level) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+  bool is_global_mode = false;
+  bool is_desktop_mode = false;
   std::string audio_codec;
   uint64_t audio_bitrate = 0;
   std::string bind_address;
@@ -232,29 +239,38 @@ int main(int argc, char* argv[]) {
       ("donot-present",
         po::value<bool>(&donot_present)->default_value(kDefaultDonotPresent),
         "Tell cgh don't present")
-      ("hardware-encoder",
-        po::value<std::string>(&hardware_encoder_string),
-        std::string("Set video hardware encoder. Select one of ")
-        .append(umu::string::ArrayJoin(kValidHardwareEncoders)).data())
+      ("desktop-mode",
+        po::value<bool>(&is_desktop_mode)->default_value(kDefaultDesktopMode),
+        "Set desktop mode")
+      ("global-mode,g",
+        po::value<bool>(&is_global_mode)->default_value(kDefaultGlobalMode),
+        "In global mode, will prefix object names with Global\\.")
       ("gamepad-replay",
         po::value<std::string>(&gamepad_replay_string)->default_value(kValidGamepadReplayMethods.at(kDefaultGamepadReplayIndex).data()),
         std::string("Set gamepad replay method. Select one of ")
        .append(umu::string::ArrayJoin(kValidGamepadReplayMethods)).data())
+      ("hardware-encoder",
+        po::value<std::string>(&hardware_encoder_string),
+        std::string("Set video hardware encoder. Select one of ")
+        .append(umu::string::ArrayJoin(kValidHardwareEncoders)).data())
       ("keyboard-replay",
         po::value<std::string>(&keyboard_replay_string)->default_value(kValidKeyboardReplayMethods.at(kDefaultKeyboardReplayIndex).data()),
         std::string("Set keyboard replay method. Select one of ")
         .append(umu::string::ArrayJoin(kValidKeyboardReplayMethods)).data())
-      ("mouse-replay",
-        po::value<std::string>(&mouse_replay_string)->default_value(kValidMouseReplayMethods.at(kDefaultMouseReplayIndex).data()),
-        std::string("Set mouse replay method. Select one of ")
-        .append(umu::string::ArrayJoin(kValidMouseReplayMethods)).data())
       ("log-level",
         po::value<std::string>(&log_level_string)->default_value(kValidSeverityLevel.at(kDefaultSeverityLevelIndex).data()),
         std::string("Set logging severity level. Select one of ")
        .append(umu::string::ArrayJoin(kValidSeverityLevel)).data())
+      ("mouse-replay",
+        po::value<std::string>(&mouse_replay_string)->default_value(kValidMouseReplayMethods.at(kDefaultMouseReplayIndex).data()),
+        std::string("Set mouse replay method. Select one of ")
+        .append(umu::string::ArrayJoin(kValidMouseReplayMethods)).data())
       ("port,p",
         po::value<uint16_t>(&port)->default_value(kDefaultPort),
         "Set the service port")
+      ("user-service",
+        po::value<std::string>(&user_service)->default_value(kDefaultUserService.data()),
+        "Set address for user service.")
       ("video-bitrate",
         po::value<uint64_t>(&video_bitrate)->default_value(kDefaultVideoBitrate),
         "Set video bitrate")
@@ -276,10 +292,7 @@ int main(int argc, char* argv[]) {
        .append(umu::string::ArrayJoin(kValidPreset)).data())
       ("video-quality",
         po::value<uint32_t>(&video_quality)->default_value(kDefaultVideoQuality),
-        "Set video quality. [0, 51], lower is better, 0 is lossless")
-      ("user-service",
-        po::value<std::string>(&user_service)->default_value(kDefaultUserService.data()),
-        "Set address for user service.");
+        "Set video quality. [0, 51], lower is better, 0 is lossless.");
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -288,31 +301,6 @@ int main(int argc, char* argv[]) {
     if (vm.count("help")) {
       std::cout << kProgramInfo << "\n\n" << desc;
       return EXIT_SUCCESS;
-    }
-
-    // sanity check
-    if (audio_bitrate < kMinAudioBitrate || audio_bitrate > kMaxAudioBitrate) {
-      throw std::out_of_range("audio-bitrate out of range!");
-    }
-    if (kValidAudioCodecs.cend() == std::find(kValidAudioCodecs.cbegin(),
-                                              kValidAudioCodecs.cend(),
-                                              audio_codec)) {
-      throw std::invalid_argument("unsupported audio-codec!");
-    }
-
-    if (!disable_keys_string.empty()) {
-      std::vector<std::string> arr;
-      boost::algorithm::split(arr, disable_keys_string, boost::is_any_of(","),
-                              boost::algorithm::token_compress_on);
-      disable_keys.reserve(arr.size());
-      for (auto& e : arr) {
-        if (!e.empty()) {
-          int key = std::atoi(e.data());
-          if (0 < key && key < 256) {
-            disable_keys.push_back(key);
-          }
-        }
-      }
     }
 
     auto gamepad_replay_pos =
@@ -346,6 +334,47 @@ int main(int argc, char* argv[]) {
     }
     mouse_replay = static_cast<MouseReplay>(
         std::distance(kValidMouseReplayMethods.cbegin(), mouse_replay_pos));
+
+    if (is_desktop_mode) {
+      if (!is_global_mode) {
+        std::cout << "desktop-mode implies global-mode!\n";
+        is_global_mode = true;
+      }
+
+      if (keyboard_replay == KeyboardReplay::kMessage) {
+        throw std::invalid_argument(
+            "unsupported keyboard-replay under desktop mode!");
+      }
+      if (mouse_replay == MouseReplay::kMessage) {
+        throw std::invalid_argument(
+            "unsupported mouse-replay under desktop mode!");
+      }
+    }
+
+    // sanity check
+    if (audio_bitrate < kMinAudioBitrate || audio_bitrate > kMaxAudioBitrate) {
+      throw std::out_of_range("audio-bitrate out of range!");
+    }
+    if (kValidAudioCodecs.cend() == std::find(kValidAudioCodecs.cbegin(),
+                                              kValidAudioCodecs.cend(),
+                                              audio_codec)) {
+      throw std::invalid_argument("unsupported audio-codec!");
+    }
+
+    if (!disable_keys_string.empty()) {
+      std::vector<std::string> arr;
+      boost::algorithm::split(arr, disable_keys_string, boost::is_any_of(","),
+                              boost::algorithm::token_compress_on);
+      disable_keys.reserve(arr.size());
+      for (auto& e : arr) {
+        if (!e.empty()) {
+          int key = std::atoi(e.data());
+          if (0 < key && key < 256) {
+            disable_keys.push_back(key);
+          }
+        }
+      }
+    }
 
     if (video_bitrate < kMinVideoBitrate) {
       throw std::out_of_range("video-bitrate too low!");
@@ -418,8 +447,10 @@ int main(int argc, char* argv[]) {
               << "audio-codec: " << audio_codec << '\n'
               << "bind-address: " << bind_address << '\n'
               << "disable-keys: " << disable_keys_string << '\n'
+              << "desktop-mode: " << is_desktop_mode << '\n'
               << "donot-present: " << std::boolalpha << donot_present << '\n'
               << "gamepad-replay: " << gamepad_replay_string << '\n'
+              << "global-mode: " << is_global_mode << '\n'
               << "hardware-encoder: " << hardware_encoder_string << '\n'
               << "keyboard-replay: " << keyboard_replay_string << '\n'
               << "log-level: " << log_level_string << '\n'
@@ -446,7 +477,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  InitLogger(log_level);
+  InitializeLogger(log_level);
 
   boost::asio::detail::winsock_init<2, 2> winsock;
   boost::system::error_code ec;
@@ -456,11 +487,13 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  if (!g_app.Init()) {
+  if (!g_app.Initialize()) {
     APP_ERROR() << "Init Engine failed!\n";
     return EXIT_FAILURE;
   }
 
+  g_app.Engine().SetDesktopMode(is_desktop_mode);
+  g_app.Engine().GetObjectNamer().SetGlobalMode(is_global_mode);
   g_app.Engine().SetPresentFlag(donot_present);
 
   net::signal_set signals(g_app.Engine().GetIoContext(), SIGINT, SIGTERM,

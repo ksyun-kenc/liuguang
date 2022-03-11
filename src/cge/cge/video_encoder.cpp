@@ -20,12 +20,16 @@
 
 #include "app.hpp"
 
-bool VideoEncoder::Init(uint64_t bitrate,
-                        AVCodecID codec_id,
-                        HardwareEncoder hardware_encoder,
-                        int gop,
-                        std::string video_preset,
-                        uint32_t quality) noexcept {
+#include "yuv/yuv.h"
+
+using namespace regame;
+
+bool VideoEncoder::Initialize(uint64_t bitrate,
+                              AVCodecID codec_id,
+                              HardwareEncoder hardware_encoder,
+                              int gop,
+                              std::string video_preset,
+                              uint32_t quality) noexcept {
   hardware_encoder_ = hardware_encoder;
   bitrate_ = bitrate;
   SetCodecID(codec_id);
@@ -33,8 +37,8 @@ bool VideoEncoder::Init(uint64_t bitrate,
   video_preset_ = std::move(video_preset);
   quality_ = quality;
 
-  HANDLE ev =
-      CreateEvent(g_app.SA(), TRUE, FALSE, kVideoStartedEventName.data());
+  HANDLE ev = CreateEvent(g_app.SA(), TRUE, FALSE,
+                          object_namer_.Get(kVideoStartedEventName).data());
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
@@ -42,7 +46,8 @@ bool VideoEncoder::Init(uint64_t bitrate,
   }
   started_event_.Attach(ev);
 
-  ev = CreateEvent(g_app.SA(), TRUE, FALSE, kVideoStoppedEventName.data());
+  ev = CreateEvent(g_app.SA(), TRUE, FALSE,
+                   object_namer_.Get(kVideoStoppedEventName).data());
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
@@ -51,7 +56,7 @@ bool VideoEncoder::Init(uint64_t bitrate,
   stop_event_.Attach(ev);
 
   ev = CreateEvent(g_app.SA(), FALSE, FALSE,
-                   kSharedVideoFrameReadyEventName.data());
+                   object_namer_.Get(kSharedVideoFrameReadyEventName).data());
   if (nullptr == ev) {
     ATLTRACE2(atlTraceException, 0, "CreateEvent() failed with %u\n",
               GetLastError());
@@ -59,10 +64,12 @@ bool VideoEncoder::Init(uint64_t bitrate,
   }
   shared_frame_ready_event_.Attach(ev);
 
+  BOOL already_existed;
   HRESULT hr = shared_frame_info_.MapSharedMem(
-      sizeof(SharedVideoFrameInfo), kSharedVideoFrameInfoFileMappingName.data(),
-      nullptr, g_app.SA());
-  if (FAILED(hr)) {
+      sizeof(SharedVideoFrameInfo),
+      object_namer_.Get(kSharedVideoFrameInfoFileMappingName).data(),
+      &already_existed, g_app.SA());
+  if (FAILED(hr) && !already_existed) {
     APP_ERROR() << "MapSharedMem(info) failed with 0x" << std::hex << hr
                 << '\n';
     return false;
@@ -89,10 +96,9 @@ int VideoEncoder::EncodingThread() {
   bool restart = false;
   BOOST_SCOPE_EXIT_ALL(&restart, this) {
     if (restart) {
-      shared_frames_.Unmap();
       g_app.Engine().NotifyRestartVideoEncoder();
     } else {
-      Free(false);
+      Free(restart);
     }
   };
 
@@ -112,7 +118,7 @@ int VideoEncoder::EncodingThread() {
   SetEvent(started_event_);
 
   // wait for first video frame, to retrieve size.
-  HANDLE events[] = {stop_event_, shared_frame_ready_event_};
+  HANDLE events[]{stop_event_, shared_frame_ready_event_};
   DWORD wait =
       WaitForMultipleObjects(_countof(events), events, FALSE, INFINITE);
   if (WAIT_OBJECT_0 == wait) {
@@ -140,8 +146,9 @@ int VideoEncoder::EncodingThread() {
                          sizeof(PackedVideoYuvFrame) * kNumberOfSharedFrames +
                          yuv_size * kNumberOfSharedFrames;
 
-    HRESULT hr = shared_frames_.OpenMapping(
-        kSharedVideoYuvFramesFileMappingName.data(), frames_size);
+    HRESULT hr = shared_yuv_frames_.OpenMapping(
+        object_namer_.Get(kSharedVideoYuvFramesFileMappingName).data(),
+        frames_size);
     if (FAILED(hr)) {
       APP_ERROR() << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
       restart = true;
@@ -149,13 +156,22 @@ int VideoEncoder::EncodingThread() {
     }
 
     auto yuv_frames =
-        reinterpret_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
+        reinterpret_cast<SharedVideoYuvFrames*>(shared_yuv_frames_.GetData());
     if (yuv_frames->data_size != sizeof(PackedVideoYuvFrame) + yuv_size) {
       APP_ERROR() << "Invild data size " << yuv_frames->data_size
                   << ", should be " << sizeof(PackedVideoYuvFrame) + yuv_size
                   << '\n';
       restart = true;
       return -1;
+    }
+  } else if (VideoFrameType::kTexture == saved_frame_info_.type) {
+    HRESULT hr = shared_texture_frames_.OpenMapping(
+        object_namer_.Get(kSharedVideoTextureFramesFileMappingName).data(),
+        sizeof(SharedVideoTextureFrames));
+    if (FAILED(hr)) {
+      APP_ERROR() << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
+      restart = true;
+      return hr;
     }
   }
 
@@ -175,7 +191,7 @@ int VideoEncoder::EncodingThread() {
   }
 
   AVFrame* frame = nullptr;
-  error_code = InitFrame(frame);
+  error_code = InitializeFrame(frame);
   if (error_code < 0) {
     APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
@@ -197,12 +213,16 @@ int VideoEncoder::EncodingThread() {
 
     ATLTRACE2(atlTraceUtil, 0, "%s: %u * %u.\n", __func__,
               shared_frame_info->width, shared_frame_info->height);
-    if (shared_frame_info->width != saved_frame_info_.width ||
+    if (shared_frame_info->type != saved_frame_info_.type ||
+        shared_frame_info->width != saved_frame_info_.width ||
         shared_frame_info->height != saved_frame_info_.height) {
       APP_INFO() << "Video dimension changed to " << shared_frame_info->width
                  << " * " << shared_frame_info->height << ".\n";
       restart = true;
       return 0;
+    }
+    if (saved_frame_info_.format != shared_frame_info->format) {
+      saved_frame_info_.format = shared_frame_info->format;
     }
     if (saved_frame_info_.window != shared_frame_info->window) {
       saved_frame_info_.window = shared_frame_info->window;
@@ -225,7 +245,13 @@ void VideoEncoder::Free(bool wait_thread) {
     thread_.join();
   }
 
-  shared_frames_.Unmap();
+  staging_texture_.Release();
+  for (auto& s : shared_textures_) {
+    s.texture.Release();
+  }
+  shared_texture_frames_.Unmap();
+
+  shared_yuv_frames_.Unmap();
 
   // TO-DO: Is it necessary to free stream_?
 
@@ -410,7 +436,7 @@ int VideoEncoder::Open(const AVCodec* codec, AVDictionary** opts) {
   return error;
 }
 
-int VideoEncoder::InitFrame(AVFrame*& frame) const noexcept {
+int VideoEncoder::InitializeFrame(AVFrame*& frame) const noexcept {
   assert(nullptr != codec_context_);
   assert(0 != codec_context_->width);
   assert(0 != codec_context_->height);
@@ -438,7 +464,6 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
   assert(nullptr != codec_context_);
   assert(nullptr != frame);
   assert(nullptr != shared_frame_info_);
-  assert(nullptr != shared_frames_);
 
   if (produce_keyframe_) {
     produce_keyframe_ = false;
@@ -448,10 +473,10 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
   }
 
   int error_code = 0;
-
   if (VideoFrameType::kYuv == saved_frame_info_.type) {
+    assert(nullptr != shared_yuv_frames_);
     auto yuv_frames =
-        reinterpret_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
+        reinterpret_cast<SharedVideoYuvFrames*>(shared_yuv_frames_.GetData());
     auto yuv_frame = reinterpret_cast<PackedVideoYuvFrame*>(yuv_frames->data);
     auto yuv_frame1 = reinterpret_cast<PackedVideoYuvFrame*>(
         yuv_frames->data + yuv_frames->data_size);
@@ -461,10 +486,54 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
     }
     ATLTRACE2(atlTraceUtil, 0, "latest video frame %llu\n",
               yuv_frame->stats.timestamp);
-
     error_code = EncodeYuvFrame(frame, yuv_frame->data);
-  }
+  } else if (VideoFrameType::kTexture == saved_frame_info_.type) {
+    assert(nullptr != shared_texture_frames_);
+    HRESULT hr = GetSharedTexture();
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!GetSharedTexture(), #0x%08X\n", hr);
+      return hr;
+    }
 
+    CComPtr<IDXGISurface> staging_surface;
+    hr = staging_texture_->QueryInterface(IID_PPV_ARGS(&staging_surface));
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0,
+                "!QueryInterface(IDXGISurface), #0x%08X\n", hr);
+      return hr;
+    }
+    DXGI_MAPPED_RECT mapped_rect{};
+    hr = staging_surface->Map(&mapped_rect, DXGI_MAP_READ);
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0, "!Map(IDXGISurface), #0x%08X\n", hr);
+      return hr;
+    }
+    BOOST_SCOPE_EXIT_ALL(&) { staging_surface->Unmap(); };
+
+    uint32_t width = saved_frame_info_.width;
+    uint32_t height = saved_frame_info_.height;
+    size_t pixel_size = width * height;
+
+    const int uv_stride = width >> 1;
+    uint8_t* y = yuv_frame_data_.data();
+    uint8_t* u = y + pixel_size;
+    uint8_t* v = u + (pixel_size >> 2);
+
+    {
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == saved_frame_info_.format) {
+        ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width, u, uv_stride,
+                   v, uv_stride, width, height);
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == saved_frame_info_.format) {
+        ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width, u, uv_stride,
+                   v, uv_stride, width, height);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.",
+                  saved_frame_info_.format);
+        return error_code;
+      }
+    }
+    error_code = EncodeYuvFrame(frame, yuv_frame_data_.data());
+  }
   return error_code;
 }
 
@@ -519,4 +588,132 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
   }  // end of for
 
   return 0;
+}
+
+HRESULT VideoEncoder::GetSharedTexture() noexcept {
+  int index = 0;
+  SharedVideoTextureFrames* texture_frames = shared_texture_frames_;
+  PackedVideoTextureFrame* texture_frame = texture_frames->frames;
+  auto texture_frame1 = texture_frame + 1;
+  if (texture_frame->stats.timestamp < texture_frame1->stats.timestamp) {
+    texture_frame = texture_frame1;
+    index = 1;
+  }
+
+  bool should_update_shared_texture = false;
+  if (!shared_textures_[index].texture) {
+    should_update_shared_texture = true;
+  } else if (shared_textures_[index].instance_id !=
+                 texture_frame->instance_id ||
+             shared_textures_[index].texture_id != texture_frame->texture_id) {
+    should_update_shared_texture = true;
+    ATLTRACE2(atlTraceUtil, 0,
+              "SharedTexture[%u] changed: %llu-%llu -> %llu-%llu\n", index,
+              shared_textures_[index].instance_id,
+              shared_textures_[index].texture_id, texture_frame->instance_id,
+              texture_frame->texture_id);
+  }
+
+  if (should_update_shared_texture) {
+    if (!device_) {
+      D3D_DRIVER_TYPE driver_types[]{
+          D3D_DRIVER_TYPE_HARDWARE,
+          D3D_DRIVER_TYPE_WARP,
+          D3D_DRIVER_TYPE_REFERENCE,
+      };
+
+      D3D_FEATURE_LEVEL feature_level;
+      D3D_FEATURE_LEVEL feature_levels[]{
+          D3D_FEATURE_LEVEL_11_1,
+      };
+
+      HRESULT hr;
+      for (int driver_type_index = 0;
+           driver_type_index < ARRAYSIZE(driver_types); driver_type_index++) {
+        hr = D3D11CreateDevice(NULL, driver_types[driver_type_index], NULL,
+                               D3D11_CREATE_DEVICE_SINGLETHREADED,
+                               feature_levels, ARRAYSIZE(feature_levels),
+                               D3D11_SDK_VERSION, &device_, &feature_level,
+                               &context_);
+        if (SUCCEEDED(hr)) {
+          break;
+        }
+      }
+
+      if (FAILED(hr)) {
+        ATLTRACE2(atlTraceException, 0, "!D3D11CreateDevice(), #0x%08X\n", hr);
+        return hr;
+      }
+    }
+
+    if (!device1_) {
+      HRESULT hr = device_->QueryInterface(IID_PPV_ARGS(&device1_));
+      if (FAILED(hr)) {
+        ATLTRACE2(atlTraceException, 0,
+                  "!QueryInterface(ID3D11Device1), #0x%08X\n", hr);
+        return hr;
+      }
+    }
+
+    std::wstring shared_handle_name =
+        std::format(kSharedTextureHandleNameFormat, texture_frame->instance_id,
+                    texture_frame->texture_id);
+    CComPtr<ID3D11Texture2D> shared_texture;
+    HRESULT hr = device1_->OpenSharedResourceByName(
+        object_namer_.Get(shared_handle_name).data(), DXGI_SHARED_RESOURCE_READ,
+        IID_PPV_ARGS(&shared_texture));
+    if (FAILED(hr)) {
+      ATLTRACE2(atlTraceException, 0,
+                "!OpenSharedResourceByName(ID3D11Texture2D), #0x%08X\n", hr);
+      return hr;
+    }
+
+    D3D11_TEXTURE2D_DESC shared_texture_desc;
+    shared_texture->GetDesc(&shared_texture_desc);
+
+    shared_textures_[index].instance_id = texture_frame->instance_id;
+    shared_textures_[index].texture_id = texture_frame->texture_id;
+    shared_textures_[index].texture = shared_texture;
+
+    bool should_update_staging_texture = false;
+    if (!staging_texture_) {
+      should_update_staging_texture = true;
+    } else if (shared_texture_desc.Width != saved_frame_info_.width ||
+               shared_texture_desc.Height != saved_frame_info_.height ||
+               shared_texture_desc.Format != saved_frame_info_.format) {
+      should_update_staging_texture = true;
+    } else {
+      D3D11_TEXTURE2D_DESC staging_desc;
+      staging_texture_->GetDesc(&staging_desc);
+      if (staging_desc.Width != saved_frame_info_.width ||
+          staging_desc.Height != saved_frame_info_.height ||
+          staging_desc.Format != saved_frame_info_.format) {
+        should_update_staging_texture = true;
+      }
+    }
+
+    if (should_update_staging_texture) {
+      D3D11_TEXTURE2D_DESC staging_desc;
+      staging_desc = shared_texture_desc;
+      staging_desc.BindFlags = 0;
+      staging_desc.MiscFlags &= D3D11_RESOURCE_MISC_TEXTURECUBE;
+      staging_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+      staging_desc.Usage = D3D11_USAGE_STAGING;
+      CComPtr<ID3D11Texture2D> staging_texture;
+      HRESULT hr =
+          device1_->CreateTexture2D(&staging_desc, nullptr, &staging_texture);
+      if (FAILED(hr)) {
+        ATLTRACE2(atlTraceException, 0,
+                  "!CreateTexture2D(D3D11_USAGE_STAGING), #0x%08X\n", hr);
+        return hr;
+      }
+      staging_texture_ = staging_texture;
+
+      yuv_frame_data_.resize(4 * saved_frame_info_.width *
+                             saved_frame_info_.height);
+    }
+  }
+
+  context_->CopyResource(staging_texture_, shared_textures_[index].texture);
+  return S_OK;
 }

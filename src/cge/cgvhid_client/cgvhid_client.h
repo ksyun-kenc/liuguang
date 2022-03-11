@@ -49,7 +49,7 @@ class CgvhidClient {
 
   static std::uint8_t VkToScancode(std::uint8_t vk) noexcept;
 
-  void Init(int display_width, int display_height) noexcept;
+  void Initialize(int display_width, int display_height) noexcept;
 
   int KeyboardReset() noexcept;
   int KeyboardPress(std::uint8_t scancode) noexcept;
