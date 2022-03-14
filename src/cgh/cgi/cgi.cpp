@@ -40,7 +40,7 @@ T ArrayToString(std::vector<T>& _array, U open, U _seperator, U close) {
   return str;
 }
 
-void ChechExec(fs::path& exec, fs::path& cd, std::wstring& arguments) {
+void CheckExec(fs::path& exec, fs::path& cd, std::wstring& arguments) {
   if (exec.empty()) {
     throw std::invalid_argument("No exec specifed!");
   }
@@ -126,7 +126,7 @@ int wmain(int argc, wchar_t* argv[]) {
       if (!ProcessNamesToProcessIds(image_names, pids)) {
         exec = fs::absolute(exec);
         // sanity check
-        ChechExec(exec, cd, arguments);
+        CheckExec(exec, cd, arguments);
 
         // run it then retry
         HANDLE process;
@@ -166,7 +166,7 @@ int wmain(int argc, wchar_t* argv[]) {
       }
     } else {
       // sanity check
-      ChechExec(exec, cd, arguments);
+      CheckExec(exec, cd, arguments);
 
       ULONG pid;
       result = RhCreateAndInjectEx(cd.wstring().data(), exec.wstring().data(),
