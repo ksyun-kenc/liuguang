@@ -60,8 +60,8 @@ class CaptureYuv {
   bool CreateSharedFrameInfo() noexcept {
     if (nullptr == shared_frame_info_) {
       HRESULT hr = shared_frame_info_.MapSharedMem(
-          sizeof(SharedVideoFrameInfo),
-          kSharedVideoFrameInfoFileMappingName.data(), nullptr, SA());
+          sizeof(regame::SharedVideoFrameInfo),
+          regame::kSharedVideoFrameInfoFileMappingName.data(), nullptr, SA());
       if (FAILED(hr)) {
         ATLTRACE2(atlTraceException, 0,
                   "MapSharedMem(info) failed with 0x%08x.\n", hr);
@@ -70,24 +70,26 @@ class CaptureYuv {
     }
     return true;
   }
-  SharedVideoFrameInfo* GetSharedVideoFrameInfo() const noexcept {
+  regame::SharedVideoFrameInfo* GetSharedVideoFrameInfo() const noexcept {
     assert(nullptr != shared_frame_info_);
     return shared_frame_info_;
   }
   void FreeSharedVideoFrameInfo() noexcept { shared_frame_info_.Unmap(); }
 
   bool CreateSharedVideoYuvFrames(size_t data_size) noexcept;
-  PackedVideoYuvFrame* GetPackedVideoYuvFrame(size_t index) const noexcept {
-    assert(index < kNumberOfSharedFrames);
+  regame::PackedVideoYuvFrame* GetPackedVideoYuvFrame(
+      size_t index) const noexcept {
+    assert(index < regame::kNumberOfSharedFrames);
 
     auto shared_frame =
-        static_cast<SharedVideoYuvFrames*>(shared_frames_.GetData());
-    return reinterpret_cast<PackedVideoYuvFrame*>(
-        static_cast<char*>(shared_frames_) + sizeof(SharedVideoYuvFrames) +
-        index * shared_frame->data_size);
+        static_cast<regame::SharedVideoYuvFrames*>(shared_frames_.GetData());
+    return reinterpret_cast<regame::PackedVideoYuvFrame*>(
+        static_cast<char*>(shared_frames_) +
+        sizeof(regame::SharedVideoYuvFrames) + index * shared_frame->data_size);
   }
-  PackedVideoYuvFrame* GetAvailablePackedVideoYuvFrame() const noexcept {
-    return GetPackedVideoYuvFrame(frame_count_ % kNumberOfSharedFrames);
+  regame::PackedVideoYuvFrame* GetAvailablePackedVideoYuvFrame()
+      const noexcept {
+    return GetPackedVideoYuvFrame(frame_count_ % regame::kNumberOfSharedFrames);
   }
   size_t GetFrameCount() const noexcept { return frame_count_; }
   void SetSharedFrameReadyEvent() noexcept {
@@ -108,7 +110,7 @@ class CaptureYuv {
   CHandle stop_event_;
   std::thread hook_thread_;
 
-  CAtlFileMapping<SharedVideoFrameInfo> shared_frame_info_;
+  CAtlFileMapping<regame::SharedVideoFrameInfo> shared_frame_info_;
   CAtlFileMapping<char> shared_frames_;
   CHandle shared_frame_ready_event_;
   size_t frame_count_{0};

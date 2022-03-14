@@ -26,6 +26,8 @@
 
 #include "yuv/yuv.h"
 
+using namespace regame;
+
 namespace {
 class CaptureD3d9 {
  public:

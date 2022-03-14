@@ -18,6 +18,8 @@
 
 #include "captureyuv.h"
 
+using namespace regame;
+
 bool CaptureYuv::Initialize() noexcept {
   ATLTRACE2(atlTraceUtil, 0, "%s: +\n", __func__);
 

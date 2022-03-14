@@ -29,6 +29,8 @@
 
 #include "yuv/yuv.h"
 
+using namespace regame;
+
 namespace {
 DXGI_FORMAT EnsureNotTypeless(DXGI_FORMAT format) noexcept {
   // Assumes UNORM or FLOAT; doesn't use UINT or SINT
