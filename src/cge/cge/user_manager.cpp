@@ -56,6 +56,7 @@ void tag_invoke(const json::value_from_tag,
 
 UserManager::~UserManager() {
   retry_timer_.cancel();
+  keep_alive_timer_.cancel();
   Close();
 }
 
@@ -165,7 +166,6 @@ void UserManager::InvokeNextKeepAlive() {
       if (!error) {
         KeepAlive();
       }
-      keep_alive_timer_.cancel();
     });
   }
 }
@@ -176,7 +176,6 @@ void UserManager::RetryNextConnection() {
     if (!error) {
       InvokeNextConnection();
     }
-    retry_timer_.cancel();
   });
 }
 
