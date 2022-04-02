@@ -26,6 +26,8 @@
 #define CAPTUREYUV_API __declspec(dllimport)
 #endif
 
+CaptureYuv g_capture_yuv;
+
 BOOL APIENTRY DllMain(HMODULE instance,
                       DWORD reason_for_call,
                       LPVOID reserved) {
@@ -33,17 +35,17 @@ BOOL APIENTRY DllMain(HMODULE instance,
     case DLL_PROCESS_ATTACH:
       ATLTRACE2(atlTraceUtil, 0, "%s: DLL_PROCESS_ATTACH\n", __func__);
       break;
-    //case DLL_THREAD_ATTACH:
-    //  // may crash
-    //  ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_ATTACH\n", __func__);
-    //  break;
-    //case DLL_THREAD_DETACH:
-    //  ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_DETACH\n", __func__);
-    //  break;
+    // case DLL_THREAD_ATTACH:
+    //   // may crash
+    //   ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_ATTACH\n", __func__);
+    //   break;
+    // case DLL_THREAD_DETACH:
+    //   ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_DETACH\n", __func__);
+    //   break;
     case DLL_PROCESS_DETACH:
       ATLTRACE2(atlTraceUtil, 0, "%s: DLL_PROCESS_DETACH\n", __func__);
       // HookThread already killed when reach here
-      CaptureYuv::GetInstance().Free();
+      g_capture_yuv.Free();
       break;
   }
   return TRUE;
@@ -52,7 +54,7 @@ BOOL APIENTRY DllMain(HMODULE instance,
 extern "C" CAPTUREYUV_API void __stdcall NativeInjectionEntryPoint(
     REMOTE_ENTRY_INFO* remote_info) {
   ATLTRACE2(atlTraceUtil, 0, "%s: +\n", __func__);
-  if (!CaptureYuv::GetInstance().Run()) {
+  if (!g_capture_yuv.Run()) {
     ATLTRACE2(atlTraceException, 0, "%s: failed!\n", __func__);
   }
   RhWakeUpProcess();

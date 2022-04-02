@@ -29,11 +29,6 @@
 
 class CaptureYuv {
  public:
-  static CaptureYuv& GetInstance() noexcept {
-    static CaptureYuv instance;
-    return instance;
-  }
-
   bool Run() noexcept;
 
   void Free() noexcept;
@@ -126,3 +121,5 @@ class CaptureYuv {
   bool is_dxgi_hooked_{false};
   HookDxgi hook_dxgi_;
 };
+
+extern CaptureYuv g_capture_yuv;

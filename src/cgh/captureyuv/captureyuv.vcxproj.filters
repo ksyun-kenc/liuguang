@@ -33,6 +33,21 @@
     <ClInclude Include="hook_d3d9.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="capture_d3d9.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="capture_dxgi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="capture_dxgi_d3d11.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="capture_dxgi_d3d11on12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="captureyuv.cpp">
@@ -48,6 +63,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hook_dxgi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="capture_d3d9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="capture_dxgi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="capture_dxgi_d3d11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="capture_dxgi_d3d11on12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

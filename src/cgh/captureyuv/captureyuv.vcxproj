@@ -276,14 +276,24 @@
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="capture_d3d9.h" />
+    <ClInclude Include="capture_dxgi.h" />
+    <ClInclude Include="capture_dxgi_d3d11.h" />
+    <ClInclude Include="capture_dxgi_d3d11on12.h" />
     <ClInclude Include="captureyuv.h" />
+    <ClInclude Include="d3d_utils.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="hook_d3d9.h" />
     <ClInclude Include="hook_dxgi.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="capture_d3d9.cpp" />
+    <ClCompile Include="capture_dxgi.cpp" />
+    <ClCompile Include="capture_dxgi_d3d11.cpp" />
+    <ClCompile Include="capture_dxgi_d3d11on12.cpp" />
     <ClCompile Include="captureyuv.cpp" />
+    <ClCompile Include="d3d_utils.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hook_d3d9.cpp" />
     <ClCompile Include="hook_dxgi.cpp" />

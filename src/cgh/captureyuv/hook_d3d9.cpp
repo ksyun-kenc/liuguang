@@ -18,288 +18,12 @@
 
 #include "hook_d3d9.h"
 
+#include "capture_d3d9.h"
 #include "captureyuv.h"
 
-#include "umu/apppath_t.h"
 #include "umu/memory.h"
-#include "umu/time_measure.hpp"
-
-#include "yuv/yuv.h"
-
-using namespace regame;
 
 namespace {
-class CaptureD3d9 {
- public:
-  void Capture(IDirect3DDevice9* device,
-               IDirect3DSurface9* backbuffer) noexcept {
-    if (!CaptureYuv::GetInstance().IsEncoderStarted()) {
-      return;
-    }
-
-    bool should_update = false;
-
-    if (!setup_) {
-      setup_ = Setup(device);
-      if (!setup_) {
-        ATLTRACE2(atlTraceException, 0, "%s: !Setup()\n", __func__);
-        return;
-      }
-      should_update = true;
-    } else if (device != device_) {
-      ATLTRACE2(atlTraceException, 0, "%s: old = %p, new = %p\n", __func__,
-                device_, device);
-      Reset();
-      return;
-    }
-
-    LARGE_INTEGER tick;
-    QueryPerformanceCounter(&tick);
-
-    HRESULT hr = device_->GetRenderTargetData(backbuffer, copy_surface_);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0, "%s: !GetRenderTargetData(), #0x%08X\n",
-                __func__, hr);
-      Reset();
-      return;
-    }
-
-    D3DSURFACE_DESC desc = {};
-    hr = copy_surface_->GetDesc(&desc);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0, "%s: %p->GetDesc() failed with 0x%08X.\n",
-                __func__, copy_surface_, hr);
-      return;
-    }
-    if (desc.Type != D3DRTYPE_SURFACE && desc.Type != D3DRTYPE_TEXTURE) {
-      ATLTRACE2(atlTraceException, 0, "%s: %p->Desc.Type = %d.\n", __func__,
-                copy_surface_, desc.Type);
-      return;
-    }
-    if (desc.MultiSampleType != D3DMULTISAMPLE_NONE) {
-      ATLTRACE2(atlTraceException, 0, "%s: %p->Desc.MultiSampleType = %d.\n",
-                __func__, copy_surface_, desc.MultiSampleType);
-      return;
-    }
-
-    if (should_update) {
-      SharedVideoFrameInfo* svfi =
-          CaptureYuv::GetInstance().GetSharedVideoFrameInfo();
-      svfi->timestamp = tick.QuadPart;
-      svfi->type = VideoFrameType::kYuv;
-      svfi->width = desc.Width;
-      svfi->height = desc.Height;
-      svfi->format = desc.Format;
-      svfi->window = reinterpret_cast<std::uint64_t>(window_);
-    }
-
-    VideoFrameStats stats = {};
-    stats.timestamp = tick.QuadPart;
-    stats.elapsed.preprocess = umu::TimeMeasure::Delta(tick.QuadPart);
-    ATLTRACE2(atlTraceUtil, 0, "%s: stats.elapsed.prepare = %llu.\n", __func__,
-              stats.elapsed.preprocess);
-
-    // wait_rgb_mapping = 0
-    D3DLOCKED_RECT mapped_rect = {};
-    {
-      umu::TimeMeasure tm(stats.elapsed.rgb_mapping);
-      // LockRect may spend long time
-      // ATLTRACE2(atlTraceUtil, 0, "%s: LockRect +\n", __func__);
-      hr = copy_surface_->LockRect(&mapped_rect, nullptr, D3DLOCK_READONLY);
-      // ATLTRACE2(atlTraceUtil, 0, "%s: LockRect -, 0x%08X\n", __func__, hr);
-    }
-    ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.rgb_mapping = %llu.\n",
-              CaptureYuv::GetInstance().GetFrameCount(),
-              stats.elapsed.rgb_mapping);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0,
-                "%s: %p->LockRect() failed with 0x%08X.\n", __func__,
-                copy_surface_, hr);
-      return;
-    }
-    BOOST_SCOPE_EXIT_ALL(this) { copy_surface_->UnlockRect(); };
-
-    size_t pixel_size = desc.Width * desc.Height;
-    size_t frame_size = mapped_rect.Pitch * desc.Height;
-    size_t data_size = sizeof(PackedVideoYuvFrame) + frame_size;
-    if (!CaptureYuv::GetInstance().CreateSharedVideoYuvFrames(data_size)) {
-      // unchanged but notify
-      CaptureYuv::GetInstance().SetSharedFrameReadyEvent();
-      return;
-    }
-
-    auto frame = CaptureYuv::GetInstance().GetAvailablePackedVideoYuvFrame();
-    const int uv_stride = (desc.Width + 1) / 2;
-    uint8_t* y = reinterpret_cast<uint8_t*>(frame->data);
-    uint8_t* u = y + pixel_size;
-    uint8_t* v = u + (pixel_size / 4);
-
-    {
-      umu::TimeMeasure tm(stats.elapsed.yuv_convert);
-      if (D3DFMT_X8R8G8B8 == desc.Format) {
-        ARGBToI420(static_cast<uint8_t*>(mapped_rect.pBits), mapped_rect.Pitch,
-                   y, desc.Width, u, uv_stride, v, uv_stride, desc.Width,
-                   desc.Height);
-      } else {
-        ATLTRACE2(atlTraceUtil, 0, "%s: Format = %d\n", __func__, desc.Format);
-      }
-    }
-    ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu\n",
-              CaptureYuv::GetInstance().GetFrameCount(),
-              stats.elapsed.yuv_convert);
-
-    stats.elapsed.total = umu::TimeMeasure::Delta(stats.timestamp);
-
-    frame->stats.timestamp = stats.timestamp;
-    frame->stats.elapsed.preprocess = stats.elapsed.preprocess;
-    frame->stats.elapsed.nvenc = 0;
-    frame->stats.elapsed.wait_rgb_mapping = stats.elapsed.wait_rgb_mapping;
-    frame->stats.elapsed.rgb_mapping = stats.elapsed.rgb_mapping;
-    frame->stats.elapsed.yuv_convert = stats.elapsed.yuv_convert;
-    frame->stats.elapsed.total = stats.elapsed.total;
-
-    CaptureYuv::GetInstance().SetSharedFrameReadyEvent();
-  }
-
-  void Reset() noexcept {
-    ATLTRACE2(atlTraceUtil, 0, "%s: +\n", __func__);
-    setup_ = false;
-    copy_surface_.Release();
-    device_ = nullptr;
-    ATLTRACE2(atlTraceUtil, 0, "%s: -\n", __func__);
-  }
-
-  void Release(IDirect3DDevice9* device) noexcept {
-    if (device == device_) {
-      Reset();
-    }
-  }
-
-  void PresentBegin(IDirect3DDevice9* device,
-                    IDirect3DSurface9** backbuffer) noexcept {
-    HRESULT hr = GetBackbuffer(device, backbuffer);
-    if (SUCCEEDED(hr)) {
-      Capture(device, *backbuffer);
-    } else {
-      // D3DERR_INVALIDCALL = 0x8876086C
-      ATLTRACE2(atlTraceException, 0, "%s: !GetBackbuffer(), #0x%08X\n",
-                __func__, hr);
-    }
-  }
-
-  void PresentEnd(IDirect3DDevice9* device,
-                  IDirect3DSurface9* backbuffer) noexcept {
-    if (nullptr != backbuffer) {
-      backbuffer->Release();
-    }
-  }
-
- private:
-  bool Setup(IDirect3DDevice9* device) {
-    ATLTRACE2(atlTraceUtil, 0, "%s: +\n", __func__);
-    device_ = device;
-
-    if (!InitFormatBackbuffer()) {
-      return false;
-    }
-    ATLTRACE2(atlTraceUtil, 0, "%s: %u * %u, %u\n", __func__, cx_, cy_,
-              d3d9_format_);
-
-    HRESULT hr = device_->CreateOffscreenPlainSurface(
-        cx_, cy_, d3d9_format_, D3DPOOL_SYSTEMMEM, &copy_surface_, nullptr);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0,
-                "%s: !CreateOffscreenPlainSurface(), #0x%08X\n", __func__, hr);
-      return false;
-    }
-
-    ATLTRACE2(atlTraceUtil, 0, "%s: -\n", __func__);
-    return true;
-  }
-
-  HRESULT GetBackbuffer(IDirect3DDevice9* device, IDirect3DSurface9** surface) {
-    static bool use_backbuffer = false;
-    static bool checked_exceptions = false;
-
-    if (!checked_exceptions) {
-      if (umu::apppath_t::GetProgramBaseName() == _T("hotd_ng.exe")) {
-        use_backbuffer = true;
-      }
-      checked_exceptions = true;
-    }
-
-    if (use_backbuffer) {
-      return device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, surface);
-    } else {
-      return device->GetRenderTarget(0, surface);
-    }
-  }
-
-  bool GetSwapDesc(D3DPRESENT_PARAMETERS* pp) {
-    CComPtr<IDirect3DSwapChain9> swap;
-    HRESULT hr = device_->GetSwapChain(0, &swap);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0, "%s: !GetSwapChain(), #0x%08X\n",
-                __func__, hr);
-      return false;
-    }
-
-    hr = swap->GetPresentParameters(pp);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0, "%s: !GetPresentParameters(), #0x%08X\n",
-                __func__, hr);
-      return false;
-    }
-
-    return true;
-  }
-
-  bool InitFormatBackbuffer() {
-    D3DPRESENT_PARAMETERS pp;
-
-    if (!GetSwapDesc(&pp)) {
-      return false;
-    }
-
-    window_ = pp.hDeviceWindow;
-
-    CComPtr<IDirect3DSurface9> back_buffer;
-    HRESULT hr = device_->GetRenderTarget(0, &back_buffer);
-    if (FAILED(hr)) {
-      ATLTRACE2(atlTraceException, 0, "%s: !GetRenderTarget(), #0x%08X\n",
-                __func__, hr);
-    } else {
-      D3DSURFACE_DESC desc;
-      hr = back_buffer->GetDesc(&desc);
-      if (FAILED(hr)) {
-        ATLTRACE2(atlTraceException, 0, "%s: !GetDesc(), #0x%08X\n", __func__,
-                  hr);
-      } else {
-        d3d9_format_ = desc.Format;
-        cx_ = desc.Width;
-        cy_ = desc.Height;
-
-        return true;
-      }
-    }
-
-    d3d9_format_ = pp.BackBufferFormat;
-    cx_ = pp.BackBufferWidth;
-    cy_ = pp.BackBufferHeight;
-    return true;
-  }
-
- private:
-  bool setup_{false};
-
-  IDirect3DDevice9* device_ = nullptr;
-  D3DFORMAT d3d9_format_;
-  uint32_t cx_ = 0;
-  uint32_t cy_ = 0;
-  CComPtr<IDirect3DSurface9> copy_surface_;
-  HWND window_ = nullptr;
-};
-
 CaptureD3d9 capture;
 }  // namespace
 
@@ -495,7 +219,7 @@ HRESULT STDMETHODCALLTYPE HookD3d9::MySwapPresent(IDirect3DSwapChain9* This,
     capture.PresentBegin(device, &backbuffer);
   }
 
-  if (CaptureYuv::GetInstance().IsPresentEnabled()) {
+  if (g_capture_yuv.IsPresentEnabled()) {
     hr = IDirect3DSwapChain9_Present_(This, pSourceRect, pDestRect,
                                       hDestWindowOverride, pDirtyRegion,
                                       dwFlags);
@@ -525,7 +249,7 @@ HRESULT STDMETHODCALLTYPE HookD3d9::MyPresent(IDirect3DDevice9Ex* This,
   IDirect3DSurface9* backbuffer = nullptr;
 
   capture.PresentBegin(This, &backbuffer);
-  if (CaptureYuv::GetInstance().IsPresentEnabled()) {
+  if (g_capture_yuv.IsPresentEnabled()) {
     hr = IDirect3DDevice9Ex_Present_(This, pSourceRect, pDestRect,
                                      hDestWindowOverride, pDirtyRegion);
   }
@@ -543,7 +267,7 @@ HRESULT STDMETHODCALLTYPE HookD3d9::MyPresentEx(IDirect3DDevice9Ex* This,
   IDirect3DSurface9* backbuffer = nullptr;
 
   capture.PresentBegin(This, &backbuffer);
-  if (CaptureYuv::GetInstance().IsPresentEnabled()) {
+  if (g_capture_yuv.IsPresentEnabled()) {
     hr = IDirect3DDevice9Ex_PresentEx_(This, pSourceRect, pDestRect,
                                        hDestWindowOverride, pDirtyRegion,
                                        dwFlags);
