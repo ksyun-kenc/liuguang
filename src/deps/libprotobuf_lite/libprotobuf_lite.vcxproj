@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\any_lite.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\arena.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\arenastring.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\arenaz_sampler.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\extension_set.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\generated_enum_util.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\generated_message_tctable_lite.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\generated_message_util.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\implicit_weak_message.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\inlined_string_field.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\io\coded_stream.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\io\io_win32.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\io\zero_copy_stream.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\io\zero_copy_stream_impl.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\io\zero_copy_stream_impl_lite.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\map.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\message_lite.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\parse_context.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\repeated_field.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\repeated_ptr_field.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\bytestream.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\common.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\int128.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\status.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\statusor.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\stringpiece.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\stringprintf.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\structurally_valid.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\strutil.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\stubs\time.cc" />
+    <ClCompile Include="..\..\deps\protobuf\src\google\protobuf\wire_format_lite.cc" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{49027dcc-ec3c-4c30-ab82-ab76cfdeb633}</ProjectGuid>
+    <RootNamespace>libprotobuflite</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)tmp\$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\deps\protobuf\src</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\deps\protobuf\src</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\deps\protobuf\src</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\deps\protobuf\src</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

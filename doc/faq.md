@@ -33,3 +33,8 @@
 .\cgi.exe -d true -e "\""C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\""" -i vlc.exe --lx64 .\captureyuv.dll
 ```
 
+## 4. 默认密码 123456 是不是太弱了？
+
+`cgc --username=UMU --verification-code=123456`
+
+这个 verification-code 不是密码，而是手机验证码。当整个流程完善起来后，您可以用手机验证码登录，也可以用复杂密码登录，密码会用 SM3 Hash 后发送给 cge。
