@@ -16,17 +16,15 @@
 
 #include "pch.h"
 
-#include "captureyuv.h"
+#include "capturetex.h"
 
-#pragma comment(lib, "yuv.lib")
-
-#ifdef CAPTUREYUV_EXPORTS
-#define CAPTUREYUV_API __declspec(dllexport)
+#ifdef CAPTURETEX_EXPORTS
+#define CAPTURETEX_API __declspec(dllexport)
 #else
-#define CAPTUREYUV_API __declspec(dllimport)
+#define CAPTURETEX_API __declspec(dllimport)
 #endif
 
-CaptureYuv g_capture_yuv;
+CaptureTex g_capture_tex;
 
 BOOL APIENTRY DllMain(HMODULE instance,
                       DWORD reason_for_call,
@@ -36,25 +34,25 @@ BOOL APIENTRY DllMain(HMODULE instance,
       ATLTRACE2(atlTraceUtil, 0, "%s: DLL_PROCESS_ATTACH\n", __func__);
       break;
     // case DLL_THREAD_ATTACH:
-    //   // may crash
-    //   ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_ATTACH\n", __func__);
-    //   break;
+    //  // may crash
+    //  ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_ATTACH\n", __func__);
+    //  break;
     // case DLL_THREAD_DETACH:
-    //   ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_DETACH\n", __func__);
-    //   break;
+    //  ATLTRACE2(atlTraceUtil, 0, "%s: DLL_THREAD_DETACH\n", __func__);
+    //  break;
     case DLL_PROCESS_DETACH:
       ATLTRACE2(atlTraceUtil, 0, "%s: DLL_PROCESS_DETACH\n", __func__);
       // HookThread already killed when reach here
-      g_capture_yuv.Free();
+      g_capture_tex.Free();
       break;
   }
   return TRUE;
 }
 
-extern "C" CAPTUREYUV_API void __stdcall NativeInjectionEntryPoint(
+extern "C" CAPTURETEX_API void __stdcall NativeInjectionEntryPoint(
     REMOTE_ENTRY_INFO* remote_info) {
   ATLTRACE2(atlTraceUtil, 0, "%s: +\n", __func__);
-  if (!g_capture_yuv.Run()) {
+  if (!g_capture_tex.Run()) {
     ATLTRACE2(atlTraceException, 0, "%s: failed!\n", __func__);
   }
   RhWakeUpProcess();

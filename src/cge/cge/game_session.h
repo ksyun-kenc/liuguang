@@ -51,8 +51,7 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
   void Write(std::string buffer);
 
   void NotifyLoginResult(bool result) {
-    net::dispatch(ioc_,
-                  beast::bind_front_handler(&GameSession::OnLogin,
+    net::dispatch(ioc_, beast::bind_front_handler(&GameSession::OnLogin,
                                                   shared_from_this(), result));
   }
   void NotifyKeepAliveResult(bool result) {
@@ -69,6 +68,8 @@ class GameSession : public std::enable_shared_from_this<GameSession> {
   void OnRead(beast::error_code ec, std::size_t bytes_transferred);
   void OnWrite(beast::error_code ec, std::size_t bytes_transferred);
   bool ServeClient();
+  bool ServeClientLogin(const regame::ClientPacketHead* client_packet,
+                        std::uint32_t packet_size);
 
  private:
   net::io_context& ioc_;

@@ -15,28 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="captureyuv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="capturetex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hook_dxgi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hook_d3d9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="capture_d3d9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="capture_dxgi.h">
+    <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="capture_dxgi_d3d11.h">
@@ -48,27 +36,21 @@
     <ClInclude Include="d3d_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="capture_dxgi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="captureyuv.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hook_d3d9.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="hook_dxgi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="capture_d3d9.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="capture_dxgi.cpp">
+    <ClCompile Include="capturetex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="capture_dxgi_d3d11.cpp">
@@ -78,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="d3d_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="capture_dxgi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

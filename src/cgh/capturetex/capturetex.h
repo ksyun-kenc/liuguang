@@ -18,16 +18,25 @@
 
 #include <sddl.h>
 
+#include <array>
 #include <thread>
+
+#include <d3d11.h>
 
 #include "../EasyHook/Public/easyhook.h"
 
-#include "hook_d3d9.h"
 #include "hook_dxgi.h"
 
 #include "regame/shared_mem_info.h"
 
-class CaptureYuv {
+using namespace regame;
+
+struct SharedTexture {
+  CComPtr<ID3D11Texture2D> texture;
+  HANDLE handle;
+};
+
+class CaptureTex {
  public:
   bool Run() noexcept;
 
@@ -50,13 +59,14 @@ class CaptureYuv {
   }
 
   bool IsEncoderStarted() const noexcept { return is_encoder_started_; }
+
   bool IsPresentEnabled() const noexcept { return is_present_enabled_; }
 
   bool CreateSharedFrameInfo() noexcept {
     if (nullptr == shared_frame_info_) {
       HRESULT hr = shared_frame_info_.MapSharedMem(
-          sizeof(regame::SharedVideoFrameInfo),
-          regame::kSharedVideoFrameInfoFileMappingName.data(), nullptr, SA());
+          sizeof(SharedVideoFrameInfo),
+          kSharedVideoFrameInfoFileMappingName.data(), nullptr, SA());
       if (FAILED(hr)) {
         ATLTRACE2(atlTraceException, 0,
                   "MapSharedMem(info) failed with 0x%08x.\n", hr);
@@ -65,36 +75,45 @@ class CaptureYuv {
     }
     return true;
   }
-  regame::SharedVideoFrameInfo* GetSharedVideoFrameInfo() const noexcept {
+
+  SharedVideoFrameInfo* GetSharedVideoFrameInfo() const noexcept {
     assert(nullptr != shared_frame_info_);
     return shared_frame_info_;
   }
+
   void FreeSharedVideoFrameInfo() noexcept { shared_frame_info_.Unmap(); }
 
-  bool CreateSharedVideoYuvFrames(size_t data_size) noexcept;
-  regame::PackedVideoYuvFrame* GetPackedVideoYuvFrame(
-      size_t index) const noexcept {
-    assert(index < regame::kNumberOfSharedFrames);
+  bool CreateSharedVideoTextureFrames() noexcept;
 
+  PackedVideoTextureFrame* GetPackedVideoTextureFrame(
+      size_t index) const noexcept {
+    assert(index < kNumberOfSharedFrames);
     auto shared_frame =
-        static_cast<regame::SharedVideoYuvFrames*>(shared_frames_.GetData());
-    return reinterpret_cast<regame::PackedVideoYuvFrame*>(
-        static_cast<char*>(shared_frames_) +
-        sizeof(regame::SharedVideoYuvFrames) + index * shared_frame->data_size);
+        static_cast<SharedVideoTextureFrames*>(shared_frames_.GetData());
+    return static_cast<PackedVideoTextureFrame*>(shared_frame->frames) + index;
   }
-  regame::PackedVideoYuvFrame* GetAvailablePackedVideoYuvFrame()
+
+  PackedVideoTextureFrame* GetAvailablePackedVideoTextureFrame()
       const noexcept {
-    return GetPackedVideoYuvFrame(frame_count_ % regame::kNumberOfSharedFrames);
+    return GetPackedVideoTextureFrame(frame_count_ % kNumberOfSharedFrames);
   }
+
   size_t GetFrameCount() const noexcept { return frame_count_; }
+
   void SetSharedFrameReadyEvent() noexcept {
     ++frame_count_;
     SetEvent(shared_frame_ready_event_);
   }
-  void FreeSharedVideoYuvFrames() noexcept {
+
+  void FreeSharedVideoTextureFrames() noexcept {
     shared_frames_.Unmap();
     shared_frame_ready_event_.Close();
   }
+
+  bool ShareTexture(ID3D11Texture2D* new_texture,
+                    ID3D11Device* device,
+                    ID3D11DeviceContext* context) noexcept;
+  void FreeSharedTexture() noexcept;
 
  private:
   bool Initialize() noexcept;
@@ -105,21 +124,24 @@ class CaptureYuv {
   CHandle stop_event_;
   std::thread hook_thread_;
 
-  CAtlFileMapping<regame::SharedVideoFrameInfo> shared_frame_info_;
-  CAtlFileMapping<char> shared_frames_;
+  CAtlFileMapping<SharedVideoFrameInfo> shared_frame_info_;
+  CAtlFileMapping<SharedVideoTextureFrames> shared_frames_;
   CHandle shared_frame_ready_event_;
   size_t frame_count_{0};
+
+  std::array<SharedTexture, regame::kNumberOfSharedFrames> shared_textures_;
+  std::uint64_t texture_id_{0};
 
   CHandle encoder_started_event_;
   bool is_encoder_started_{false};
 
   bool is_present_enabled_{true};
 
-  bool is_d3d9_hooked_{false};
-  HookD3d9 hook_d3d9_;
+  // TODO: D3d9 hook
+  // bool is_d3d9_hooked_{false};
+  // HookD3d9 hook_d3d9_;
 
   bool is_dxgi_hooked_{false};
   HookDxgi hook_dxgi_;
 };
-
-extern CaptureYuv g_capture_yuv;
+extern CaptureTex g_capture_tex;

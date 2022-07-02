@@ -1,3 +1,12 @@
 [submodule "src/cge/third_party/ViGEmClient"]
 	path = src/cge/third_party/ViGEmClient
 	url = https://github.com/ViGEm/ViGEmClient.git
+[submodule "src/deps/include/dry"]
+	path = src/deps/include/dry
+	url = https://github.com/UMU618/dry
+[submodule "src/deps/fast_io"]
+	path = src/deps/fast_io
+	url = https://github.com/cppfastio/fast_io
+[submodule "src/deps/protobuf"]
+	path = src/deps/protobuf
+	url = https://github.com/protocolbuffers/protobuf

@@ -19,10 +19,12 @@
 #include "hook_dxgi.h"
 
 #include "capture_dxgi.h"
-#include "captureyuv.h"
+#include "capturetex.h"
 
 #include "umu/memory.h"
 #include "umu/time_measure.hpp"
+
+using namespace regame;
 
 namespace {
 CaptureDxgi capture;
@@ -188,7 +190,7 @@ HRESULT STDMETHODCALLTYPE HookDxgi::MyPresent(IDXGISwapChain* swap,
     }
   }
 
-  if (!g_capture_yuv.IsPresentEnabled()) {
+  if (!g_capture_tex.IsPresentEnabled()) {
     flags |= DXGI_PRESENT_TEST;
   }
   return IDXGISwapChain_Present_(swap, sync_interval, flags);
@@ -238,7 +240,7 @@ HookDxgi::MyPresent1(IDXGISwapChain1* swap,
     }
   }
 
-  if (!g_capture_yuv.IsPresentEnabled()) {
+  if (!g_capture_tex.IsPresentEnabled()) {
     flags |= DXGI_PRESENT_TEST;
   }
   return IDXGISwapChain1_Present1_(swap, sync_interval, flags,
