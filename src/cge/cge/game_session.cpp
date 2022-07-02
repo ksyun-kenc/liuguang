@@ -134,8 +134,10 @@ void GameSession::OnLogin(bool result) noexcept {
   if (!result) {
     session_state_ = SessionState::kFailed;
     Stop(true);
+#if USER_MANAGER
     APP_ERROR() << user_manager_->GetUsername() << " from " << remote_endpoint_
                 << " login failed !\n";
+#endif
     return;
   }
 
@@ -162,8 +164,10 @@ void GameSession::OnLogin(bool result) noexcept {
   login_result.work_modes = static_cast<regame::WorkMode>(htons(work_modes));
   Write(std::move(buffer));
 
+#if USER_MANAGER
   APP_INFO() << "Authorized " << user_manager_->GetUsername() << " from "
              << remote_endpoint_ << '\n';
+#endif
   game_control_.Initialize();
 
   g_app.Engine().VideoProduceKeyframe();
@@ -262,47 +266,20 @@ bool GameSession::ServeClient() {
             reinterpret_cast<const regame::ClientPacketHead*>(head + 1);
         auto action = client_packet->action;
         if (SessionState::kAuthorized <= session_state_) {
-          if (regame::ClientAction::kPing == action) {
-          } else if (regame::ClientAction::kControl == action) {
-            game_control_.Replay(
-                reinterpret_cast<const regame::ClientControl*>(client_packet),
-                packet_size);
+          switch (action) {
+            case regame::ClientAction::kPing:
+              break;
+            case regame::ClientAction::kControl:
+              game_control_.Replay(
+                  reinterpret_cast<const regame::ClientControl*>(client_packet),
+                  packet_size);
+              break;
           }
         } else if (SessionState::kNone == session_state_) {
           if (regame::ClientAction::kLogin == action) {
-            session_state_ = SessionState::kAuthorizing;
-            auto cl =
-                reinterpret_cast<const regame::ClientLogin*>(client_packet);
-            if (cl->verification_size > sizeof(cl->verification_data)) {
+            if (!ServeClientLogin(client_packet, packet_size)) {
               return false;
             }
-
-            UserManager::Verification verification;
-            verification.version =
-                static_cast<std::int64_t>(cl->protocol_version);
-            verification.username.assign(cl->username, sizeof(cl->username));
-            verification.username.resize(
-                decltype(verification.username)::traits_type::length(
-                    verification.username.data()));
-            verification.type =
-                static_cast<std::int64_t>(cl->verification_type);
-            verification.data.assign(cl->verification_data,
-                                     cl->verification_size);
-#if USER_MANAGER
-            user_manager_ = std::make_shared<UserManager>(
-                ioc_, std::move(weak_from_this()));
-            if (user_manager_) {
-              user_manager_->Initialize();
-              user_manager_->Login(verification);
-            }
-#else
-            // You should remove this backdoor.
-            bool authorized = false;
-            if (regame::VerificationType::Code == cl->verification_type) {
-              authorized = login.username == "UMU" && login.data == "123456";
-            }
-            SetAuthorized(authorized);
-#endif
           }
         }
 
@@ -311,6 +288,51 @@ bool GameSession::ServeClient() {
         break;
     }
   }
+  return true;
+}
+
+bool GameSession::ServeClientLogin(
+    const regame::ClientPacketHead* client_packet,
+    std::uint32_t packet_size) {
+  assert(nullptr != client_packet);
+  assert(0 < packet_size);
+
+  if (packet_size < sizeof(regame::ClientLogin)) {
+    DEBUG_PRINT("Invalid login packet\n");
+    return false;
+  }
+
+  session_state_ = SessionState::kAuthorizing;
+  auto cl = reinterpret_cast<const regame::ClientLogin*>(client_packet);
+  if (cl->verification_size > sizeof(cl->verification_data)) {
+    DEBUG_PRINT("Invalid login verification size\n");
+    return false;
+  }
+
+  UserManager::Verification verification;
+  verification.version = static_cast<std::int64_t>(cl->protocol_version);
+  verification.username.assign(cl->username, sizeof(cl->username));
+  verification.username.resize(
+      decltype(verification.username)::traits_type::length(
+          verification.username.data()));
+  verification.type = static_cast<std::int64_t>(cl->verification_type);
+  verification.data.assign(cl->verification_data, cl->verification_size);
+#if USER_MANAGER
+  user_manager_ =
+      std::make_shared<UserManager>(ioc_, std::move(weak_from_this()));
+  if (user_manager_) {
+    user_manager_->Initialize();
+    user_manager_->Login(verification);
+  }
+#else
+  // You should remove this backdoor.
+  bool authorized = false;
+  if (regame::VerificationType::Code == cl->verification_type) {
+    authorized =
+        verification.username == "UMU" && verification.data == "123456";
+  }
+  NotifyLoginResult(authorized);
+#endif
   return true;
 }
 #pragma endregion

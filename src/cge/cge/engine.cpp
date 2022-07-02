@@ -29,6 +29,7 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  uint64_t audio_bitrate,
                  const std::vector<uint8_t>& disable_keys,
                  GamepadReplay gamepad_replay,
+                 bool is_desktop_mode,
                  KeyboardReplay keyboard_replay,
                  MouseReplay mouse_replay,
                  uint64_t video_bitrate,
@@ -37,7 +38,9 @@ void Engine::Run(tcp::endpoint ws_endpoint,
                  int video_gop,
                  std::string video_preset,
                  uint32_t video_quality,
-                 const std::string& user_service) {
+                 const std::string& user_service) noexcept {
+  is_desktop_mode_ = is_desktop_mode;
+
   try {
     using namespace boost::urls;
 
@@ -136,7 +139,7 @@ void Engine::Loop() noexcept {
   }
 }
 
-void Engine::Stop() {
+void Engine::Stop() noexcept {
   if (!running_) {
     return;
   }
@@ -188,7 +191,7 @@ int Engine::WritePacket(void* opaque, std::span<uint8_t> packet) noexcept {
   return 0;
 }
 
-void Engine::SetPresentFlag(bool donot_present) {
+void Engine::DisablePresent(bool donot_present) {
   HANDLE ev = CreateEvent(g_app.SA(), TRUE, FALSE,
                           object_namer_.Get(kDoNotPresentEventName).data());
   if (nullptr == ev) {

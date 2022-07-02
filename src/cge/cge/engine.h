@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020-present Ksyun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #pragma once
 
 #include "net.hpp"
@@ -22,6 +38,7 @@ class Engine {
            uint64_t audio_bitrate,
            const std::vector<uint8_t>& disable_keys,
            GamepadReplay gamepad_replay,
+           bool is_desktop_mode,
            KeyboardReplay keyboard_replay,
            MouseReplay mouse_replay,
            uint64_t video_bitrate,
@@ -30,13 +47,13 @@ class Engine {
            int video_gop,
            std::string video_preset,
            uint32_t video_quality,
-           const std::string& user_service);
-  void Stop();
+           const std::string& user_service) noexcept;
+  void Stop() noexcept;
 
   void EncoderRun();
   void EncoderStop();
 
-  void SetPresentFlag(bool donot_present);
+  void DisablePresent(bool donot_present);
 
   const std::string& GetAudioHeader() const noexcept {
     return audio_encoder_.GetHeader();
@@ -55,6 +72,16 @@ class Engine {
   void NotifyRestartAudioEncoder() noexcept;
   void NotifyRestartVideoEncoder() noexcept;
 
+  HWND GetSourceWindow() const noexcept {
+    return video_encoder_.GetSourceWindow();
+  }
+  std::uint32_t GetSourceWidth() const noexcept {
+    return video_encoder_.GetSourceWidth();
+  }
+  std::uint32_t GetSourceHeight() const noexcept {
+    return video_encoder_.GetSourceHeight();
+  }
+
   void VideoProduceKeyframe() noexcept { video_encoder_.ProduceKeyframe(); }
   
   const tcp::endpoint& GetUserServiceEndpoint() noexcept {
@@ -66,9 +93,6 @@ class Engine {
 
   ObjectNamer& GetObjectNamer() noexcept { return object_namer_; }
 
-  void SetDesktopMode(bool is_desktop_mode) noexcept {
-    is_desktop_mode_ = is_desktop_mode;
-  }
   const bool IsDesktopMode() const noexcept { return is_desktop_mode_; }
 
  private:
