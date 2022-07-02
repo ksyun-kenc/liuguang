@@ -59,15 +59,22 @@ namespace po = boost::program_options;
 using namespace std::literals::string_view_literals;
 
 constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.4 Beta"sv};
-constexpr bool kDefaultGlobalMode = false;
-constexpr bool kDefaultDesktopMode = false;
-constexpr auto kDefaultBindAddress{"::"sv};
-constexpr auto kDefaultUserService{"http://127.0.0.1:8545/"sv};
+
 constexpr uint64_t kDefaultAudioBitrate = 128000;
+constexpr auto kDefaultBindAddress{"::"sv};
+constexpr bool kDefaultDesktopMode = false;
+constexpr bool kDefaultDonotPresent = false;
+constexpr bool kDefaultGlobalMode = false;
+constexpr uint16_t kDefaultPort = 8080;
+constexpr auto kDefaultUserService{"http://127.0.0.1:8545/"sv};
+constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
+constexpr auto kDefaultVideoCodec{"h264"sv};
+constexpr int kDefaultVideoGop = 180;
+constexpr uint32_t kDefaultVideoQuality = 23;
+
 constexpr std::array<std::string_view, 3> kValidAudioCodecs{"libopus", "aac",
                                                             "opus"};
 constexpr size_t kDefaultAudioCodecIndex = 0;
-constexpr bool kDefaultDonotPresent = false;
 
 // Should be the same order with GamepadReplay
 constexpr std::array<std::string_view, 3> kValidGamepadReplayMethods{
@@ -84,10 +91,6 @@ constexpr std::array<std::string_view, 4> kValidMouseReplayMethods{
     "none", "cgvhid", "sendinput", "message"};
 constexpr size_t kDefaultMouseReplayIndex = 0;
 
-constexpr uint16_t kDefaultPort = 8080;
-constexpr uint64_t kDefaultVideoBitrate = 1'000'000;
-constexpr auto kDefaultVideoCodec{"h264"sv};
-constexpr int kDefaultVideoGop = 180;
 constexpr std::array<std::string_view, 3> kValidHardwareEncoders{"amf", "nvenc",
                                                                  "qsv"};
 constexpr std::array<std::string_view, 3> kValidAmfPreset{"speed", "balanced",
@@ -100,7 +103,6 @@ constexpr std::array<std::string_view, 7> kValidQsvPreset{
 constexpr std::array<std::string_view, 10> kValidPreset{
     "ultrafast", "superfast", "veryfast", "faster",   "fast",
     "medium",    "slow",      "slower",   "veryslow", "placebo"};
-constexpr uint32_t kDefaultVideoQuality = 23;
 
 constexpr uint32_t kMinAudioBitrate = 16'000;
 constexpr uint32_t kMaxAudioBitrate = 256'000;
@@ -191,8 +193,6 @@ void InitializeLogger(SeverityLevel severity_level) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  bool is_global_mode = false;
-  bool is_desktop_mode = false;
   std::string audio_codec;
   uint64_t audio_bitrate = 0;
   std::string bind_address;
@@ -200,6 +200,8 @@ int main(int argc, char* argv[]) {
   bool donot_present = false;
   GamepadReplay gamepad_replay;
   HardwareEncoder hardware_encoder = HardwareEncoder::None;
+  bool is_desktop_mode = false;
+  bool is_global_mode = false;
   KeyboardReplay keyboard_replay;
   SeverityLevel log_level = SeverityLevel::kInfo;
   MouseReplay mouse_replay;
@@ -337,8 +339,8 @@ int main(int argc, char* argv[]) {
 
     if (is_desktop_mode) {
       if (!is_global_mode) {
-        std::cout << "desktop-mode implies global-mode!\n";
         is_global_mode = true;
+        std::cout << "desktop-mode implies global-mode!\n";
       }
 
       if (keyboard_replay == KeyboardReplay::kMessage) {
@@ -446,9 +448,9 @@ int main(int argc, char* argv[]) {
     std::cout << "audio-bitrate: " << audio_bitrate << '\n'
               << "audio-codec: " << audio_codec << '\n'
               << "bind-address: " << bind_address << '\n'
-              << "disable-keys: " << disable_keys_string << '\n'
               << "desktop-mode: " << is_desktop_mode << '\n'
-              << "donot-present: " << std::boolalpha << donot_present << '\n'
+              << "disable-keys: " << disable_keys_string << '\n'
+              << "donot-present: " << donot_present << '\n'
               << "gamepad-replay: " << gamepad_replay_string << '\n'
               << "global-mode: " << is_global_mode << '\n'
               << "hardware-encoder: " << hardware_encoder_string << '\n'
@@ -492,9 +494,8 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  g_app.Engine().SetDesktopMode(is_desktop_mode);
   g_app.Engine().GetObjectNamer().SetGlobalMode(is_global_mode);
-  g_app.Engine().SetPresentFlag(donot_present);
+  g_app.Engine().DisablePresent(donot_present);
 
   net::signal_set signals(g_app.Engine().GetIoContext(), SIGINT, SIGTERM,
                           SIGBREAK);
@@ -504,8 +505,8 @@ int main(int argc, char* argv[]) {
   });
   g_app.Engine().Run(tcp::endpoint(kBindAddress, port), std::move(audio_codec),
                      audio_bitrate, disable_keys, gamepad_replay,
-                     keyboard_replay, mouse_replay, video_bitrate,
-                     video_codec_id, hardware_encoder, video_gop,
+                     is_desktop_mode, keyboard_replay, mouse_replay,
+                     video_bitrate, video_codec_id, hardware_encoder, video_gop,
                      std::move(video_preset), video_quality, user_service);
   g_app.Engine().EncoderStop();
   logging::core::get()->flush();

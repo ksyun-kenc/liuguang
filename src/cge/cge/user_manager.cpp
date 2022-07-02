@@ -190,13 +190,17 @@ void UserManager::OnConnect(beast::error_code ec) {
           user_state_ = UserState::kNone;
           if (!game_session_.expired()) {
             auto gs = game_session_.lock();
-            gs->NotifyLoginResult(false);
+            if (gs) {
+              gs->NotifyLoginResult(false);
+            }
           }
           break;
         case Method::kKeepAlive:
           if (!game_session_.expired()) {
             auto gs = game_session_.lock();
-            gs->NotifyKeepAliveResult(false);
+            if (gs) {
+              gs->NotifyKeepAliveResult(false);
+            }
           }
           break;
         case Method::kLogout:
@@ -228,7 +232,9 @@ void UserManager::OnRequest(beast::error_code ec,
       case Method::kLogin:
         if (!game_session_.expired()) {
           auto gs = game_session_.lock();
-          gs->NotifyLoginResult(false);
+          if (gs) {
+            gs->NotifyLoginResult(false);
+          }
         }
         break;
     }
@@ -275,7 +281,9 @@ void UserManager::OnLoginResponse(beast::error_code ec,
     }
     if (!game_session_.expired()) {
       auto gs = game_session_.lock();
-      gs->NotifyLoginResult(authorized);
+      if (gs) {
+        gs->NotifyLoginResult(authorized);
+      }
     }
   };
 
@@ -343,7 +351,9 @@ void UserManager::OnKeepAliveResponse(beast::error_code ec,
 
       if (!game_session_.expired()) {
         auto gs = game_session_.lock();
-        gs->NotifyKeepAliveResult(kept_alive);
+        if (gs) {
+          gs->NotifyKeepAliveResult(kept_alive);
+        }
       }
     }
   };
