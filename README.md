@@ -8,6 +8,8 @@ Cloud gaming is a method of playing video games that is done using remote hardwa
 
 Cloud gaming engine is a core technology to host ordinary games on remote server and start cloud gaming service.
 
+`Regame` means `remote game`. It's also the transliteration of `鎏光` in Chinese. We start with Chinese name, and then English name.
+
 `Regame` is still under development. It would be great if you could help.
 
 [Download Regame v0.4 here](https://ks3-cn-beijing.ksyun.com/liuguang/regame_v0.4.zip) \(It will be updated from time to time!\)
