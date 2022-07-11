@@ -10,3 +10,6 @@
 [submodule "src/deps/protobuf"]
 	path = src/deps/protobuf
 	url = https://github.com/protocolbuffers/protobuf
+[submodule "src/ClipboardSync"]
+	path = src/ClipboardSync
+	url = https://github.com/ksyun-kenc/ClipboardSync
