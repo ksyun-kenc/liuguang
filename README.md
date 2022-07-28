@@ -1,6 +1,6 @@
 # Regame - Cloud Gaming Engine
 
-[简体中文](README.zh-CN.md) | English
+# [简体中文](README.zh-CN.md) | English
 
 `Regame - Cloud Gaming Engine` is a set of technologies developed by Edge computing team of [Ksyun](https://www.ksyun.com/) to serve the cloud game scene.
 
