@@ -12,4 +12,4 @@
 	url = https://github.com/protocolbuffers/protobuf
 [submodule "src/ClipboardSync"]
 	path = src/ClipboardSync
-	url = https://github.com/ksyun-kenc/ClipboardSync
+	url = https://github.com/UMU618/ClipboardSync
