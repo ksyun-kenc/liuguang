@@ -36,6 +36,7 @@
 #include "../cliprdr.h"
 
 #define CLIPRDR_SVC_CHANNEL_NAME "cliprdr"
+const TCHAR kClassName[] = { _T("HiddenClipboardMessageProcessor") };
 
 /**
  * Clipboard Formats
@@ -674,13 +675,12 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject *This, FO
 		return E_INVALIDARG;
 
 	clipboard = (wfClipboard *)instance->m_pData;
+	if (!clipboard)
+		return E_INVALIDARG;
 	if (!clipboard->context->CheckEnabled(instance->m_connID))
 	{
 		return E_INVALIDARG;
 	}
-
-	if (!clipboard)
-		return E_INVALIDARG;
 
 	if ((idx = cliprdr_lookup_format(instance, pFormatEtc)) == -1)
 	{
@@ -1517,6 +1517,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard *clipboard, UINT32 connID, co
 		return ERROR_INTERNAL_ERROR;
 
 	fileContentsRequest.connID = connID;
+	fileContentsRequest.msgFlags = 0;
 	fileContentsRequest.streamId = (UINT32)(ULONG_PTR)streamid;
 	fileContentsRequest.listIndex = index;
 	fileContentsRequest.dwFlags = flag;
@@ -1524,7 +1525,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard *clipboard, UINT32 connID, co
 	fileContentsRequest.nPositionHigh = positionhigh;
 	fileContentsRequest.cbRequested = nreq;
 	fileContentsRequest.clipDataId = 0;
-	fileContentsRequest.msgFlags = 0;
+
 	rc = clipboard->context->ClientFileContentsRequest(clipboard->context, &fileContentsRequest);
 	if (rc != ERROR_SUCCESS)
 	{
@@ -1828,12 +1829,12 @@ static int create_cliprdr_window(wfClipboard *clipboard)
 	wnd_cls.hCursor = NULL;
 	wnd_cls.hbrBackground = NULL;
 	wnd_cls.lpszMenuName = NULL;
-	wnd_cls.lpszClassName = _T("ClipboardHiddenMessageProcessor");
+	wnd_cls.lpszClassName = kClassName;
 	wnd_cls.hInstance = GetModuleHandle(NULL);
 	wnd_cls.hIconSm = NULL;
 	RegisterClassEx(&wnd_cls);
 	clipboard->hwnd =
-		CreateWindowEx(WS_EX_LEFT, _T("ClipboardHiddenMessageProcessor"), _T("rdpclip"), 0, 0, 0, 0,
+		CreateWindowEx(WS_EX_LEFT, kClassName, _T("rdpclip"), 0, 0, 0, 0,
 					   0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), clipboard);
 
 	if (!clipboard->hwnd)
@@ -2034,7 +2035,7 @@ static BOOL wf_cliprdr_add_to_file_arrays(wfClipboard *clipboard, WCHAR *full_fi
 		return FALSE;
 
 	/* add to name array */
-	clipboard->file_names[clipboard->nFiles] = (LPWSTR)malloc(MAX_PATH * 2);
+	clipboard->file_names[clipboard->nFiles] = (LPWSTR)malloc(MAX_PATH * sizeof(WCHAR));
 
 	if (!clipboard->file_names[clipboard->nFiles])
 		return FALSE;
