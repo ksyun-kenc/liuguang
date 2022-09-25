@@ -677,7 +677,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject *This, FO
 	clipboard = (wfClipboard *)instance->m_pData;
 	if (!clipboard)
 		return E_INVALIDARG;
-	if (!clipboard->context->CheckEnabled(instance->m_connID))
+        if (!clipboard->context->CheckEnabled(clipboard->context, instance->m_connID))
 	{
 		return E_INVALIDARG;
 	}
@@ -1465,7 +1465,7 @@ static UINT cliprdr_send_data_request(UINT32 connID, wfClipboard *clipboard, UIN
 		DWORD waitRes = WaitForSingleObject(clipboard->response_data_event, 50);
 		if (waitRes == WAIT_TIMEOUT)
 		{
-			if (clipboard->context->CheckEnabled(connID))
+			if (clipboard->context->CheckEnabled(clipboard->context, connID))
 			{
 				continue;
 			}
@@ -1538,7 +1538,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard *clipboard, UINT32 connID, co
 		DWORD waitRes = WaitForSingleObject(clipboard->req_fevent, 50);
 		if (waitRes == WAIT_TIMEOUT)
 		{
-			if (clipboard->context->CheckEnabled(connID))
+			if (clipboard->context->CheckEnabled(clipboard->context, connID))
 			{
 				continue;
 			}
@@ -2059,7 +2059,7 @@ static BOOL wf_cliprdr_traverse_directory(wfClipboard *clipboard, WCHAR *Dir, si
 {
 	HANDLE hFind;
 	WCHAR DirSpec[MAX_PATH];
-	WIN32_FIND_DATA FindFileData;
+	WIN32_FIND_DATAW FindFileData;
 
 	if (!clipboard || !Dir)
 		return FALSE;
