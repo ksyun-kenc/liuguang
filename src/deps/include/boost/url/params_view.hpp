@@ -1,209 +1,199 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2022 Alan de Freitas (alandefreitas@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_PARAMS_VIEW_HPP
 #define BOOST_URL_PARAMS_VIEW_HPP
 
 #include <boost/url/detail/config.hpp>
-#include <boost/url/string.hpp>
-#include <boost/url/detail/parts_base.hpp>
-#include <iterator>
-#include <type_traits>
+#include <boost/url/params_base.hpp>
 
 namespace boost {
 namespace urls {
 
-#ifndef BOOST_URL_DOCS
-class url_view;
-class params_encoded_view;
-#endif
+/** A view representing query parameters in a URL
 
+    Objects of this type are used to interpret
+    the query parameters as a bidirectional view
+    of key/value pairs.
+
+    The view does not retain ownership of the
+    elements and instead references the original
+    character buffer. The caller is responsible
+    for ensuring that the lifetime of the buffer
+    extends until it is no longer referenced.
+
+    @par Example
+    @code
+    url_view u( "?first=John&last=Doe" );
+
+    params_view p = u.params();
+    @endcode
+
+    The strings produced when iterators are
+    dereferenced belong to the iterator and
+    become invalidated when that particular
+    iterator is incremented, decremented,
+    or destroyed.
+    Any percent-escapes in returned strings
+    are decoded first.
+    Strings passed to member functions do
+    not contain percent-escapes; the percent
+    character ('%') is treated as a literal
+    percent.
+
+    @par Iterator Invalidation
+    Changes to the underlying character buffer
+    can invalidate iterators which reference it.
+*/
 class params_view
-    : private detail::parts_base
+    : public params_base
 {
-    friend class url_view;
+    friend class url_view_base;
     friend class params_encoded_view;
+    friend class params_ref;
 
-    string_view s_;
-    std::size_t n_;
-    string_value::allocator a_;
-
-    template<class Allocator>
     params_view(
-        string_view s,
-        std::size_t n,
-        Allocator const& a);
+        detail::query_ref const& ref) noexcept;
 
 public:
-    class iterator;
+    /** Constructor
 
-    class value_type
-    {
-    public:
-        string_value key;
-        string_value value;
-        bool has_value;
+        Default-constructed params have
+        zero elements.
 
-        BOOST_URL_DECL
-        ~value_type() noexcept;
+        @par Example
+        @code
+        params_view qp;
+        @endcode
 
-        BOOST_URL_DECL
-        value_type() noexcept;
+        @par Effects
+        @code
+        return params_view( "" );
+        @endcode
 
-        BOOST_URL_DECL
-        value_type(
-            value_type const& other) noexcept;
+        @par Complexity
+        Constant.
 
-        BOOST_URL_DECL
-        value_type&
-        operator=(
-            value_type const& other) noexcept;
+        @par Exception Safety
+        Throws nothing.
+    */
+    params_view() = default;
 
-    private:
-        friend class params_view;
-        friend class iterator;
+    /** Constructor
 
-        BOOST_URL_DECL
-        value_type(
-            char const* s,
-            std::size_t nk,
-            std::size_t nv,
-            string_value::allocator a);
-    };
+        After construction both views will
+        reference the same character buffer.
 
-    using reference = value_type;
-    using const_reference = value_type;
-    using size_type = std::size_t;
-    using difference_type = std::ptrdiff_t;
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
 
-    //--------------------------------------------
-    //
-    // Element Access
-    //
-    //--------------------------------------------
+        @par Postconditions
+        @code
+        this->buffer().data() == other.buffer().data()
+        @endcode
 
-    BOOST_URL_DECL
-    string_value
-    at(string_view key) const;
+        @par Complexity
+        Constant.
 
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    string_value
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        string_value>::type
-#endif
-    at(Key const& key) const;
+        @par Exception Safety
+        Throws nothing
+    */
+    params_view(
+        params_view const& other) = default;
 
-    //--------------------------------------------
-    //
-    // Iterators
-    //
-    //--------------------------------------------
+    /** Constructor
 
-    BOOST_URL_DECL
-    iterator
-    begin() const noexcept;
+        This function constructs params from
+        a valid query parameter string, which
+        can contain percent escapes. Unlike
+        the parameters in URLs, the string
+        passed here should not start with "?".
+        Upon construction, the view will
+        reference the character buffer pointed
+        to by `s`. The caller is responsible
+        for ensuring that the lifetime of the
+        buffer extends until it is no longer
+        referenced.
 
-    BOOST_URL_DECL
-    iterator
-    end() const noexcept;
+        @par Example
+        @code
+        params_view qp( "first=John&last=Doe" );
+        @endcode
 
-    //--------------------------------------------
-    //
-    // Capacity
-    //
-    //--------------------------------------------
+        @par Effects
+        @code
+        return parse_query( s ).value();
+        @endcode
 
-    inline
-    bool
-    empty() const noexcept;
+        @par Postconditions
+        @code
+        this->buffer().data() == s.data()
+        @endcode
 
-    inline
-    std::size_t
-    size() const noexcept;
+        @par Complexity
+        Linear in `s`.
 
-    //--------------------------------------------
-    //
-    // Lookup
-    //
-    //--------------------------------------------
+        @par Exception Safety
+        Exceptions thrown on invalid input.
 
-    BOOST_URL_DECL
-    std::size_t
-    count(string_view key) const noexcept;
+        @throw system_error
+        `s` contains an invalid query parameter
+        string.
 
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    std::size_t
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        std::size_t>::type
-#endif
-    count(Key const& key) const noexcept;
+        @param s The string to parse.
 
-    inline
-    iterator
-    find(string_view key) const noexcept;
+        @par BNF
+        @code
+        query-params    = [ query-param ] *( "&" query-param )
 
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    iterator
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        iterator>::type
-#endif
-    find(Key const& key) const noexcept;
+        query-param     = key [ "=" value ]
+        @endcode
 
-    /** Search [from, end), from==end is valid
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4"
+            >3.4.  Query</a>
     */
     BOOST_URL_DECL
-    iterator
-    find(
-        iterator from,
-        string_view key) const noexcept;
+    params_view(
+        string_view s);
 
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    iterator
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        iterator>::type
-#endif
-    find(
-        iterator from,
-        Key const& key) const noexcept;
+    /** Assignment
 
-    inline
-    bool
-    contains(string_view key) const noexcept;
+        After assignment, both views will
+        reference the same underlying character
+        buffer.
 
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    bool
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        bool>::type
-#endif
-    contains(Key const& key) const noexcept;
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
+
+        @par Postconditions
+        @code
+        this->buffer().data() == other.buffer().data()
+        @endcode
+
+        @par Complexity
+        Constant
+
+        @par Exception Safety
+        Throws nothing
+    */
+    params_view&
+    operator=(
+        params_view const&) = default;
 };
 
 } // urls
 } // boost
-
-// VFALCO This include is at the bottom of
-// url_view.hpp because of a circular dependency
-//#include <boost/url/impl/params_view.hpp>
 
 #endif

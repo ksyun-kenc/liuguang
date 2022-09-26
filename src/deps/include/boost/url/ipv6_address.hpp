@@ -1,10 +1,11 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2022 Alan Freitas (alandefreitas@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_IPV6_ADDRESS_HPP
@@ -12,7 +13,9 @@
 
 #include <boost/url/detail/config.hpp>
 #include <boost/url/error.hpp>
-#include <boost/url/string.hpp>
+#include <boost/url/error_types.hpp>
+#include <boost/url/string_view.hpp>
+#include <boost/url/grammar/string_token.hpp>
 #include <array>
 #include <cstdint>
 #include <iosfwd>
@@ -176,32 +179,49 @@ public:
         The returned string will not
         contain surrounding square brackets.
 
+        When called with no arguments, the
+        return type is `std::string`.
+        Otherwise, the return type and style
+        of output is determined by which string
+        token is passed.
+
+        @par Example
+        @code
+        ipv6_address::bytes_type b = {{
+                0, 1, 0, 2, 0, 3, 0, 4,
+                0, 5, 0, 6, 0, 7, 0, 8 }};
+        ipv6_address a(b);
+        assert(a.to_string() == "1:2:3:4:5:6:7:8");
+        assert( ipv4_address(0x01020304).to_string() == "1.2.3.4" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
         @par Exception Safety
         Strong guarantee.
         Calls to allocate may throw.
+        String tokens may throw exceptions.
 
-        @param a An optional allocator the returned
-        string will use. If this parameter is omitted,
-        the default allocator is used.
+        @return The return type of the string token.
+        If the token parameter is omitted, then
+        a new `std::string` is returned.
+        Otherwise, the function return type
+        will be the result type of the token.
 
-        @return A @ref string_value using the
-        specified allocator.
+        @param token An optional string token.
 
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc4291#section-2.2">
             2.2. Text Representation of Addresses (rfc4291)</a>
     */
-    template<class Allocator =
-        std::allocator<char>>
-    string_value
-    to_string(Allocator const& a = {}) const
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
+    to_string(
+        BOOST_URL_STRTOK_ARG(token)) const
     {
-        char buf[max_str_len];
-        auto const n = print_impl(buf);
-        char* dest;
-        string_value s(n, a, dest);
-        std::memcpy(dest, buf, n);
-        return s;
+        to_string_impl(token);
+        return token.result();
     }
 
     /** Write a dotted decimal string representing the address to a buffer
@@ -266,12 +286,14 @@ public:
 
     /** Return true if two addresses are equal
     */
-    BOOST_URL_DECL
     friend
     bool
     operator==(
         ipv6_address const& a1,
-        ipv6_address const& a2) noexcept;
+        ipv6_address const& a2) noexcept
+    {
+        return a1.addr_ == a2.addr_;
+    }
 
     /** Return true if two addresses are not equal
     */
@@ -299,33 +321,20 @@ public:
     ipv6_address
     loopback() noexcept;
 
-    /** Parse a string containing an IPv6 address.
-
-        This function overload is used with
-        @ref bnf::parse.
-
-        @return true if the parse was successful.
-
-        @param it A pointer to the beginning of
-        the string to be parsed. Upon return, this
-        will point to one past the last character
-        visited.
-
-        @param end A pointer to one past the last
-        character in the string to be parsed.
-
-        @param ec Set to the error, if any occurred.
-
-        @param t Set to the result upon success.
-    */
-    BOOST_URL_DECL
+    // hidden friend
     friend
-    bool
-    parse(
-        char const*& it,
-        char const* const end,
-        error_code& ec,
-        ipv6_address& t) noexcept;
+    std::ostream&
+    operator<<(
+        std::ostream& os,
+        ipv6_address const& addr)
+    {
+        char buf[ipv6_address::max_str_len];
+        auto const s = addr.to_buffer(
+            buf, sizeof(buf));
+        os << s;
+        return os;
+    }
+
 
 private:
     BOOST_URL_DECL
@@ -333,10 +342,13 @@ private:
     print_impl(
         char* dest) const noexcept;
 
+    BOOST_URL_DECL
+    void
+    to_string_impl(
+        string_token::arg& t) const;
+
     bytes_type addr_{};
 };
-
-//------------------------------------------------
 
 /** Format the address to an output stream
 
@@ -347,13 +359,14 @@ private:
 
     @param os The output stream to write to.
 
-    @param addrr The address to write.
+    @param addr The address to write.
 */
-BOOST_URL_DECL
 std::ostream&
 operator<<(
     std::ostream& os,
     ipv6_address const& addr);
+
+//------------------------------------------------
 
 /** Parse a string containing an IPv6 address.
 

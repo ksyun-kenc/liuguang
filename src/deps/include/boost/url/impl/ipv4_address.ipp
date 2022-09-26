@@ -4,7 +4,7 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_IMPL_IPV4_ADDRESS_IPP
@@ -12,8 +12,7 @@
 
 #include <boost/url/ipv4_address.hpp>
 #include <boost/url/detail/except.hpp>
-#include <boost/url/bnf/parse.hpp>
-#include <boost/url/rfc/detail/dec_octet.hpp>
+#include <boost/url/rfc/ipv4_address_rule.hpp>
 #include <cstring>
 
 namespace boost {
@@ -40,12 +39,10 @@ ipv4_address(
 ipv4_address::
 ipv4_address(
     string_view s)
+    : ipv4_address(
+        parse_ipv4_address(s
+            ).value(BOOST_URL_POS))
 {
-    auto r = parse_ipv4_address(s);
-    if(r.has_error())
-        detail::throw_invalid_argument(
-            BOOST_CURRENT_LOCATION);
-    *this = r.value();
 }
 
 auto
@@ -76,9 +73,7 @@ to_buffer(
     std::size_t dest_size) const
 {
     if(dest_size < max_str_len)
-        detail::throw_length_error(
-            "ipv4_address::to_buffer",
-            BOOST_CURRENT_LOCATION);
+        detail::throw_length_error();
     auto n = print_impl(dest);
     return string_view(dest, n);
 }
@@ -106,24 +101,6 @@ is_multicast() const noexcept
         0xE0000000;
 }
 
-bool
-parse(
-    char const*& it,
-    char const* const end,
-    error_code& ec,
-    ipv4_address& t)
-{
-    using bnf::parse;
-    std::array<unsigned char, 4> v;
-    if(! parse(it, end, ec,
-        detail::dec_octet{v[0]}, '.',
-        detail::dec_octet{v[1]}, '.',
-        detail::dec_octet{v[2]}, '.',
-        detail::dec_octet{v[3]}))
-        return false;
-    t = ipv4_address(v);
-    return true;
-}
 std::size_t
 ipv4_address::
 print_impl(
@@ -159,26 +136,26 @@ print_impl(
     return dest - start;
 }
 
-std::ostream&
-operator<<(
-    std::ostream& os,
-    ipv4_address const& addr)
+void
+ipv4_address::
+to_string_impl(
+    string_token::arg& t) const
 {
-    char buf[ipv4_address::max_str_len];
-    os << addr.to_buffer(buf, sizeof(buf));
-    return os;
+    char buf[max_str_len];
+    auto const n = print_impl(buf);
+    char* dest = t.prepare(n);
+    std::memcpy(dest, buf, n);
 }
 
-result<ipv4_address>
+//------------------------------------------------
+
+auto
 parse_ipv4_address(
-    string_view s) noexcept
+    string_view s) noexcept ->
+        result<ipv4_address>
 {
-    error_code ec;
-    ipv4_address addr;
-    if(! bnf::parse_string(
-            s, ec, addr))
-        return ec;
-    return addr;
+    return grammar::parse(
+        s, ipv4_address_rule);
 }
 
 } // urls

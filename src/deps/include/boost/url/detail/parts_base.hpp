@@ -4,7 +4,7 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_DETAIL_PARTS_BASE_HPP
@@ -33,13 +33,17 @@ struct parts_base
         id_end          // one past the end
     };
 
-    static
-    constexpr
-    pos_t zero_ = 0;
-
-    static
-    constexpr
-    char const* const empty_ = "";
+    enum class from : char {
+        // this belongs to a string
+        string = 0,
+        // this belongs to url_base
+        // segments/params containers point to
+        // another url
+        url = 1,
+        // this belongs to authority_view
+        // id_user will not have the leading "//"
+        authority = 2,
+    };
 };
 
 } // detail

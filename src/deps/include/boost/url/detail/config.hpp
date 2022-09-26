@@ -1,10 +1,11 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2022 Alan de Freitas (alandefreitas@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_DETAIL_CONFIG_HPP
@@ -13,6 +14,7 @@
 #include <boost/config.hpp>
 #include <boost/config/workaround.hpp>
 #include <limits.h>
+#include <stdint.h>
 
 #if CHAR_BIT != 8
 # error unsupported platform
@@ -49,16 +51,6 @@
 # endif
 #endif
 
-// This macro is used for the limits
-// test which sets the value lower,
-// to exercise code coverage.
-//
-#ifndef BOOST_URL_MAX_SIZE
-// we leave room for a null,
-// and still fit in signed-32
-#define BOOST_URL_MAX_SIZE 0x7ffffffe
-#endif
-
 #if BOOST_WORKAROUND( BOOST_GCC_VERSION, <= 72000 ) || \
     BOOST_WORKAROUND( BOOST_CLANG_VERSION, <= 35000 )
 # define BOOST_URL_CONSTEXPR
@@ -69,10 +61,55 @@
 // Add source location to error codes
 #ifdef BOOST_URL_NO_SOURCE_LOCATION
 # define BOOST_URL_ERR(ev) (ev)
+# define BOOST_URL_RETURN_EC(ev) return (ev)
+# define BOOST_URL_POS ::boost::source_location()
 #else
 # define BOOST_URL_ERR(ev) (::boost::system::error_code( (ev), [] { \
-         static constexpr auto loc(BOOST_CURRENT_LOCATION); \
+         static constexpr auto loc((BOOST_CURRENT_LOCATION)); \
          return &loc; }()))
+# define BOOST_URL_RETURN_EC(ev) \
+    static constexpr auto loc ## __LINE__((BOOST_CURRENT_LOCATION)); \
+    return ::boost::system::error_code((ev), &loc ## __LINE__)
+# define BOOST_URL_POS (BOOST_CURRENT_LOCATION)
 #endif
+
+#ifndef BOOST_URL_STRTOK_TPARAM
+#define BOOST_URL_STRTOK_TPARAM class StringToken = string_token::return_string
+#endif
+#ifndef BOOST_URL_STRTOK_RETURN
+#define BOOST_URL_STRTOK_RETURN typename StringToken::result_type
+#endif
+#ifndef BOOST_URL_STRTOK_ARG
+#define BOOST_URL_STRTOK_ARG(name) StringToken&& token = {}
+#endif
+
+#if BOOST_WORKAROUND( BOOST_GCC_VERSION, < 80000 ) || \
+    BOOST_WORKAROUND( BOOST_CLANG_VERSION, < 30900 )
+#define BOOST_URL_RETURN(x) return std::move((x))
+#else
+#define BOOST_URL_RETURN(x) return (x)
+#endif
+
+using pos_t = size_t;
+
+#ifndef BOOST_URL_MAX_SIZE
+// we leave room for a null,
+// and still fit in pos_t
+#define BOOST_URL_MAX_SIZE ((pos_t(-1))-1)
+#endif
+
+#ifdef BOOST_GCC
+#define BOOST_URL_NO_INLINE [[gnu::noinline]]
+#else
+#define BOOST_URL_NO_INLINE
+#endif
+
+#ifndef BOOST_URL_COW_STRINGS
+#if defined(BOOST_LIBSTDCXX_VERSION) && (BOOST_LIBSTDCXX_VERSION < 60000 || (defined(_GLIBCXX_USE_CXX11_ABI) && _GLIBCXX_USE_CXX11_ABI == 0))
+#define BOOST_URL_COW_STRINGS
+#endif
+#endif
+
+#define BOOST_URL_PCT_STRING_VIEW pct_string_view
 
 #endif

@@ -4,7 +4,7 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_AUTHORITY_VIEW_HPP
@@ -14,8 +14,10 @@
 #include <boost/url/host_type.hpp>
 #include <boost/url/ipv4_address.hpp>
 #include <boost/url/ipv6_address.hpp>
-#include <boost/url/pct_encoding.hpp>
+#include <boost/url/pct_string_view.hpp>
+#include <boost/url/decode.hpp>
 #include <boost/url/detail/except.hpp>
+#include <boost/url/detail/url_impl.hpp>
 #include <boost/assert.hpp>
 #include <cstddef>
 #include <iosfwd>
@@ -24,30 +26,37 @@
 namespace boost {
 namespace urls {
 
-#ifndef BOOST_URL_DOCS
-struct authority_bnf;
-struct host_bnf;
-#endif
+/** A non-owning reference to a valid authority
 
-/** A read-only view to an authority.
+    Objects of this type represent valid authority
+    strings constructed from a parsed, external
+    character buffer whose storage is managed
+    by the caller. That is, it acts like a
+    @ref string_view in terms of ownership.
+    The caller is responsible for ensuring
+    that the lifetime of the underlying
+    character buffer extends until it is no
+    longer referenced.
 
-    Objects of this type represent a valid
-    authority whose storage is managed externally.
-    That is, it acts like a `std::string_view` in
-    terms of ownership. Callers are responsible
-    for ensuring that the lifetime of the
-    underlying string extends until the
-    `authority_view` is no longer in use.
-    To construct from an existing string it is
-    necessary to use one of the parsing
-    functions. Each function parses against
-    a particular URL grammar:
-
-    @par Example
+    @par Example 1
+    Construction from a string parses the input
+    as an <em>authority</em> and throws an
+    exception on error. Upon success, the
+    constructed object points to the passed
+    character buffer; ownership is not
+    transferred.
     @code
-    authority_view a;
+    authority_view a( "user:pass@www.example.com:8080" );
+    @endcode
 
-    a = parse_authority( "www.example.com:443" );
+    @par Example 2
+    The parsing function @ref parse_authority returns
+    a @ref result containing either a valid
+    @ref authority_view upon succcess, otherwise it
+    contain an error. The error can be converted to
+    an exception by the caller if desired:
+    @code
+    result< authority_view > rv = parse_authority( "user:pass@www.example.com:8080" );
     @endcode
 
     @par BNF
@@ -73,123 +82,20 @@ struct host_bnf;
 */
 class BOOST_SYMBOL_VISIBLE
     authority_view
+    : private detail::parts_base
 {
-    enum
-    {
-        id_user = 0,
-        id_pass,        // leading ':', trailing '@'
-        id_host,
-        id_port,        // leading ':'
-        id_end          // one past the end
-    };
+    detail::url_impl u_;
 
-    static
-    constexpr
-    pos_t zero_ = 0;
+#ifndef BOOST_URL_DOCS
+    // VFALCO docca emits this erroneously
+    friend struct detail::url_impl;
+#endif
 
-    static
-    constexpr
-    char const* const empty_ = "";
-
-    char const* cs_ = empty_;
-    pos_t offset_[id_end + 1] = {};
-    pos_t decoded_[id_end] = {};
-    unsigned char ip_addr_[16] = {};
-    // VFALCO don't we need a bool?
-    std::uint16_t port_number_ = 0;
-    urls::host_type host_type_ =
-        urls::host_type::none;
-
-    struct shared_impl;
-
-    inline pos_t len(int first,
-        int last) const noexcept;
-    inline void set_size(
-        int id, pos_t n) noexcept;
-    explicit authority_view(
-        char const* cs) noexcept;
+    explicit
     authority_view(
-        authority_view const& u,
-            char const* cs) noexcept;
-
-    // return offset of id
-    BOOST_URL_CONSTEXPR
-    auto
-    offset(int id) const noexcept ->
-        pos_t
-    {
-        return
-            id == id_user ?
-            zero_ : offset_[id - 1];
-    }
-
-    // return length of part
-    BOOST_URL_CONSTEXPR
-    auto
-    len(int id) const noexcept ->
-        pos_t
-    {
-        return
-            offset(id + 1) -
-            offset(id);
-    }
-
-    // return id as string
-    BOOST_URL_CONSTEXPR
-    string_view
-    get(int id) const noexcept
-    {
-        return {
-            cs_ + offset(id), len(id) };
-    }
-
-    // return [first, last) as string
-    BOOST_URL_CONSTEXPR
-    string_view
-    get(int first,
-        int last) const noexcept
-    {
-        return { cs_ + offset(first),
-            offset(last) - offset(first) };
-    }
+        detail::url_impl const& u) noexcept;
 
 public:
-    /** The type of elements.
-    */
-    using value_type        = char;
-
-    /** The type of pointers to elements.
-    */
-    using pointer           = char const*;
-
-    /** The type of const pointers to elements.
-    */
-    using const_pointer     = char const*;
-
-    /** The type of reference to elements.
-    */
-    using reference         = char const&;
-
-    /** The type of const references to elements.
-    */
-    using const_reference   = char const&;
-
-    /** The type of const iterator to elements.
-    */
-    using const_iterator    = char const*;
-
-    /** The type of iterator to elements.
-    */
-    using iterator          = char const*;
-
-    /** An unsigned integer type to represent sizes.
-    */
-    using size_type         = std::size_t;
-
-    /** A signed integer type to represent differences.
-    */
-    using difference_type   = std::ptrdiff_t;
-
     //--------------------------------------------
     //
     // Special Members
@@ -199,7 +105,8 @@ public:
     /** Destructor
     */
     BOOST_URL_DECL
-    virtual ~authority_view();
+    virtual
+    ~authority_view();
 
     /** Constructor
 
@@ -216,10 +123,53 @@ public:
     BOOST_URL_DECL
     authority_view() noexcept;
 
+    /** Construct from a string.
+
+        This function attempts to construct
+        an authority from the string `s`,
+        which must be a valid ['authority] or
+        else an exception is thrown. Upon
+        successful construction, the view
+        refers to the characters in the
+        buffer pointed to by `s`.
+        Ownership is not transferred; The
+        caller is responsible for ensuring
+        that the lifetime of the buffer
+        extends until the view is destroyed.
+
+        @par BNF
+        @code
+        authority     = [ userinfo "@" ] host [ ":" port ]
+
+        userinfo      = user [ ":" [ password ] ]
+
+        user          = *( unreserved / pct-encoded / sub-delims )
+        password      = *( unreserved / pct-encoded / sub-delims / ":" )
+
+        host          = IP-literal / IPv4address / reg-name
+
+        port          = *DIGIT
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2"
+            >3.2. Authority (rfc3986)</a>
+
+        @see
+            @ref parse_authority.
+    */
+    BOOST_URL_DECL
+    explicit
+    authority_view(string_view s);
+
+    /** Constructor
+    */
     BOOST_URL_DECL
     authority_view(
         authority_view const&) noexcept;
 
+    /** Assignment
+    */
     BOOST_URL_DECL
     authority_view&
     operator=(
@@ -227,31 +177,19 @@ public:
 
     //--------------------------------------------
     //
-    // Capacity
-    // Element Access
+    // Observers
     //
     //--------------------------------------------
 
-    /** Return the maximum number of characters allowed in the authority.
+    /** Return the number of characters in the authority
 
-        This includes any null terminator, if present
+        This function returns the number of
+        characters in the authority.
 
-        @par Exception Safety
-        Throws nothing.
-    */
-    static
-    constexpr
-    std::size_t
-    max_size() noexcept
-    {
-        return BOOST_URL_MAX_SIZE;
-    }
-
-    /** Return the number of characters in the authority.
-
-        This function returns the number
-        of characters in the authority, not
-        including any null terminator.
+        @par Example
+        @code
+        assert( authority_view( "user:pass@www.example.com:8080" ).size() == 30 );
+        @endcode
 
         @par Exception Safety
         Throws nothing.
@@ -259,10 +197,18 @@ public:
     std::size_t
     size() const noexcept
     {
-        return offset(id_end);
+        return u_.offset(id_end);
     }
 
-    /** Return true if the contents are empty.
+    /** Return true if the authority is empty
+
+        An empty authority has an empty host,
+        no userinfo, and no port.
+
+        @par Example
+        @code
+        assert( authority_view( "" ).empty() );
+        @endcode
 
         @par Exception Safety
         Throws nothing.
@@ -285,118 +231,8 @@ public:
     char const*
     data() const noexcept
     {
-        return cs_;
+        return u_.cs_;
     }
-
-    /** Access the specified character
-
-        This function returns a reference to
-        the character at the specified zero-based
-        position. If `pos` is out of range, an
-        exception if thrown.
-
-        @param pos The zero-based character
-        position to access.
-
-        @throw std::out_of_range pos >= size()
-    */
-    char const&
-    at(std::size_t pos) const
-    {
-        if(pos >= size())
-            detail::throw_out_of_range(
-                BOOST_CURRENT_LOCATION);
-        return cs_[pos];
-    }
-
-    /** Access the specified character
-
-        This function returns a reference to
-        the character at the specified zero-based
-        position. The behavior is undefined if
-        `pos` is out of range.
-
-        @par Preconditions
-        @code
-        pos < this->size()
-        @endcode
-    */
-    char const&
-    operator[](
-        std::size_t pos) const noexcept
-    {
-        BOOST_ASSERT(pos < size());
-        return cs_[pos];
-    }
-
-    /** Return an iterator to the beginning
-
-        This function returns a constant iterator
-        to the first character of the view, or
-        one past the last element if the view is
-        empty.
-    */
-    char const*
-    begin() const noexcept
-    {
-        return data();
-    }
-
-    /** Return an iterator to the end
-
-        This function returns a constant iterator to
-        the character following the last character of
-        the view. This character acts as a placeholder,
-        attempting to access it results in undefined
-        behavior.
-    */
-    char const*
-    end() const noexcept
-    {
-        return data() + size();
-    }
-
-    //--------------------------------------------
-    //
-    // Observers
-    //
-    //--------------------------------------------
-
-    /** Return a read-only copy of the authority, with shared lifetime.
-
-        This function makes a copy of the storage
-        pointed to by this, and attaches it to a
-        new constant @ref authority_view returned in a
-        shared pointer. The lifetime of the storage
-        for the characters will extend for the
-        lifetime of the shared object. This allows
-        the new view to be copied and passed around
-        after the original string buffer is destroyed.
-
-        @par Example
-        @code
-        std::shared_ptr<authority const> sp;
-        {
-            std::string s( "user:pass@example.com:443" );
-            authority_view a = parse_authority( s ).value();    // a references characters in s
-
-            assert( a.data() == s.data() );                     // same buffer
-
-            sp = a.collect();
-
-            assert( sp->data() != a.data() );                   // different buffer
-            assert( sp->encoded_authority() == s);              // same contents
-
-            // s is destroyed and thus a
-            // becomes invalid, but sp remains valid.
-        }
-        std::cout << *sp; // works
-        @endcode
-    */
-    BOOST_URL_DECL
-    std::shared_ptr<
-        authority_view const>
-    collect() const;
 
     /** Return the complete authority
 
@@ -421,25 +257,32 @@ public:
             >3.2. Authority (rfc3986)</a>
     */
     string_view
-    encoded_authority() const noexcept
+    buffer() const noexcept
     {
-        return string_view(
-            data(), size());
+        return string_view(data(), size());
     }
 
     //--------------------------------------------
+    //
+    // Userinfo
+    //
+    //--------------------------------------------
 
-    /** Return true if this contains a userinfo
+    /** Return true if a userinfo is present
 
         This function returns true if this
         contains a userinfo.
 
         @par Example
         @code
-        authority_view a = parse_authority( "user@example.com" ).value();
-
-        assert( a.has_userinfo() == true );
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).has_userinfo() );
         @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
@@ -448,16 +291,19 @@ public:
         authority   = [ userinfo "@" ] host [ ":" port ]
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
             >3.2.1. User Information (rfc3986)</a>
 
         @see
+            @ref has_password,
+            @ref encoded_password,
+            @ref encoded_user,
             @ref encoded_userinfo,
+            @ref password,
+            @ref user,
             @ref userinfo.
+
     */
     BOOST_URL_DECL
     bool
@@ -465,194 +311,172 @@ public:
 
     /** Return the userinfo
 
-        This function returns the userinfo
-        as a percent-encoded string.
+        If present, this function returns a
+        string representing the userinfo (which
+        may be empty).
+        Otherwise it returns an empty string.
+        Any percent-escapes in the string are
+        decoded first.
 
         @par Example
         @code
-        assert( parse_authority( "user:pass@example.com" ).value().encoded_userinfo() == "user:pass" );
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).userinfo() == "jane-doe:pass" );
         @endcode
 
-        @par BNF
-        @code
-        userinfo    = user [ ":" [ password ] ]
-
-        authority   = [ userinfo "@" ] host [ ":" port ]
-        @endcode
-
-        @par Exception Safety
-        Throws nothing.
-
-        @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
-            >3.2.1. User Information (rfc3986)</a>
-
-        @see
-            @ref has_userinfo,
-            @ref userinfo.
-    */
-    BOOST_URL_DECL
-    string_view
-    encoded_userinfo() const noexcept;
-
-    /** Return the userinfo
-
-        This function returns the userinfo as a
-        string with percent-decoding applied, using
-        the optionally specified allocator.
-
-        @par Example
-        @code
-        authority_view a = parse_authority( "user:pass@example.com" ).value();
-
-        assert( a.userinfo() == "user:pass" );
-        @endcode
-
-        @par BNF
-        @code
-        userinfo    = user [ ":" [ password ] ]
-
-        authority   = [ userinfo "@" ] host [ ":" port ]
-        @endcode
+        @par Complexity
+        Linear in `this->userinfo().size()`.
 
         @par Exception Safety
         Calls to allocate may throw.
 
-        @param a An optional allocator the returned
-        string will use. If this parameter is omitted,
-        the default allocator is used.
+        @par BNF
+        @code
+        userinfo    = user [ ":" [ password ] ]
 
-        @return A @ref string_value using the
-        specified allocator.
+        authority   = [ userinfo "@" ] host [ ":" port ]
+        @endcode
 
         @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
             >3.2.1. User Information (rfc3986)</a>
 
         @see
+            @ref has_password,
             @ref has_userinfo,
-            @ref encoded_userinfo.
+            @ref encoded_password,
+            @ref encoded_user,
+            @ref encoded_userinfo,
+            @ref password,
+            @ref user.
     */
-    template<
-        class Allocator =
-            std::allocator<char>>
-    string_value
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
     userinfo(
-        Allocator const& a = {}) const
+        BOOST_URL_STRTOK_ARG(token)) const
     {
-        pct_decode_opts opt;
+        decode_opts opt;
         opt.plus_to_space = false;
-        return pct_decode_unchecked(
-            encoded_userinfo(), opt, a);
+        return encoded_userinfo().decode(
+            opt, std::move(token));
     }
+
+    /** Return the userinfo
+
+        If present, this function returns a
+        string representing the userinfo (which
+        may be empty).
+        Otherwise it returns an empty string.
+        The returned string may contain
+        percent escapes.
+
+        @par Example
+        @code
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).encoded_userinfo() == "jane%2Ddoe:pass" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing
+
+        @par BNF
+        @code
+        userinfo    = user [ ":" [ password ] ]
+
+        authority   = [ userinfo "@" ] host [ ":" port ]
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+            >3.2.1. User Information (rfc3986)</a>
+
+        @see
+            @ref has_password,
+            @ref has_userinfo,
+            @ref encoded_password,
+            @ref encoded_user,
+            @ref password,
+            @ref user,
+            @ref userinfo.
+    */
+    BOOST_URL_DECL
+    pct_string_view
+    encoded_userinfo() const noexcept;
 
     //--------------------------------------------
 
     /** Return the user
 
-        This function returns the user portion of
-        the userinfo as a percent-encoded string.
+        If present, this function returns a
+        string representing the user (which
+        may be empty).
+        Otherwise it returns an empty string.
+        Any percent-escapes in the string are
+        decoded first.
 
         @par Example
         @code
-        authority_view a = parse_authority( "user:pass@example.com" ).value();
-
-        assert( a.encoded_user() == "user" );
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).user() == "jane-doe" );
         @endcode
 
-        @par BNF
-        @code
-        userinfo    = user [ ":" [ password ] ]
-
-        user        = *( unreserved / pct-encoded / sub-delims )
-        password    = *( unreserved / pct-encoded / sub-delims / ":" )
-        @endcode
-
-        @par Exception Safety
-        Throws nothing.
-
-        @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
-            >3.2.1. User Information (rfc3986)</a>
-
-        @see
-            @ref encoded_password,
-            @ref has_password,
-            @ref password,
-            @ref user.
-    */
-    string_view
-    encoded_user() const noexcept
-    {
-        return get(id_user);
-    }
-
-    /** Return the user
-
-        This function returns the user portion of
-        the userinfo as a string with percent-decoding
-        applied, using the optionally specified
-        allocator.
-
-        @par Example
-        @code
-        assert( parse_authority( "user:pass@example.com" ).value().user() == "user" );
-        @endcode
-
-        @par BNF
-        @code
-        userinfo    = user [ ":" [ password ] ]
-
-        user        = *( unreserved / pct-encoded / sub-delims )
-        password    = *( unreserved / pct-encoded / sub-delims / ":" )
-        @endcode
+        @par Complexity
+        Linear in `this->user().size()`.
 
         @par Exception Safety
         Calls to allocate may throw.
 
-        @param a An optional allocator the returned
-        string will use. If this parameter is omitted,
-        the default allocator is used.
+        @par BNF
+        @code
+        userinfo    = user [ ":" [ password ] ]
 
-        @return A @ref string_value using the
-        specified allocator.
+        user        = *( unreserved / pct-encoded / sub-delims )
+        password    = *( unreserved / pct-encoded / sub-delims / ":" )
+        @endcode
 
         @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
             >3.2.1. User Information (rfc3986)</a>
 
         @see
+            @ref has_password,
+            @ref has_userinfo,
             @ref encoded_password,
             @ref encoded_user,
-            @ref has_password,
-            @ref password.
+            @ref encoded_userinfo,
+            @ref password,
+            @ref userinfo.
     */
-    template<
-        class Allocator =
-            std::allocator<char>>
-    string_value
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
     user(
-        Allocator const& a = {}) const
+        BOOST_URL_STRTOK_ARG(token)) const
     {
-        pct_decode_opts opt;
+        decode_opts opt;
         opt.plus_to_space = false;
-        return pct_decode_unchecked(
-            encoded_user(), opt, a);
+        return encoded_user().decode(
+            opt, std::move(token));
     }
 
-    /** Return true if this contains a password
+    /** Return the user
 
-        This function returns true if the userinfo
-        contains a password (which may be empty).
+        If present, this function returns a
+        string representing the user (which
+        may be empty).
+        Otherwise it returns an empty string.
+        The returned string may contain
+        percent escapes.
 
         @par Example
         @code
-        assert( parse_authority( "user@example.com" ).value().has_password() == false );
-
-        assert( parse_authority( "user:pass@example.com" ).value().has_password() == true );
-
-        assert( parse_authority( ":@" ).value().has_password() == true );
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).encoded_user() == "jane%2Ddoe" );
         @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
@@ -662,22 +486,116 @@ public:
         password    = *( unreserved / pct-encoded / sub-delims / ":" )
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
             >3.2.1. User Information (rfc3986)</a>
 
         @see
+            @ref has_password,
+            @ref has_userinfo,
+            @ref encoded_password,
+            @ref encoded_userinfo,
+            @ref password,
+            @ref user,
+            @ref userinfo.
+    */
+    BOOST_URL_DECL
+    pct_string_view
+    encoded_user() const noexcept;
+
+    /** Return true if a password is present
+
+        This function returns true if the
+        userinfo is present and contains
+        a password.
+
+        @par Example
+        @code
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).has_password() );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
+
+        @par BNF
+        @code
+        userinfo    = user [ ":" [ password ] ]
+
+        user        = *( unreserved / pct-encoded / sub-delims )
+        password    = *( unreserved / pct-encoded / sub-delims / ":" )
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+            >3.2.1. User Information (rfc3986)</a>
+
+        @see
+            @ref has_userinfo,
             @ref encoded_password,
             @ref encoded_user,
+            @ref encoded_userinfo,
             @ref password,
-            @ref user.
+            @ref user,
+            @ref userinfo.
     */
     BOOST_URL_DECL
     bool
     has_password() const noexcept;
+
+    /** Return the password
+
+        If present, this function returns a
+        string representing the password (which
+        may be an empty string).
+        Otherwise it returns an empty string.
+        Any percent-escapes in the string are
+        decoded first.
+
+        @par Example
+        @code
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).password() == "pass" );
+        @endcode
+
+        @par Complexity
+        Linear in `this->password().size()`.
+
+        @par Exception Safety
+        Calls to allocate may throw.
+
+        @par BNF
+        @code
+        userinfo    = user [ ":" [ password ] ]
+
+        user        = *( unreserved / pct-encoded / sub-delims )
+        password    = *( unreserved / pct-encoded / sub-delims / ":" )
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
+            >3.2.1. User Information (rfc3986)</a>
+
+        @see
+            @ref has_password,
+            @ref has_userinfo,
+            @ref encoded_password,
+            @ref encoded_user,
+            @ref encoded_userinfo,
+            @ref user,
+            @ref userinfo.
+    */
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
+    password(
+        BOOST_URL_STRTOK_ARG(token)) const
+    {
+        decode_opts opt;
+        opt.plus_to_space = false;
+        return encoded_password().decode(
+            opt, std::move(token));
+    }
 
     /** Return the password
 
@@ -686,10 +604,14 @@ public:
 
         @par Example
         @code
-        authority_view a = parse_authority( "user:pass@example.com" ).value();
-
-        assert( a.encoded_user() == "user" );
+        assert( url_view( "http://jane%2Ddoe:pass@example.com" ).encoded_password() == "pass" );
         @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
@@ -699,90 +621,47 @@ public:
         password    = *( unreserved / pct-encoded / sub-delims / ":" )
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
-        @par Specification
-        <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
-            >3.2.1. User Information (rfc3986)</a>
-
-        @see
-            @ref encoded_password,
-            @ref has_password,
-            @ref password,
-            @ref user.
-    */
-    BOOST_URL_DECL
-    string_view
-    encoded_password() const noexcept;
-
-    /** Return the password
-
-        This function returns the password from the
-        userinfo with percent-decoding applied,
-        using the optionally specified allocator.
-
-        @par Exception Safety
-        Calls to allocate may throw.
-
-        @param a An allocator to use for the string.
-        If this parameter is omitted, the default
-        allocator is used, and the return type of
-        the function becomes `std::string`.
-
-        @return A @ref string_value using the
-        specified allocator.
-
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1"
             >3.2.1. User Information (rfc3986)</a>
 
         @see
-            @ref encoded_password,
-            @ref encoded_user,
             @ref has_password,
-            @ref password.
+            @ref has_userinfo,
+            @ref encoded_user,
+            @ref encoded_userinfo,
+            @ref password,
+            @ref user,
+            @ref userinfo.
     */
-    template<
-        class Allocator =
-            std::allocator<char>>
-    string_value
-    password(
-        Allocator const& a = {}) const
-    {
-        pct_decode_opts opt;
-        opt.plus_to_space = false;
-        return pct_decode_unchecked(
-            encoded_password(), opt, a);
-    }
+    BOOST_URL_DECL
+    pct_string_view
+    encoded_password() const noexcept;
 
     //--------------------------------------------
+    //
+    // Host
+    //
+    //--------------------------------------------
 
-    /** Return the type of host present, if any
+    /** Return the host type
 
-        This function returns a
-            @ref urls::host_type
-        constant representing the type of
-        host this contains, which may be
-        @ref urls::host_type::none.
+        This function returns one of the
+        following constants representing the
+        type of host present.
+
+        @li @ref host_type::ipv4
+        @li @ref host_type::ipv6
+        @li @ref host_type::ipvfuture
+        @li @ref host_type::name
 
         @par Example
         @code
-        assert( authority_view().host_type() == host_type::none );
-
-        assert( parse_authority( "example.com" ).value().host_type() == host_type::name );
-
-        assert( parse_authority( "192.168.0.1" ).value().host_type() == host_type::ipv4 );
+        assert( url_view( "https://192.168.0.1/local.htm" ).host_type() == host_type::ipv4 );
         @endcode
 
-        @par BNF
-        @code
-        host        = IP-literal / IPv4address / reg-name
-
-        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
-
-        IPvFuture   = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-        @endcode
+        @par Complexity
+        Constant.
 
         @par Exception Safety
         Throws nothing.
@@ -790,142 +669,227 @@ public:
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
             >3.2.2. Host (rfc3986)</a>
-
-        @see
-            @ref encoded_host,
-            @ref has_port,
-            @ref host,
-            @ref port,
-            @ref port_number.
     */
     urls::host_type
     host_type() const noexcept
     {
-        return host_type_;
+        return u_.host_type_;
     }
 
     /** Return the host
 
-        This function returns the host portion of
-        the authority as a percent-encoded string,
+        This function returns the host portion
+        of the authority as a string, or the
+        empty string if there is no authority.
+        Any percent-escapes in the string are
+        decoded first.
 
         @par Example
         @code
-        assert( parse_authority( "" ).value().encoded_host() == "" );
-
-        assert( parse_authority( "http://example.com" ).value().encoded_host() == "example.com" );
-
-        assert( parse_authority( "http://192.168.0.1" ).value().encoded_host() == "192.168.0.1" );
+        assert( url_view( "https://www%2droot.example.com/" ).host() == "www-root.example.com" );
         @endcode
 
-        @par BNF
-        @code
-        host        = IP-literal / IPv4address / reg-name
-
-        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
-
-        IPvFuture   = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-
-        reg-name    = *( unreserved / pct-encoded / "-" / ".")
-        @endcode
-
-        @par Exception Safety
-        Throws nothing.
-
-        @par Specification
-        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
-            >3.2.2. Host (rfc3986)</a>
-
-        @see
-            @ref has_port,
-            @ref host,
-            @ref host_type,
-            @ref port,
-            @ref port_number.
-    */
-    BOOST_URL_DECL
-    string_view
-    encoded_host() const noexcept;
-
-    /** Return the host
-
-        This function returns the host portion of
-        the authority as a string with percent-decoding
-        applied, using the optionally specified
-        allocator.
-
-        @par Example
-        @code
-        assert( parse_authority( "" ).value().host() == "" );
-
-        assert( parse_authority( "example.com" ).value().host() == "example.com" );
-
-        assert( parse_authority( "192.168.0.1" ).value().host() == "192.168.0.1" );
-        @endcode
-
-        @par BNF
-        @code
-        host        = IP-literal / IPv4address / reg-name
-
-        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
-
-        IPvFuture   = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-
-        reg-name    = *( unreserved / pct-encoded / "-" / ".")
-        @endcode
+        @par Complexity
+        Linear in `this->host().size()`.
 
         @par Exception Safety
         Calls to allocate may throw.
 
-        @param a An optional allocator the returned
-        string will use. If this parameter is omitted,
-        the default allocator is used, and the return
-        type of the function becomes `std::string`.
+        @par BNF
+        @code
+        host        = IP-literal / IPv4address / reg-name
 
-        @return A @ref string_value using the
-        specified allocator.
+        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
+
+        reg-name    = *( unreserved / pct-encoded / "-" / ".")
+        @endcode
 
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
             >3.2.2. Host (rfc3986)</a>
-
-        @see
-            @ref encoded_host,
-            @ref encoded_host_and_port
-            @ref has_port,
-            @ref host_type,
-            @ref port,
-            @ref port_number.
     */
-    template<
-        class Allocator =
-            std::allocator<char>>
-    string_value
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
     host(
-        Allocator const& a = {}) const
+        BOOST_URL_STRTOK_ARG(token)) const
     {
-        auto const s0 =
-            encoded_host();
-        if(host_type_ !=
-            urls::host_type::name)
-        {
-            // no decoding
-            return string_value(s0, a);
-        }
-        pct_decode_opts opt;
+        decode_opts opt;
         opt.plus_to_space = false;
-        return pct_decode_unchecked(
-            s0, opt, a, decoded_[id_host]);
+        return encoded_host().decode(
+            opt, std::move(token));
     }
 
-    /** Return the host as an IPv4 address
+    /** Return the host
 
-        If @ref host_type equals @ref urls::host_type::ipv4,
-        this function returns the corresponding
-        @ref ipv4_address
-        of the host if it exists, otherwise it
-        returns the unspecified address which
-        is equal to "0.0.0.0".
+        This function returns the host portion
+        of the authority as a string, or the
+        empty string if there is no authority.
+        The returned string may contain
+        percent escapes.
+
+        @par Example
+        @code
+        assert( url_view( "https://www%2droot.example.com/" ).encoded_host() == "www%2droot.example.com" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
+
+        @par BNF
+        @code
+        host        = IP-literal / IPv4address / reg-name
+
+        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
+
+        reg-name    = *( unreserved / pct-encoded / "-" / ".")
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
+            >3.2.2. Host (rfc3986)</a>
+    */
+    BOOST_URL_DECL
+    pct_string_view
+    encoded_host() const noexcept;
+
+    /** Return the host
+
+        The value returned by this function
+        depends on the type of host returned
+        from the function @ref host_type.
+
+        @li If the type is @ref host_type::ipv4,
+        then the IPv4 address string is returned.
+
+        @li If the type is @ref host_type::ipv6,
+        then the IPv6 address string is returned,
+        without any enclosing brackets.
+
+        @li If the type is @ref host_type::ipvfuture,
+        then the IPvFuture address string is returned,
+        without any enclosing brackets.
+
+        @li If the type is @ref host_type::name,
+        then the host name string is returned.
+        Any percent-escapes in the string are
+        decoded first.
+
+        @li If the type is @ref host_type::none,
+        then an empty string is returned.
+
+        @par Example
+        @code
+        assert( url_view( "https://[1::6:c0a8:1]/" ).host_address() == "1::6:c0a8:1" );
+        @endcode
+
+        @par Complexity
+        Linear in `this->host_address().size()`.
+
+        @par Exception Safety
+        Calls to allocate may throw.
+
+        @par BNF
+        @code
+        host        = IP-literal / IPv4address / reg-name
+
+        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
+
+        reg-name    = *( unreserved / pct-encoded / "-" / ".")
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
+            >3.2.2. Host (rfc3986)</a>
+    */
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
+    host_address(
+        BOOST_URL_STRTOK_ARG(token)) const
+    {
+        decode_opts opt;
+        opt.plus_to_space = false;
+        return encoded_host_address().decode(
+            opt, std::move(token));
+    }
+
+    /** Return the host
+
+        The value returned by this function
+        depends on the type of host returned
+        from the function @ref host_type.
+
+        @li If the type is @ref host_type::ipv4,
+        then the IPv4 address string is returned.
+
+        @li If the type is @ref host_type::ipv6,
+        then the IPv6 address string is returned,
+        without any enclosing brackets.
+
+        @li If the type is @ref host_type::ipvfuture,
+        then the IPvFuture address string is returned,
+        without any enclosing brackets.
+
+        @li If the type is @ref host_type::name,
+        then the host name string is returned.
+        Any percent-escapes in the string are
+        decoded first.
+
+        @li If the type is @ref host_type::none,
+        then an empty string is returned.
+        The returned string may contain
+        percent escapes.
+
+        @par Example
+        @code
+        assert( url_view( "https://www%2droot.example.com/" ).encoded_host_address() == "www%2droot.example.com" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
+
+        @par BNF
+        @code
+        host        = IP-literal / IPv4address / reg-name
+
+        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
+
+        reg-name    = *( unreserved / pct-encoded / "-" / ".")
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
+            >3.2.2. Host (rfc3986)</a>
+    */
+    BOOST_URL_DECL
+    pct_string_view
+    encoded_host_address() const noexcept;
+
+    /** Return the host IPv4 address
+
+        If the host type is @ref host_type::ipv4,
+        this function returns the address as
+        a value of type @ref ipv4_address.
+        Otherwise, if the host type is not an IPv4
+        address, it returns a default-constructed
+        value which is equal to the unspecified
+        address "0.0.0.0".
+
+        @par Example
+        @code
+        assert( url_view( "http://127.0.0.1/index.htm?user=win95" ).host_ipv4_address() == ipv4_address( "127.0.0.1" ) );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
@@ -938,29 +902,34 @@ public:
                     / "25" %x30-35          ; 250-255
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
             >3.2.2. Host (rfc3986)</a>
-
-        @see
-            @ref ipv4_address.
     */
     BOOST_URL_DECL
-    urls::ipv4_address
-    ipv4_address() const noexcept;
+    ipv4_address
+    host_ipv4_address() const noexcept;
 
-    /** Return the host as an IPv6 address
+    /** Return the host IPv6 address
 
-        If @ref host_type equals
-        @ref urls::host_type::ipv6, this
-        function returns the corresponding
-        @ref ipv6_address of the host if it
-        exists, otherwise it returns the
-        unspecified address which is equal
-        to "0:0:0:0:0:0:0:0".
+        If the host type is @ref host_type::ipv6,
+        this function returns the address as
+        a value of type @ref ipv6_address.
+        Otherwise, if the host type is not an IPv6
+        address, it returns a default-constructed
+        value which is equal to the unspecified
+        address "0:0:0:0:0:0:0:0".
+
+        @par Example
+        @code
+        assert( url_view( "ftp://[::1]/" ).host_ipv6_address() == ipv6_address( "::1" ) );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
@@ -981,35 +950,38 @@ public:
                     ; 16 bits of address represented in hexadecimal
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
             >3.2.2. Host (rfc3986)</a>
-
-        @see
-            @ref ipv6_address.
     */
     BOOST_URL_DECL
-    urls::ipv6_address
-    ipv6_address() const noexcept;
+    ipv6_address
+    host_ipv6_address() const noexcept;
 
-    /** Return the host as an IPvFuture string
+    /** Return the host IPvFuture address
 
-        If @ref host_type equals
-        @ref urls::host_type::ipvfuture, this
-        function returns a string representing
-        the address. Otherwise it returns the
+        If the host type is @ref host_type::ipvfuture,
+        this function returns the address as
+        a string.
+        Otherwise, if the host type is not an
+        IPvFuture address, it returns an
         empty string.
+
+        @par Example
+        @code
+        assert( url_view( "http://[v1fe.d:9]/index.htm" ).host_ipvfuture() == "v1fe.d:9" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
         IPvFuture  = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
         @endcode
-
-        @par Exception Safety
-        Throws nothing.
 
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
@@ -1017,12 +989,112 @@ public:
     */
     BOOST_URL_DECL
     string_view
-    ipv_future() const noexcept;
+    host_ipvfuture() const noexcept;
 
-    /** Return true if the URL contains a port
+    /** Return the host name
 
-        This function returns true if the
-        authority contains a port.
+        If the host type is @ref host_type::name,
+        this function returns the name as
+        a string.
+        Otherwise, if the host type is not an
+        name, it returns an empty string.
+        Any percent-escapes in the string are
+        decoded first.
+
+        @par Example
+        @code
+        assert( url_view( "https://www%2droot.example.com/" ).host_name() == "www-root.example.com" );
+        @endcode
+
+        @par Complexity
+        Linear in `this->host_name().size()`.
+
+        @par Exception Safety
+        Calls to allocate may throw.
+
+        @par BNF
+        @code
+        host        = IP-literal / IPv4address / reg-name
+
+        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
+
+        reg-name    = *( unreserved / pct-encoded / "-" / ".")
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
+            >3.2.2. Host (rfc3986)</a>
+    */
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
+    host_name(
+        BOOST_URL_STRTOK_ARG(token)) const
+    {
+        decode_opts opt;
+        opt.plus_to_space = false;
+        return encoded_host_name().decode(
+            opt, std::move(token));
+    }
+
+    /** Return the host name
+
+        If the host type is @ref host_type::name,
+        this function returns the name as
+        a string.
+        Otherwise, if the host type is not an
+        name, it returns an empty string.
+        The returned string may contain
+        percent escapes.
+
+        @par Example
+        @code
+        assert( url_view( "https://www%2droot.example.com/" ).encoded_host_name() == "www%2droot.example.com" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
+
+        @par BNF
+        @code
+        host        = IP-literal / IPv4address / reg-name
+
+        IP-literal  = "[" ( IPv6address / IPvFuture  ) "]"
+
+        reg-name    = *( unreserved / pct-encoded / "-" / ".")
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
+            >3.2.2. Host (rfc3986)</a>
+    */
+    BOOST_URL_DECL
+    pct_string_view
+    encoded_host_name() const noexcept;
+
+    //--------------------------------------------
+    //
+    // Port
+    //
+    //--------------------------------------------
+
+    /** Return true if a port is present
+
+        This function returns true if an
+        authority is present and contains a port.
+
+        @par Example
+        @code
+        assert( url_view( "wss://www.example.com:443" ).has_port() );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
@@ -1031,18 +1103,12 @@ public:
         port        = *DIGIT
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.3"
             >3.2.3. Port (rfc3986)</a>
 
         @see
-            @ref encoded_host,
-            @ref encoded_host_and_port
-            @ref host,
-            @ref host_type,
+            @ref encoded_host_and_port,
             @ref port,
             @ref port_number.
     */
@@ -1052,60 +1118,71 @@ public:
 
     /** Return the port
 
-        This function returns the port specified
-        in the authority, or an empty string if
-        there is no port.
+        If present, this function returns a
+        string representing the port (which
+        may be empty).
+        Otherwise it returns an empty string.
+
+        @par Example
+        @code
+        assert( url_view( "http://localhost.com:8080" ).port() == "8080" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
         port        = *DIGIT
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.3"
             >3.2.3. Port (rfc3986)</a>
 
         @see
-            @ref encoded_host,
-            @ref encoded_host_and_port
+            @ref encoded_host_and_port,
             @ref has_port,
-            @ref host,
-            @ref host_type,
             @ref port_number.
     */
     BOOST_URL_DECL
     string_view
     port() const noexcept;
 
-    /** Return the port as an intege
+    /** Return the port
 
-        This function returns the port as an
-        integer if the authority specifies
-        a port and the number can be represented.
-        Otherwise it returns zero.
+        If a port is present and the numerical
+        value is representable, it is returned
+        as an unsigned integer. Otherwise, the
+        number zero is returned.
+
+        @par Example
+        @code
+        assert( url_view( "http://localhost.com:8080" ).port_number() == 8080 );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
         port        = *DIGIT
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.3"
             >3.2.3. Port (rfc3986)</a>
 
         @see
-            @ref encoded_host,
-            @ref encoded_host_and_port
+            @ref encoded_host_and_port,
             @ref has_port,
-            @ref host,
-            @ref host_type,
-            @ref port,
+            @ref port.
     */
     BOOST_URL_DECL
     std::uint16_t
@@ -1113,47 +1190,79 @@ public:
 
     /** Return the host and port
 
-        This function returns the host and
-        port of the authority as a single
-        percent-encoded string.
+        If an authority is present, this
+        function returns the host and optional
+        port as a string, which may be empty.
+        Otherwise it returns an empty string.
+        The returned string may contain
+        percent escapes.
+
+        @par Example
+        @code
+        assert( url_view( "http://www.example.com:8080/index.htm" ).encoded_host_and_port() == "www.example.com:8080" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing.
 
         @par BNF
         @code
         authority   = [ userinfo "@" ] host [ ":" port ]
         @endcode
 
-        @par Exception Safety
-        Throws nothing.
-
         @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2"
+            >3.2.2.  Host (rfc3986)</a>
         @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.3"
             >3.2.3. Port (rfc3986)</a>
 
         @see
-            @ref encoded_host,
-            @ref encoded_host_and_port
             @ref has_port,
-            @ref host,
-            @ref host_type,
             @ref port,
+            @ref port_number.
     */
     BOOST_URL_DECL
-    string_view
+    pct_string_view
     encoded_host_and_port() const noexcept;
 
     //--------------------------------------------
-    //
-    // Parsing
-    //
-    //--------------------------------------------
 
-    BOOST_URL_DECL friend result<authority_view>
-        parse_authority(string_view s) noexcept;
-
-private:
-    void apply(host_bnf const& h) noexcept;
-    void apply(authority_bnf const& t) noexcept;
+    // hidden friend
+    friend
+    std::ostream&
+    operator<<(
+        std::ostream& os,
+        authority_view const& a)
+    {
+        return os << a.buffer();
+    }
 };
+
+/** Format the encoded authority to the output stream
+
+    This function serializes the encoded URL
+    to the output stream.
+
+    @par Example
+    @code
+    authority_view a( "www.example.com" );
+
+    std::cout << a << std::endl;
+    @endcode
+
+    @return A reference to the output stream, for chaining
+
+    @param os The output stream to write to
+
+    @param a The URL to write
+*/
+std::ostream&
+operator<<(
+    std::ostream& os,
+    authority_view const& a);
 
 //------------------------------------------------
 
@@ -1202,33 +1311,7 @@ parse_authority(
 
 //------------------------------------------------
 
-/** Format the encoded authority to the output stream
-
-    This function serializes the encoded URL
-    to the output stream.
-
-    @par Example
-    @code
-    url_view u = parse_uri( "http://www.example.com/index.htm" );
-
-    std::cout << u << std::endl;
-    @endcode
-
-    @return A reference to the output stream, for chaining
-
-    @param os The output stream to write to
-
-    @param u The URL to write
-*/
-BOOST_URL_DECL
-std::ostream&
-operator<<(
-    std::ostream& os,
-    authority_view const& a);
-
 } // urls
 } // boost
-
-#include <boost/url/impl/authority_view.hpp>
 
 #endif

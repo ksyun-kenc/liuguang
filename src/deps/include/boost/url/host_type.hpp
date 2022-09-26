@@ -4,7 +4,7 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_HOST_TYPE_HPP
@@ -20,9 +20,6 @@ namespace urls {
     Values of this type are returned by URL views
     and containers to indicate the type of host
     present in a URL.
-
-    @see
-        @ref url_view::host.
 */
 enum class host_type
 {
@@ -40,15 +37,12 @@ enum class host_type
     name,
 
     /**
-     * A host is specified by IPv4address.
-       See @ref ipv4_address
+     * A host is specified by @ref ipv4_address.
     */
     ipv4,
 
     /**
-     * A host is specified by IPv6address.
-
-       @see @ref ipv6_address
+     * A host is specified by @ref ipv6_address.
     */
     ipv6,
 

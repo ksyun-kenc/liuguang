@@ -1,10 +1,11 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2022 Alan Freitas (alandefreitas@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_IPV4_ADDRESS_HPP
@@ -12,7 +13,10 @@
 
 #include <boost/url/detail/config.hpp>
 #include <boost/url/error.hpp>
-#include <boost/url/string.hpp>
+#include <boost/url/error_types.hpp>
+#include <boost/url/string_view.hpp>
+#include <boost/url/grammar/string_token.hpp>
+#include <string>
 #include <array>
 #include <cstdint>
 #include <iosfwd>
@@ -109,6 +113,7 @@ public:
         @param bytes The value to construct from.
     */
     BOOST_URL_DECL
+    explicit
     ipv4_address(
         bytes_type const& bytes) noexcept;
 
@@ -134,6 +139,7 @@ public:
             @ref parse_ipv4_address.
     */
     BOOST_URL_DECL
+    explicit
     ipv4_address(
         string_view s);
 
@@ -151,28 +157,44 @@ public:
 
     /** Return the address as a string in dotted decimal format
 
+        When called with no arguments, the
+        return type is `std::string`.
+        Otherwise, the return type and style
+        of output is determined by which string
+        token is passed.
+
+        @par Example
+        @code
+        assert( ipv4_address(0x01020304).to_string() == "1.2.3.4" );
+        @endcode
+
+        @par Complexity
+        Constant.
+
         @par Exception Safety
         Strong guarantee.
         Calls to allocate may throw.
+        String tokens may throw exceptions.
 
-        @param a An optional allocator the returned
-        string will use. If this parameter is omitted,
-        the default allocator is used.
+        @return The return type of the string token.
+        If the token parameter is omitted, then
+        a new `std::string` is returned.
+        Otherwise, the function return type
+        will be the result type of the token.
 
-        @return A @ref string_value using the
-        specified allocator.
+        @param token An optional string token.
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc4291#section-2.2">
+            2.2. Text Representation of Addresses (rfc4291)</a>
     */
-    template<class Allocator =
-        std::allocator<char>>
-    string_value
-    to_string(Allocator const& a = {}) const
+    template<BOOST_URL_STRTOK_TPARAM>
+    BOOST_URL_STRTOK_RETURN
+    to_string(
+        BOOST_URL_STRTOK_ARG(token)) const
     {
-        char buf[max_str_len];
-        auto const n = print_impl(buf);
-        char* dest;
-        string_value s(n, a, dest);
-        std::memcpy(dest, buf, n);
-        return s;
+        to_string_impl(token);
+        return token.result();
     }
 
     /** Write a dotted decimal string representing the address to a buffer
@@ -261,16 +283,17 @@ public:
         return ipv4_address(0xFFFFFFFF);
     }
 
-    /** Parse an IPv4 address.
-    */
-    BOOST_URL_DECL
+    // hidden friend
     friend
-    bool
-    parse(
-        char const*& it,
-        char const* const end,
-        error_code& ec,
-        ipv4_address& t);
+    std::ostream&
+    operator<<(
+        std::ostream& os,
+        ipv4_address const& addr)
+    {
+        char buf[ipv4_address::max_str_len];
+        os << addr.to_buffer(buf, sizeof(buf));
+        return os;
+    }
 
 private:
     friend class ipv6_address;
@@ -280,10 +303,13 @@ private:
     print_impl(
         char* dest) const noexcept;
 
+    BOOST_URL_DECL
+    void
+    to_string_impl(
+        string_token::arg& t) const;
+
     uint_type addr_ = 0;
 };
-
-//------------------------------------------------
 
 /** Format the address to an output stream.
 
@@ -294,11 +320,12 @@ private:
 
     @param addr The address to format.
 */
-BOOST_URL_DECL
 std::ostream&
 operator<<(
     std::ostream& os,
     ipv4_address const& addr);
+
+//------------------------------------------------
 
 /** Return an IPv4 address from an IP address string in dotted decimal form
 */

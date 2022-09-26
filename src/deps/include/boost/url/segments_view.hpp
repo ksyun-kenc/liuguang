@@ -1,178 +1,199 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2022 Alan de Freitas (alandefreitas@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_SEGMENTS_VIEW_HPP
 #define BOOST_URL_SEGMENTS_VIEW_HPP
 
 #include <boost/url/detail/config.hpp>
-#include <boost/url/string.hpp>
-#include <cstddef>
-#include <iosfwd>
+#include <boost/url/segments_base.hpp>
+#include <boost/url/string_view.hpp>
 
 namespace boost {
 namespace urls {
 
-#ifndef BOOST_URL_DECL
-class url_view;
-class segments_encoded_view;
-#endif
+/** A view representing path segments in a URL
 
-/** A bidirectional range of read-only path segment strings with percent-decoding applied.
+    Objects of this type are used to interpret
+    the path as a bidirectional view of segment
+    strings.
+
+    The view does not retain ownership of the
+    elements and instead references the original
+    character buffer. The caller is responsible
+    for ensuring that the lifetime of the buffer
+    extends until it is no longer referenced.
+
+    @par Example
+    @code
+    url_view u( "/path/to/file.txt" );
+
+    segments_view ps = u.segments();
+
+    assert( ps.buffer().data() == u.buffer().data() );
+    @endcode
+
+    The strings produced when iterators are
+    dereferenced belong to the iterator and
+    become invalidated when that particular
+    iterator is incremented, decremented,
+    or destroyed.
+    Any percent-escapes in returned strings
+    are decoded first.
+
+    @par Iterator Invalidation
+    Changes to the underlying character buffer
+    can invalidate iterators which reference it.
 
     @see
-        @ref segments_encoded_view.
+        @ref segments_encoded_view,
+        @ref segments_encoded_ref,
+        @ref segments_ref.
 */
 class segments_view
+    : public segments_base
 {
-    string_view s_;
-    std::size_t n_ = 0;
-    string_value::allocator a_;
-
-    friend class url_view;
+    friend class url_view_base;
     friend class segments_encoded_view;
+    friend class segments_ref;
 
-    template<class Allocator>
     segments_view(
-        string_view s,
-        std::size_t n,
-        Allocator const& a);
+        detail::path_ref const& ref) noexcept;
 
 public:
-#ifdef BOOST_URL_DOCS
-    /** An iterator to a read-only decoded path segment.
-    */
-    using iterator = __see_below__;
-#else
-    class iterator;
-#endif
+    /** Constructor
 
-    /** The type of value returned when dereferencing an iterator.
-    */
-    using value_type = string_value;
+        Default-constructed segments have
+        zero elements.
 
-    /** The type of value returned when dereferencing an iterator.
-    */
-    using reference = string_value;
+        @par Example
+        @code
+        segments_view ps;
+        @endcode
 
-    /** The type of value returned when dereferencing an iterator.
-    */
-    using const_reference = string_value;
+        @par Effects
+        @code
+        return segments_view( "" );
+        @endcode
 
-    /** The unsigned integer type used to represent size.
-    */
-    using size_type = std::size_t;
+        @par Complexity
+        Constant.
 
-    /** The signed integer type used to represent differences.
+        @par Exception Safety
+        Throws nothing.
     */
-    using difference_type = std::ptrdiff_t;
-
-    //--------------------------------------------
-    //
-    // Members
-    //
-    //--------------------------------------------
+    segments_view() = default;
 
     /** Constructor
 
-        Default constructed views represent an
-        empty path.
+        After construction, both views will
+        reference the same underlying character
+        buffer.
+
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
+
+        @par Postconditions
+        @code
+        this->buffer().data() == other.buffer().data()
+        @endcode
+
+        @par Complexity
+        Constant
+
+        @par Exception Safety
+        Throws nothing
     */
-    inline
-    segments_view() noexcept;
+    segments_view(
+        segments_view const& other) = default;
 
-    /** Returns true if this contains an absolute path.
+    /** Constructor
 
-        Absolute paths always start with a
-        forward slash ('/').
-    */
-    inline
-    bool
-    is_absolute() const noexcept;
+        This function constructs segments from
+        a valid path string, which can contain
+        percent escapes.
+        Upon construction, the view will reference
+        the character buffer pointed to by `s`.
+        caller is responsible for ensuring
+        that the lifetime of the buffer
+        extends until the view is destroyed.
 
-    //--------------------------------------------
-    //
-    // Element Access
-    //
-    //--------------------------------------------
+        @par Example
+        @code
+        segments_view ps( "/path/to/file.txt" );
+        @endcode
 
-    /** Return the first element.
-    */
-    inline
-    string_value
-    front() const noexcept;
+        @par Effects
+        @code
+        return parse_path( s ).value();
+        @endcode
 
-    /** Return the last element.
-    */
-    inline
-    string_value
-    back() const noexcept;
+        @par Postconditions
+        @code
+        this->buffer().data() == s.data()
+        @endcode
 
-    //--------------------------------------------
-    //
-    // Iterators
-    //
-    //--------------------------------------------
+        @par Complexity
+        Linear in `s`.
 
-    /** Return an iterator to the beginning.
+        @par Exception Safety
+        Exceptions thrown on invalid input.
+
+        @throw system_error
+        `s` contains an invalid path.
+
+        @param s The string to parse.
+
+        @par BNF
+        @code
+        path = [ "/" ] [ segment *( "/" segment ) ]
+
+        segment = *pchar
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.3"
+            >3.3.  Path</a>
     */
     BOOST_URL_DECL
-    iterator
-    begin() const noexcept;
+    segments_view(
+        string_view s);
 
-    /** Return an iterator to the end.
+    /** Assignment
+
+        After assignment, both views will
+        reference the same underlying character
+        buffer.
+
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
+
+        @par Postconditions
+        @code
+        this->buffer().data() == other.buffer().data()
+        @endcode
+
+        @par Complexity
+        Constant
+
+        @par Exception Safety
+        Throws nothing
     */
-    BOOST_URL_DECL
-    iterator
-    end() const noexcept;
-
-    //--------------------------------------------
-    //
-    // Capacity
-    //
-    //--------------------------------------------
-
-    /** Return true if the range contains no elements
-    */
-    inline
-    bool
-    empty() const noexcept;
-
-    /** Return the number of elements in the range
-    */
-    inline
-    std::size_t
-    size() const noexcept;
-
-    //--------------------------------------------
-    //
-    // Friends
-    //
-    //--------------------------------------------
-
-    BOOST_URL_DECL friend std::ostream&
-        operator<<(std::ostream& os,
-            segments_view const& pv);
+    segments_view&
+    operator=(segments_view const& other) = default;
 };
-
-//----------------------------------------------------------
-
-/** Format the object to an output stream
-*/
-BOOST_URL_DECL
-std::ostream&
-operator<<(
-    std::ostream& os,
-    segments_view const& vw);
 
 } // urls
 } // boost
-
-#include <boost/url/impl/segments_view.hpp>
 
 #endif

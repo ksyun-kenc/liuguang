@@ -13,3 +13,6 @@
 [submodule "src/ClipboardSync"]
 	path = src/ClipboardSync
 	url = https://github.com/UMU618/ClipboardSync
+[submodule "src/deps/umu"]
+	path = src/deps/umu
+	url = https://github.com/UMU618/umu

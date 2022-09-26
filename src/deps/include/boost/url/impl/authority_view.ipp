@@ -4,55 +4,42 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_IMPL_AUTHORITY_VIEW_IPP
 #define BOOST_URL_IMPL_AUTHORITY_VIEW_IPP
 
 #include <boost/url/authority_view.hpp>
-#include <boost/url/error.hpp>
-#include <boost/url/detail/over_allocator.hpp>
-#include <boost/url/bnf/parse.hpp>
-#include <boost/url/rfc/authority_bnf.hpp>
-#include <boost/url/rfc/host_bnf.hpp>
-#include <boost/url/rfc/pct_encoded_bnf.hpp>
+#include <boost/url/grammar/parse.hpp>
+#include <boost/url/rfc/authority_rule.hpp>
+#include <boost/url/rfc/pct_encoded_rule.hpp>
 #include <array>
 #include <ostream>
 
 namespace boost {
 namespace urls {
 
-struct authority_view::shared_impl :
-    authority_view
-{
-    virtual
-    ~shared_impl()
-    {
-    }
+//------------------------------------------------
 
-    shared_impl(
-        authority_view const& u) noexcept
-        : authority_view(u, reinterpret_cast<
-            char const*>(this + 1))
-    {
-    }
-};
+namespace detail {
 
-authority_view::
-authority_view(
-    char const* cs) noexcept
-    : cs_(cs)
+authority_view
+url_impl::
+construct_authority() const noexcept
 {
+    return authority_view(*this);
 }
 
+} // detail
+
+//------------------------------------------------
+
 authority_view::
 authority_view(
-    authority_view const& u,
-    char const* cs) noexcept
-    : authority_view(u)
+    detail::url_impl const& u) noexcept
+    : u_(u)
 {
-    cs_ = cs;
 }
 
 //------------------------------------------------
@@ -63,7 +50,19 @@ authority_view::
 }
 
 authority_view::
-authority_view() noexcept = default;
+authority_view() noexcept
+    : u_(from::authority)
+{
+}
+
+authority_view::
+authority_view(
+    string_view s)
+    : authority_view(
+        parse_authority(s
+            ).value(BOOST_URL_POS))
+{
+}
 
 authority_view::
 authority_view(
@@ -76,169 +75,221 @@ operator=(
 
 //------------------------------------------------
 //
-// Observers
+// Userinfo
 //
 //------------------------------------------------
-
-std::shared_ptr<
-    authority_view const>
-authority_view::
-collect() const
-{
-    using T = shared_impl;
-    using Alloc = std::allocator<char>;
-    Alloc a;
-    auto p = std::allocate_shared<T>(
-        detail::over_allocator<T, Alloc>(
-            size(), a), *this);
-    std::memcpy(
-        reinterpret_cast<char*>(
-            p.get() + 1), data(), size());
-    return p;
-}
-
-//----------------------------------------------------------
-//
-// Authority
-//
-//----------------------------------------------------------
-
-// userinfo
 
 bool
 authority_view::
 has_userinfo() const noexcept
 {
-    auto n = len(id_pass);
+    auto n = u_.len(id_pass);
     if(n == 0)
         return false;
-    BOOST_ASSERT(get(
+    BOOST_ASSERT(u_.get(
         id_pass).ends_with('@'));
     return true;
 }
 
-string_view
+pct_string_view
 authority_view::
 encoded_userinfo() const noexcept
 {
-    auto s = get(
+    auto s = u_.get(
         id_user, id_host);
-    if(s.empty())
-        return s;
     if(s.empty())
         return s;
     BOOST_ASSERT(
         s.ends_with('@'));
     s.remove_suffix(1);
-    return s;
+    return detail::make_pct_string_view(
+        s, u_.decoded_[id_user] + u_.decoded_[id_pass] + has_password());
+}
+
+pct_string_view
+authority_view::
+encoded_user() const noexcept
+{
+    auto s = u_.get(id_user);
+    return detail::make_pct_string_view(
+        s, u_.decoded_[id_user]);
 }
 
 bool
 authority_view::
 has_password() const noexcept
 {
-    auto const n = len(id_pass);
+    auto const n = u_.len(id_pass);
     if(n > 1)
     {
-        BOOST_ASSERT(get(id_pass
+        BOOST_ASSERT(u_.get(id_pass
             ).starts_with(':'));
-        BOOST_ASSERT(get(id_pass
+        BOOST_ASSERT(u_.get(id_pass
             ).ends_with('@'));
         return true;
     }
-    BOOST_ASSERT(n == 0 || get(
+    BOOST_ASSERT(n == 0 || u_.get(
         id_pass).ends_with('@'));
     return false;
 }
 
-string_view
+pct_string_view
 authority_view::
 encoded_password() const noexcept
 {
-    auto s = get(id_pass);
+    auto s = u_.get(id_pass);
     switch(s.size())
     {
     case 1:
         BOOST_ASSERT(
             s.starts_with('@'));
+        s.remove_prefix(1);
         BOOST_FALLTHROUGH;
     case 0:
-        return s.substr(0, 0);
+        return detail::make_pct_string_view(s, 0);
     default:
         break;
     }
-    BOOST_ASSERT(
-        s.ends_with('@'));
-    BOOST_ASSERT(
-        s.starts_with(':'));
-    return s.substr(1,
-        s.size() - 2);
+    BOOST_ASSERT(s.ends_with('@'));
+    BOOST_ASSERT(s.starts_with(':'));
+    return detail::make_pct_string_view(
+        s.substr(1, s.size() - 2),
+        u_.decoded_[id_pass]);
 }
 
-// host
+//------------------------------------------------
+//
+// Host
+//
+//------------------------------------------------
+/*
+host_type       host_type()                 // ipv4, ipv6, ipvfuture, name
 
-string_view
+std::string     host()                      // return encoded_host().decode()
+pct_string_view encoded_host()              // return host part, as-is
+std::string     host_address()              // return encoded_host_address().decode()
+pct_string_view encoded_host_address()      // ipv4, ipv6, ipvfut, or encoded name, no brackets
+
+ipv4_address    host_ipv4_address()         // return ipv4_address or {}
+ipv6_address    host_ipv6_address()         // return ipv6_address or {}
+string_view     host_ipvfuture()            // return ipvfuture or {}
+std::string     host_name()                 // return decoded name or ""
+pct_string_view encoded_host_name()         // return encoded host name or ""
+*/
+
+pct_string_view
 authority_view::
 encoded_host() const noexcept
 {
-    return get(id_host);
+    return detail::make_pct_string_view(
+        u_.get(id_host),
+        u_.decoded_[id_host]);
+}
+
+pct_string_view
+authority_view::
+encoded_host_address() const noexcept
+{
+    string_view s = u_.get(id_host);
+    std::size_t n;
+    switch(u_.host_type_)
+    {
+    default:
+    case urls::host_type::none:
+        BOOST_ASSERT(s.empty());
+        n = 0;
+        break;
+
+    case urls::host_type::name:
+    case urls::host_type::ipv4:
+        n = u_.decoded_[id_host];
+        break;
+
+    case urls::host_type::ipv6:
+    case urls::host_type::ipvfuture:
+    {
+        BOOST_ASSERT(
+            u_.decoded_[id_host] ==
+                s.size());
+        BOOST_ASSERT(s.size() >= 2);
+        BOOST_ASSERT(s.front() == '[');
+        BOOST_ASSERT(s.back() == ']');
+        s = s.substr(1, s.size() - 2);
+        n = u_.decoded_[id_host] - 2;
+        break;
+    }
+    }
+    return detail::make_pct_string_view(s, n);
 }
 
 urls::ipv4_address
 authority_view::
-ipv4_address() const noexcept
+host_ipv4_address() const noexcept
 {
-    if(host_type_ !=
-        urls::host_type::ipv4)
+    if(u_.host_type_ !=
+            urls::host_type::ipv4)
         return {};
-    std::array<
-        unsigned char, 4> bytes;
+    ipv4_address::bytes_type b;
     std::memcpy(
-        &bytes[0],
-        &ip_addr_[0], 4);
-    return urls::ipv4_address(
-        bytes);
+        &b[0], &u_.ip_addr_[0], b.size());
+    return urls::ipv4_address(b);
 }
 
 urls::ipv6_address
 authority_view::
-ipv6_address() const noexcept
+host_ipv6_address() const noexcept
 {
-    if(host_type_ ==
-        urls::host_type::ipv6)
-    {
-        std::array<
-            unsigned char, 16> bytes;
-        std::memcpy(
-            &bytes[0],
-            &ip_addr_[0], 16);
-        return urls::ipv6_address(
-            bytes);
-    }
-    return urls::ipv6_address();
+    if(u_.host_type_ !=
+            urls::host_type::ipv6)
+        return {};
+    ipv6_address::bytes_type b;
+    std::memcpy(
+        &b[0], &u_.ip_addr_[0], b.size());
+    return urls::ipv6_address(b);
 }
 
 string_view
 authority_view::
-ipv_future() const noexcept
+host_ipvfuture() const noexcept
 {
-    if(host_type_ ==
-        urls::host_type::ipvfuture)
-        return get(id_host);
-    return {};
+    if(u_.host_type_ !=
+            urls::host_type::ipvfuture)
+        return {};
+    string_view s = u_.get(id_host);
+    BOOST_ASSERT(s.size() >= 6);
+    BOOST_ASSERT(s.front() == '[');
+    BOOST_ASSERT(s.back() == ']');
+    s = s.substr(1, s.size() - 2);
+    return s;
 }
 
-// port
+pct_string_view
+authority_view::
+encoded_host_name() const noexcept
+{
+    if(u_.host_type_ !=
+            urls::host_type::name)
+        return {};
+    string_view s = u_.get(id_host);
+    return detail::make_pct_string_view(
+        s, u_.decoded_[id_host]);
+}
+
+//------------------------------------------------
+//
+// Port
+//
+//------------------------------------------------
 
 bool
 authority_view::
 has_port() const noexcept
 {
-    auto const n = len(id_port);
+    auto const n = u_.len(id_port);
     if(n == 0)
         return false;
     BOOST_ASSERT(
-        get(id_port).starts_with(':'));
+        u_.get(id_port).starts_with(':'));
     return true;
 }
 
@@ -246,7 +297,7 @@ string_view
 authority_view::
 port() const noexcept
 {
-    auto s = get(id_port);
+    auto s = u_.get(id_port);
     if(s.empty())
         return s;
     BOOST_ASSERT(has_port());
@@ -259,126 +310,15 @@ port_number() const noexcept
 {
     BOOST_ASSERT(
         has_port() ||
-        port_number_ == 0);
-    return port_number_;
+        u_.port_number_ == 0);
+    return u_.port_number_;
 }
 
-string_view
+pct_string_view
 authority_view::
 encoded_host_and_port() const noexcept
 {
-    return get(id_host, id_end);
-}
-
-//------------------------------------------------
-//
-// Parsing
-//
-//------------------------------------------------
-
-void
-authority_view::
-apply(
-    host_bnf const& t) noexcept
-{
-    host_type_ = t.host_type;
-    switch(t.host_type)
-    {
-    default:
-    case urls::host_type::none:
-    {
-        break;
-    }
-    case urls::host_type::name:
-    {
-        decoded_[id_host] =
-            t.name.decoded_size;
-        break;
-    }
-    case urls::host_type::ipv4:
-    {
-        auto const bytes =
-            t.ipv4.to_bytes();
-        std::memcpy(
-            &ip_addr_[0],
-            bytes.data(), 4);
-        break;
-    }
-    case urls::host_type::ipv6:
-    {
-        auto const bytes =
-            t.ipv6.to_bytes();
-        std::memcpy(
-            &ip_addr_[0],
-            bytes.data(), 16);
-        break;
-    }
-    case urls::host_type::ipvfuture:
-    {
-        break;
-    }
-    }
-
-    if(t.host_type !=
-        urls::host_type::none)
-    {
-        set_size(
-            id_host,
-            t.host_part.size());
-    }
-}
-
-void
-authority_view::
-apply(
-    authority_bnf const& t) noexcept
-{
-    if(t.has_userinfo)
-    {
-        auto const& u = t.userinfo;
-
-        set_size(
-            id_user,
-            u.user.str.size());
-        decoded_[id_user] = u.user.decoded_size;
-
-        if(u.has_password)
-        {
-            // leading ':' for password,
-            // trailing '@' for userinfo
-            set_size(
-                id_pass,
-                u.password.str.size() + 2);
-            decoded_[id_pass] =
-                u.password.decoded_size;
-        }
-        else
-        {
-            // trailing '@' for userinfo
-            set_size(id_pass, 1);
-            decoded_[id_pass] = 0;
-        }
-    }
-    else
-    {
-        set_size(id_user, 0);
-        decoded_[id_user] = 0;
-    }
-
-    // host
-    apply(t.host);
-
-    // port
-    if(t.port.has_port)
-    {
-        set_size(
-            id_port,
-            t.port.port.size() + 1);
-
-        if(t.port.has_number)
-            port_number_ =
-                t.port.port_number;
-    }
+    return u_.get(id_host, id_end);
 }
 
 //------------------------------------------------
@@ -391,33 +331,7 @@ result<authority_view>
 parse_authority(
     string_view s) noexcept
 {
-    if(s.size() > authority_view::max_size())
-        detail::throw_length_error(
-            "authority_view::max_size exceeded",
-            BOOST_CURRENT_LOCATION);
-
-    error_code ec;
-    authority_bnf t;
-    if(! bnf::parse_string(s, ec, t))
-        return ec;
-
-    authority_view a(s.data());
-
-    // authority
-    a.apply(t);
-
-    return a;
-}
-
-//------------------------------------------------
-
-std::ostream&
-operator<<(
-    std::ostream& os,
-    authority_view const& a)
-{
-    os << a.encoded_authority();
-    return os;
+    return grammar::parse(s, authority_rule);
 }
 
 } // urls

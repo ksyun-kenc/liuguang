@@ -1,428 +1,239 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2022 Alan de Freitas (alandefreitas@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_PARAMS_ENCODED_VIEW_HPP
 #define BOOST_URL_PARAMS_ENCODED_VIEW_HPP
 
 #include <boost/url/detail/config.hpp>
-#include <boost/url/string.hpp>
-#include <boost/url/params_value_type.hpp>
+#include <boost/url/error_types.hpp>
+#include <boost/url/params_encoded_base.hpp>
 #include <boost/url/params_view.hpp>
-#include <boost/url/detail/parts_base.hpp>
-#include <iterator>
-#include <type_traits>
+#include <boost/url/string_view.hpp>
+#include <iosfwd>
+#include <utility>
 
 namespace boost {
 namespace urls {
 
-#ifndef BOOST_URL_DOCS
-class url_view;
-#endif
+/** A view representing query parameters in a URL
 
-/** A forward range of read-only encoded query parameters.
+    Objects of this type are used to interpret
+    the query parameters as a bidirectional view
+    of key/value pairs.
 
-    Objects of this type represent an iterable
-    range of query parameters, where each parameter
-    is represented by percent-encoded key and value
-    strings.
-
-    Dereferenced iterators return a structure of
-    string views into the underlying character
-    buffer.
-
-    Ownership of the underlying characters is
-    not transferred; the character buffer used
-    to construct the container must remain
-    valid for as long as the container exists.
-
-    The container models a multi-map. That is,
-    duplicate keys are possible.
-
-    A view of encoded parameters in a URL's query
-    can be obtained by calling
-        @ref url_view::encoded_params.
-    Alternatively, to obtain encoded parameters
-    from a query stored in a string call the
-    parsing function (see below).
+    The view does not retain ownership of the
+    elements and instead references the original
+    character buffer. The caller is responsible
+    for ensuring that the lifetime of the buffer
+    extends until it is no longer referenced.
 
     @par Example
-
-    A query parameter string is parsed into
-    encoded params, then each parameer is
-    printed to standard output:
-
     @code
-    params_encoded_view pev = parse_query_params( "cust=John&id=42&last_invoice=1001" ).value();
+    url_view u( "?first=John&last=Doe" );
 
-    for(auto e : pev)
-        std::cout << "key = " << e.key << ", value = " << e.value << std::endl;
+    params_encoded_view p = u.encoded_params();
     @endcode
 
-    @par Complexity
-    Iterator increment runs in linear time on
-    the size of the parameter.
-    All other operations run in constant time.
-    No operations allocate memory.
+    Strings produced when elements are returned
+    have type @ref param_pct_view and represent
+    encoded strings. Strings passed to member
+    functions may contain percent escapes, and
+    throw exceptions on invalid inputs.
 
-    @see
-        @ref parse_query_params.
+    @par Iterator Invalidation
+    Changes to the underlying character buffer
+    can invalidate iterators which reference it.
 */
 class params_encoded_view
-    : private detail::parts_base
+    : public params_encoded_base
 {
-    friend class url_view;
+    friend class url_view_base;
+    friend class params_view;
+    friend class params_encoded_ref;
+    friend struct query_rule_t;
 
-    string_view s_;
-    std::size_t n_ = 0;
-
-    inline
     params_encoded_view(
-        string_view s,
-        std::size_t n) noexcept;
+        detail::query_ref const& ref) noexcept;
 
 public:
-#ifdef BOOST_URL_DOCS
-    /** A read-only forward iterator to an encoded query parameter.
-    */
-    using iterator = __see_below__;
-#else
-    class iterator;
-#endif
+    /** Constructor
 
-    /** The type of value returned when dereferencing an iterator.
-    */
-    using value_type = params_value_type;
-
-    /** The type of value returned when dereferencing an iterator.
-    */
-    using reference = params_value_type;
-
-    /** The type of value returned when dereferencing an iterator.
-    */
-    using const_reference = params_value_type;
-
-    /** An unsigned integer type used to represent size.
-    */
-    using size_type = std::size_t;
-
-    /** A signed integer type used to represent differences.
-    */
-    using difference_type = std::ptrdiff_t;
-
-    /** Return a view of this container as percent-decoded query parameters
-
-        This function returns a new view over the
-        same underlying character buffer where each
-        segment is returned as a @ref string_value
-        with percent-decoding applied using the
-        optionally specified allocator.
-
-        The decoded view does not take ownership of
-        the underlying character buffer; the caller
-        is still responsible for ensuring that the
-        buffer remains valid until all views which
-        reference it are destroyed.
-
-        @par Exceptions
-        Calls to allocate may throw.
-
-        @return A view to decoded path segments.
-
-        @param alloc The allocator the returned
-        view will use for all string storage. If
-        this parameter is ommitted, the default
-        allocator will be used.
-    */
-    template<class Allocator =
-        std::allocator<char>>
-    params_view
-    decoded(Allocator const& alloc = {}) const;
-
-    //--------------------------------------------
-    //
-    // Element Access
-    //
-    //--------------------------------------------
-
-    /** Return the first element matching the key.
-
-        This function searches the container for
-        the specified encoded key. If the key
-        is found, the corresponding value is
-        returned. If the value does not exist,
-        an empty string is returned. Otherwise,
-        if the key does not exist, an exception
-        is thrown.
-
-        If multiple parameters match the key,
-        only the first match is returned.
+        Default-constructed params have
+        zero elements.
 
         @par Example
         @code
-        params_encoded_view pev = parse_query_params( "cust=John&id=42&last_invoice=1001" ).value();
-
-        std::cout << pev.at( "cust" ); // prints "John"
+        params_encoded_view qp;
         @endcode
 
-        @return The value as an encoded string.
+        @par Effects
+        @code
+        return params_encoded_view( "" );
+        @endcode
 
-        @param key The encoded key.
-
-        @throws std::out_of_range Key not found.
-    */
-    /**@{*/
-    BOOST_URL_DECL
-    string_view
-    at(string_view key) const;
-
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    string_view
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        string_view>::type
-#endif
-    at(Key const& key) const;
-    /**@}*/
-
-    //--------------------------------------------
-    //
-    // Iterators
-    //
-    //--------------------------------------------
-
-    /** Return an iterator to the beginning.
-    */
-    BOOST_URL_DECL
-    iterator
-    begin() const noexcept;
-
-    /** Return an iterator to the end.
-    */
-    BOOST_URL_DECL
-    iterator
-    end() const noexcept;
-
-    //--------------------------------------------
-    //
-    // Capacity
-    //
-    //--------------------------------------------
-
-    /** Return true if the range contains no elements.
-    */
-    inline
-    bool
-    empty() const noexcept;
-
-    /** Return the number of elements in the range.
-    */
-    inline
-    std::size_t
-    size() const noexcept;
-
-    //--------------------------------------------
-    //
-    // Lookup
-    //
-    //--------------------------------------------
-
-    /** Return the number of matching elements.
-
-        This function returns the total number
-        of elements whose key matches the
-        specified encoded string.
+        @par Complexity
+        Constant.
 
         @par Exception Safety
         Throws nothing.
-
-        @return The number of elements.
-
-        @param key The encoded key.
     */
-    /**@{*/
+    params_encoded_view() = default;
+
+    /** Constructor
+
+        After construction both views will
+        reference the same character buffer.
+
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
+
+        @par Postconditions
+        @code
+        this->buffer().data() == other.buffer().data()
+        @endcode
+
+        @par Complexity
+        Constant.
+
+        @par Exception Safety
+        Throws nothing
+    */
+    params_encoded_view(
+        params_encoded_view const& other) = default;
+
+    /** Constructor
+
+        This function constructs params from
+        a valid query parameter string, which
+        can contain percent escapes. Unlike
+        the parameters in URLs, the string
+        passed here should not start with "?".
+        Upon construction, the view will
+        reference the character buffer pointed
+        to by `s`. The caller is responsible
+        for ensuring that the lifetime of the
+        buffer extends until it is no longer
+        referenced.
+
+        @par Example
+        @code
+        params_encoded_view qp( "first=John&last=Doe" );
+        @endcode
+
+        @par Effects
+        @code
+        return parse_query( s ).value();
+        @endcode
+
+        @par Postconditions
+        @code
+        this->buffer().data() == s.data()
+        @endcode
+
+        @par Complexity
+        Linear in `s`.
+
+        @par Exception Safety
+        Exceptions thrown on invalid input.
+
+        @throw system_error
+        `s` contains an invalid query parameter
+        string.
+
+        @param s The string to parse.
+
+        @par BNF
+        @code
+        query-params    = [ query-param ] *( "&" query-param )
+
+        query-param     = key [ "=" value ]
+        @endcode
+
+        @par Specification
+        @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4"
+            >3.4.  Query</a>
+    */
     BOOST_URL_DECL
-    std::size_t
-    count(string_view key) const noexcept;
+    params_encoded_view(
+        string_view s);
 
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    std::size_t
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        std::size_t>::type
-#endif
-    count(Key const& key) const noexcept;
-    /**@}*/
+    /** Assignment
 
-    /** Return the first element matching the key
+        After assignment, both views will
+        reference the same underlying character
+        buffer.
 
-        This function returns the first
-        element which matches the specified
-        percent-encoded key. If no element
-        matches, then @ref end is returned.
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
 
-        @par Exception Safety
-        Throws nothing.
+        @par Postconditions
+        @code
+        this->buffer().data() == other.buffer().data()
+        @endcode
 
-        @return An iterator to the element.
-
-        @param key The encoded key.
-    */
-    /**@{*/
-    inline
-    iterator
-    find(string_view key) const noexcept;
-
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    iterator
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        iterator>::type
-#endif
-    find(Key const& key) const noexcept;
-    /**@}*/
-
-    /** Return the next element matching the key
-
-        This function returns the first
-        element which matches the specified
-        percent-encoded key, starting the
-        search at `*from` inclusive. If no
-        element matches, then @ref end is
-        returned.
+        @par Complexity
+        Constant
 
         @par Exception Safety
-        Throws nothing.
-
-        @return An iterator to the element
-
-        @param from An iterator to the element
-        to start from. The range `[ from, end() )`
-        is searched.
-
-        @param key The encoded key.
+        Throws nothing
     */
-    /**@{*/
+    params_encoded_view&
+    operator=(
+        params_encoded_view const&) = default;
+
+    /** Conversion
+
+        This conversion returns a new view which
+        references the same underlying character
+        buffer, and whose iterators and members
+        return ordinary strings with decoding
+        applied to any percent escapes.
+
+        Ownership is not transferred; the caller
+        is responsible for ensuring the lifetime
+        of the buffer extends until it is no
+        longer referenced.
+
+        @par Example
+        @code
+        params_view qp = parse_path( "/path/to/file.txt" ).value();
+        @endcode
+
+        @par Postconditions
+        @code
+        params_view( *this ).buffer().data() == this->buffer().data()
+        @endcode
+
+        @par Complexity
+        Constant
+
+        @par Exception Safety
+        Throws nothing
+    */
     BOOST_URL_DECL
-    iterator
-    find(
-        iterator from,
-        string_view key) const noexcept;
-
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    iterator
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        iterator>::type
-#endif
-    find(
-        iterator from,
-        Key const& key) const noexcept;
-    /**@}*/
-
-    /** Return true if at least one matching element exists.
-
-        This function returns true if at least one
-        element matches the specified percent-encoded
-        key.
-
-        @par Exception Safety
-        Throws nothing.
-
-        @return `true` if a matching element exists.
-
-        @param key The encoded key.
-    */
-    /**@{*/
-    inline
-    bool
-    contains(string_view key) const noexcept;
-
-    template<class Key>
-#ifdef BOOST_URL_DOCS
-    bool
-#else
-    typename std::enable_if<
-        is_stringlike<Key>::value,
-        bool>::type
-#endif
-    contains(Key const& key) const noexcept;
-    /**@}*/
+    operator
+    params_view() const noexcept;
 
     //--------------------------------------------
-    //
-    // Parsing
-    //
-    //--------------------------------------------
 
-    BOOST_URL_DECL friend
-    result<params_encoded_view>
-    parse_query_params(string_view s) noexcept;
+    BOOST_URL_DECL
+    friend
+        result<params_encoded_view>
+        parse_query(string_view s) noexcept;
 };
-
-//------------------------------------------------
-
-/** Return a query params view from a parsed string, using query-params bnf
-
-    This function parses the string and returns the
-    corresponding query params object if the string
-    is valid, otherwise sets the error and returns
-    an empty range. The query string should not
-    include the leading question mark.
-
-    @par BNF
-    @code
-    query-params    = query-param *( "&" query-param )
-    query-param     = key [ "=" value ]
-
-    key             = *qpchar
-    value           = *( qpchar / "=" )
-    qpchar          = unreserved
-                    / pct-encoded
-                    / "!" / "$" / "'" / "(" / ")"
-                    / "*" / "+" / "," / ";"
-                    / ":" / "@" / "/" / "?"
-    @endcode
-
-    @par Exception Safety
-    No-throw guarantee.
-
-    @return The encoded parameter view, or an
-    error if parsing failed.
-
-    @param s The string to parse
-
-    @par Specification
-    @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4">
-        3.4. Query (rfc3986)</a>
-
-    @see
-        @ref params_encoded_view,
-        @ref result.
-*/
-BOOST_URL_DECL
-result<params_encoded_view>
-parse_query_params(
-    string_view s) noexcept;
 
 } // urls
 } // boost
-
-// VFALCO This include is at the bottom of
-// url_view.hpp because of a circular dependency
-//#include <boost/url/impl/params_encoded_view.hpp>
 
 #endif

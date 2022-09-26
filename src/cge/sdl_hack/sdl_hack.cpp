@@ -16,10 +16,12 @@
 
 #include "sdl_hack.h"
 
-#include <atlstr.h>
-#include <sddl.h>
+#include <format>
 
 #include <boost/scope_exit.hpp>
+
+#include <atlstr.h>
+#include <sddl.h>
 
 //#include "umu/apppath_t.h"
 #include "umu/com_initializer.hpp"

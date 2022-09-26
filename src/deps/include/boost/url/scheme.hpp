@@ -4,14 +4,15 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/CPPAlliance/url
+// Official repository: https://github.com/boostorg/url
 //
 
 #ifndef BOOST_URL_SCHEME_HPP
 #define BOOST_URL_SCHEME_HPP
 
 #include <boost/url/detail/config.hpp>
-#include <boost/url/string.hpp>
+#include <boost/url/string_view.hpp>
+#include <cinttypes>
 
 namespace boost {
 namespace urls {
@@ -27,7 +28,9 @@ namespace urls {
     @li <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.1"
         >3.1. Scheme (rfc3986)</a>
 */
-enum class scheme : unsigned char
+// Made this short so it doesn't
+// show up as an ascii character
+enum class scheme : unsigned short
 {
     /** Indicates that no scheme is present
     */
@@ -147,6 +150,29 @@ string_to_scheme(string_view s) noexcept;
 BOOST_URL_DECL
 string_view
 to_string(scheme s) noexcept;
+
+/** Return the default port for a known scheme
+
+    This function returns the default port
+    for the known schemes. If the value does
+    not represent a known scheme or the scheme
+    does not represent a protocol, the function
+    returns zero.
+
+    The following ports are returned by the
+    function:
+
+    @li @ref scheme::ftp = 21
+    @li @ref scheme::http, @ref scheme::ws = 80
+    @li @ref scheme::https, @ref scheme::wss = 443
+
+    @return An integer with the default port number
+
+    @param s The known scheme constant
+*/
+BOOST_URL_DECL
+std::uint16_t
+default_port(scheme s) noexcept;
 
 } // urls
 } // boost

@@ -16,6 +16,8 @@
 
 #include "pch.h"
 
+#include <format>
+
 #include "capturetex.h"
 
 #include <d3d11.h>
