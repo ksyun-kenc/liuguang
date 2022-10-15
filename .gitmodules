@@ -16,3 +16,6 @@
 [submodule "src/deps/umu"]
 	path = src/deps/umu
 	url = https://github.com/UMU618/umu
+[submodule "src/deps/boostorg/url"]
+	path = src/deps/boostorg/url
+	url = https://github.com/boostorg/url
