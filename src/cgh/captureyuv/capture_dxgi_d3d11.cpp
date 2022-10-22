@@ -116,7 +116,7 @@ void Capture(void* swap, void* backbuffer) {
       }
     }
     svfi->timestamp = tick.QuadPart;
-    svfi->type = VideoFrameType::kYuv;
+    svfi->type = VideoFrameType::kI420;
     svfi->width = width_;
     svfi->height = height_;
     svfi->format = desc.Format;

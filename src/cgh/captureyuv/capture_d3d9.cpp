@@ -96,7 +96,7 @@ void CaptureD3d9::Capture(IDirect3DDevice9* device,
       }
     }
     svfi->timestamp = tick.QuadPart;
-    svfi->type = VideoFrameType::kYuv;
+    svfi->type = VideoFrameType::kI420;
     svfi->width = width_;
     svfi->height = height_;
     svfi->format = desc.Format;
