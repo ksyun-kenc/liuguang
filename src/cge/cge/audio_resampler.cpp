@@ -18,10 +18,10 @@
 
 #include "audio_resampler.h"
 
-int AudioResampler::Initialize(int64_t in_channel_layout,
+int AudioResampler::Initialize(const AVChannelLayout* in_channel_layout,
                                AVSampleFormat in_sample_format,
                                int in_sample_rate,
-                               int64_t out_channel_layout,
+                               AVChannelLayout* out_channel_layout,
                                AVSampleFormat out_sample_format,
                                int out_sample_rate,
                                int frame_size) noexcept {
@@ -30,22 +30,24 @@ int AudioResampler::Initialize(int64_t in_channel_layout,
 
   std::lock_guard<std::mutex> lock(mutex_);
 
-  out_channel_layout_ = out_channel_layout;
+  av_channel_layout_copy(&out_channel_layout_, out_channel_layout);
   out_sample_format_ = out_sample_format;
   out_sample_rate_ = out_sample_rate;
   frame_size_ = frame_size;
 
-  if (in_channel_layout != out_channel_layout ||
+  if (0 != av_channel_layout_compare(in_channel_layout, out_channel_layout) ||
       in_sample_format != out_sample_format ||
       in_sample_rate != out_sample_rate) {
     in_sample_rate_ = in_sample_rate;
 
-    resampler_context_ = swr_alloc_set_opts(
-        nullptr, out_channel_layout, out_sample_format, out_sample_rate,
-        in_channel_layout, in_sample_format, in_sample_rate, 0, nullptr);
+    // resampler_context_ = swr_alloc_set_opts(nullptr, ...);
+    int ec = swr_alloc_set_opts2(&resampler_context_, out_channel_layout,
+                                 out_sample_format, out_sample_rate,
+                                 in_channel_layout, in_sample_format,
+                                 in_sample_rate, 0, nullptr);
     if (nullptr == resampler_context_) {
-      ATLTRACE2(atlTraceException, 0, "!swr_alloc_set_opts()\n");
-      return AVERROR(ENOMEM);
+      ATLTRACE2(atlTraceException, 0, "!swr_alloc_set_opts2(), #%d\n", ec);
+      return ec;
     }
 
     int error = swr_init(resampler_context_);
@@ -63,9 +65,8 @@ int AudioResampler::Initialize(int64_t in_channel_layout,
     }
   }
 
-  fifo_ = av_audio_fifo_alloc(
-      out_sample_format_,
-      av_get_channel_layout_nb_channels(out_channel_layout_), frame_size_ * 3);
+  fifo_ = av_audio_fifo_alloc(out_sample_format_,
+                              out_channel_layout_.nb_channels, frame_size_ * 3);
   if (nullptr == fifo_) {
     ATLTRACE2(atlTraceException, 0, "!av_audio_fifo_alloc()\n");
     return AVERROR(ENOMEM);
@@ -109,7 +110,7 @@ int AudioResampler::Store(const uint8_t* in,
       return AVERROR_EXIT;
     }
   } else {
-    int channel_count = av_get_channel_layout_nb_channels(out_channel_layout_);
+    int channel_count = out_channel_layout_.nb_channels;
     auto converted_samples =
         static_cast<uint8_t**>(uint8_ptr_pool_.ordered_malloc(channel_count));
     if (nullptr == converted_samples) {
@@ -196,7 +197,7 @@ int AudioResampler::InitializeFrame(AVFrame*& frame,
   frame->nb_samples = frame_size;
   frame->format = out_sample_format_;
   frame->sample_rate = out_sample_rate_;
-  frame->channel_layout = out_channel_layout_;
+  frame->ch_layout = out_channel_layout_;
 
   if (0 == frame_size) {
     return 0;

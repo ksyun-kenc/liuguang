@@ -33,8 +33,9 @@ _CRT_END_C_HEADER
 struct AudioInfo {
   int sample_rate;
   int sample_bits;
-  int64_t channel_layout;
-  int channels;
+  //int64_t channel_layout;
+  //int channels;
+  AVChannelLayout channel_layout;
   AVSampleFormat sample_format;
 };
 
@@ -47,7 +48,7 @@ class SoundCapturer {
   bool Initialize() noexcept;
   void Run();
   void Stop();
-  void SetOutputInfo(int64_t channel_layout,
+  void SetOutputInfo(AVChannelLayout channel_layout,
                      AVSampleFormat sample_format,
                      int sample_rate,
                      int frame_size) noexcept {
@@ -74,7 +75,7 @@ class SoundCapturer {
   CHandle shared_frame_ready_event_;
   UINT32 frames_ = 0;
 
-  int64_t out_channel_layout_ = 0;
+  AVChannelLayout out_channel_layout_{};
   AVSampleFormat out_sample_format_ = AV_SAMPLE_FMT_NONE;
   int out_sample_rate_ = 0;
   int frame_size_ = 0;

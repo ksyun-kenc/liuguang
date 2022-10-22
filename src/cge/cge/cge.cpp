@@ -58,7 +58,7 @@ namespace po = boost::program_options;
 
 using namespace std::literals::string_view_literals;
 
-constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.4 Beta"sv};
+constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.5 Beta"sv};
 
 constexpr uint64_t kDefaultAudioBitrate = 128000;
 constexpr auto kDefaultBindAddress{"::"sv};
