@@ -1,6 +1,6 @@
 @echo off
 
-set argv=address-model=64 link=static runtime-link=shared variant=release
+set argv=address-model=64 link=shared runtime-link=shared variant=release
 
 pushd "%~dp0"
 

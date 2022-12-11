@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-local boost-version = 1.78 ;
+local boost-version = 1.81 ;
 
 import os ;
   local boost-root = [ os.environ BOOST_ROOT ] ;
@@ -22,9 +22,15 @@ import project ;
 project.push-current [ project.current ] ;
 project.initialize $(__name__) ;
 
+ECHO "OS:" [ os.name ] ;
 if $(boost-root) && [ path.exists $(boost-root) ] {
   ECHO "Using the BOOST_ROOT environment variable: $(boost-root)" ;
-  using boost : $(boost-version) : <root>$(boost-root) ;
+  if [ os.name ] = NT {
+    # The same as msvc
+    using boost : $(boost-version) : <include>$(boost-root) <library>$(boost-root)/stage/lib <layout>versioned ;
+  } else {
+    using boost : $(boost-version) : <root>$(boost-root) ;
+  }
 } else {
   if [ os.name ] = NT {
     ECHO "You should set the BOOST_ROOT environment variable on Windows!" ;
@@ -55,8 +61,8 @@ if $(boost-root) && [ path.exists $(boost-root) ] {
 
 project.pop-current ;
 
-# before 1.78
-#import boost-modified ;
-#  boost-modified.use-project ;
-import boost ;
-  boost.use-project ;
+# Before Boost.URL being added to 1.81
+import boost-modified ;
+  boost-modified.use-project ;
+#import boost ;
+#  boost.use-project ;

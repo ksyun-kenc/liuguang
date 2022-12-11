@@ -368,7 +368,7 @@ HRESULT SoundCapturer::CaptureThread() {
       if (ok) {
         int new_size = 0;
         audio_resampler_.Store(data, frames_to_read, &new_size);
-        if (new_size > frame_size_) {
+        if (new_size >= frame_size_) {
           // Map
           SetEvent(shared_frame_ready_event_);
         }

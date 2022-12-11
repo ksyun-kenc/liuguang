@@ -418,7 +418,7 @@ int AudioEncoder::Encode() {
         // flush the buffer.
         av_write_frame(format_context_, nullptr);
       }  // end of for
-    }    // end of while
+    }    // end of for
   }      // end of for
 
 #if _DEBUG
