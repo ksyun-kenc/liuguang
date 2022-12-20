@@ -337,7 +337,7 @@ Video Reference (Chinese):
 
 ## 6. Contact Us
 
-WeChat: UMUTech
+WeChat: wxid_8521565209912
 
 - Please have "regame" or "liuguang" included in friend request.
 
