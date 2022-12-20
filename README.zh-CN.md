@@ -321,7 +321,7 @@ git submodule update --init
 
 ## 6. 联系方式
 
-微信：UMUTech
+微信：wxid_8521565209912
 
 - 请在好友请求里包含 regame、liuguang 或者鎏光。
 
