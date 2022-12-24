@@ -22,7 +22,7 @@
 #include "game_service.h"
 #include "user_manager.h"
 
-#define USER_MANAGER 1
+#define USER_MANAGER !_DEBUG
 
 using namespace std::literals::chrono_literals;
 

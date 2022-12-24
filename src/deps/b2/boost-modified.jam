@@ -5,7 +5,7 @@
 
 # Boost library support module.
 #
-# This module allows to use the boost library from boost-build projects. The
+# This module allows to use the boost library from B2 projects. The
 # location of a boost source tree or the path to a pre-built version of the
 # library can be configured from either site-config.jam or user-config.jam. If
 # no location is configured the module looks for a BOOST_ROOT environment
@@ -215,29 +215,30 @@ rule boost_std ( inc ? lib ? )
     boost_lib_std iostreams           : BOOST_IOSTREAMS_DYN_LINK ;
     boost_lib_std json                : BOOST_JSON_DYN_LINK ;
     boost_lib_std locale              : BOOST_LOCALE_DYN_LINK ;
-    boost_lib_std log                 : BOOST_LOG_DYN_LINK ;
-    boost_lib_std log_setup           : BOOST_LOG_SETUP_DYN_LINK ;
+    boost_lib_std log                 : BOOST_LOG_DYN_LINK  ;
+    boost_lib_std log_setup           : BOOST_LOG_SETUP_DYN_LINK  ;
     boost_lib_std math_c99            : BOOST_MATH_TR1_DYN_LINK ;
     boost_lib_std math_c99f           : BOOST_MATH_TR1_DYN_LINK ;
     boost_lib_std math_c99l           : BOOST_MATH_TR1_DYN_LINK ;
     boost_lib_std math_tr1            : BOOST_MATH_TR1_DYN_LINK ;
     boost_lib_std math_tr1f           : BOOST_MATH_TR1_DYN_LINK ;
     boost_lib_std math_tr1l           : BOOST_MATH_TR1_DYN_LINK ;
-    boost_lib_std mpi                 : BOOST_MPI_DYN_LINK ;
+    boost_lib_std mpi                 : BOOST_MPI_DYN_LINK  ;
     boost_lib_std prg_exec_monitor    : BOOST_TEST_DYN_LINK ;
     boost_lib_std program_options     : BOOST_PROGRAM_OPTIONS_DYN_LINK ;
     boost_lib_std python              : BOOST_PYTHON_DYN_LINK ;
     boost_lib_std python3             : BOOST_PYTHON_DYN_LINK ;
     boost_lib_std random              : BOOST_RANDOM_DYN_LINK ;
-    boost_lib_std regex               : BOOST_REGEX_DYN_LINK ;
+    boost_lib_std regex               : BOOST_REGEX_DYN_LINK  ;
     boost_lib_std serialization       : BOOST_SERIALIZATION_DYN_LINK ;
-    boost_lib_std signals             : BOOST_SIGNALS_DYN_LINK ;
-    boost_lib_std system              : BOOST_SYSTEM_DYN_LINK ;
+    boost_lib_std signals             : BOOST_SIGNALS_DYN_LINK  ;
+    boost_lib_std system              : BOOST_SYSTEM_DYN_LINK  ;
     boost_lib_std test_exec_monitor   : BOOST_TEST_DYN_LINK ;
-    boost_lib_std thread              : BOOST_THREAD_DYN_DLL ;
-    boost_lib_std timer               : BOOST_TIMER_DYN_DLL ;
-    boost_lib_std unit_test_framework : BOOST_TEST_DYN_LINK ;
-    boost_lib_std wave                : BOOST_WAVE_DYN_LINK ;
+    boost_lib_std thread              : BOOST_THREAD_DYN_DLL  ;
+    boost_lib_std timer               : BOOST_TIMER_DYN_DLL  ;
+    boost_lib_std unit_test_framework : BOOST_TEST_DYN_LINK  ;
+    boost_lib_std url                 : BOOST_URL_DYN_LINK  ;
+    boost_lib_std wave                : BOOST_WAVE_DYN_LINK  ;
     boost_lib_std wserialization      : BOOST_SERIALIZATION_DYN_LINK ;
 }
 

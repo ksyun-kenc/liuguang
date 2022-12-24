@@ -116,7 +116,7 @@ int AudioEncoder::EncodingThread() {
 
   size_t frame_bytes = codec_context_->frame_size *
                        (codec_context_->bits_per_raw_sample + 7) / 8 *
-                       codec_context_->channels;
+                       codec_context_->ch_layout.nb_channels;
   size_t shared_mem_size = sizeof(SharedAudioFrames) +
                            sizeof(PackedAudioFrame) +
                            frame_bytes * kNumberOfSharedFrames;
@@ -132,7 +132,7 @@ int AudioEncoder::EncodingThread() {
   }
   SharedAudioFrames* saf = shared_frames_;
   strcpy_s(saf->codec_name, codec_name_.data());
-  saf->channels = codec_context_->channels;
+  saf->channels = codec_context_->ch_layout.nb_channels;
   saf->frame_size = codec_context_->frame_size;
   saf->sample_bits = codec_context_->bits_per_raw_sample;
   saf->sample_format = codec_context_->sample_fmt;
@@ -249,8 +249,9 @@ int AudioEncoder::AddStream(const AVCodec*& codec) {
   //  std::cerr << "invaild channels " << source_audio_info_.channels << ".\n";
   //  return -1;
   // }
-  codec_context_->channels = kTargetChannels;
-  codec_context_->channel_layout = kTargetChannelLayout;
+  codec_context_->ch_layout = AV_CHANNEL_LAYOUT_STEREO;
+  //codec_context_->channels = kTargetChannels;
+  //codec_context_->channel_layout = kTargetChannelLayout;
   if (codec_name_ == "opus") {
     codec_context_->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
   }
@@ -280,19 +281,21 @@ int AudioEncoder::Open(const AVCodec* codec, AVDictionary** opts) {
   }
 
   sound_capturer_.SetOutputInfo(
-      codec_context_->channel_layout, codec_context_->sample_fmt,
+      codec_context_->ch_layout, codec_context_->sample_fmt,
       codec_context_->sample_rate, codec_context_->frame_size);
 
 #if _DEBUG
-  APP_DEBUG() << "channel layout: " << codec_context_->channel_layout << '\n';
+  APP_DEBUG() << "channel layout: " << codec_context_->ch_layout.u.mask << '\n';
   APP_DEBUG() << "sample format: " << codec_context_->sample_fmt << '\n';
   APP_DEBUG() << "sample rate: " << codec_context_->sample_rate << '\n';
   APP_DEBUG() << "frame size: " << codec_context_->frame_size << '\n';
 
-  if (source_audio_info_.channel_layout != codec_context_->channel_layout) {
+  if (0 != av_channel_layout_compare(&source_audio_info_.channel_layout,
+                                     &codec_context_->ch_layout)) {
+
     APP_DEBUG() << "resample channel layout "
-                << source_audio_info_.channel_layout << " to "
-                << codec_context_->channel_layout << ".\n";
+                << source_audio_info_.channel_layout.u.mask << " to "
+                << codec_context_->ch_layout.u.mask << ".\n";
   }
   if (source_audio_info_.sample_format != codec_context_->sample_fmt) {
     APP_DEBUG() << "resample format " << source_audio_info_.sample_format
@@ -334,7 +337,7 @@ int AudioEncoder::InitializeFrame(AVFrame*& frame) const noexcept {
   frame->nb_samples = codec_context_->frame_size;
   frame->format = codec_context_->sample_fmt;
   frame->sample_rate = codec_context_->sample_rate;
-  frame->channel_layout = codec_context_->channel_layout;
+  av_channel_layout_copy(&frame->ch_layout, &codec_context_->ch_layout);
 
   int error_code = av_frame_get_buffer(frame, 0);
   if (error_code < 0) {
@@ -415,7 +418,7 @@ int AudioEncoder::Encode() {
         // flush the buffer.
         av_write_frame(format_context_, nullptr);
       }  // end of for
-    }    // end of while
+    }    // end of for
   }      // end of for
 
 #if _DEBUG

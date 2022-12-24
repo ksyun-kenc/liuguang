@@ -1,1 +1,0 @@
-cp C:\newgit.op.ksyun.com\cloudgaming\regame\src\cge\b2\cge\bin\msvc-14.3\release\address-model-64\cxxstd-latest-iso\link-static\runtime-link-static\threadapi-win32\threading-multi\cge.exe C:\Users\UMU\Desktop\regame\windows-x64

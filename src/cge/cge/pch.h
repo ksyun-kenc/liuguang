@@ -16,19 +16,27 @@
 
 #pragma once
 
+#define NOMINMAX
+
+// Debug & Release link VC/Boost dlls.
+// * Add %BOOST_ROOT%\stage\lib to your %PATH%
+// MTRelease links VC/Boost libs.
+#ifdef _DLL
+#define BOOST_ALL_DYN_LINK
+#endif
+#define BOOST_ASIO_NO_DEPRECATED
+// Use Boost 1.81+
+// #define BOOST_URL_NO_LIB
+// #define BOOST_URL_NO_SOURCE_LOCATION
+
+// C
 #include <SDKDDKVer.h>
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
 #endif
 #define _WIN32_WINNT _WIN32_WINNT_WIN7
 
-#define BOOST_ASIO_NO_DEPRECATED
-#define BOOST_URL_NO_LIB
-#define BOOST_URL_NO_SOURCE_LOCATION
-
-#include <atlbase.h>
-#include <atlfile.h>
-
+// STL
 #include <array>
 #include <chrono>
 #include <cstdlib>
@@ -40,6 +48,11 @@
 #include <string>
 #include <thread>
 
+// ATL
+#include <atlbase.h>
+#include <atlfile.h>
+
+// Boost
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/pool/pool.hpp>

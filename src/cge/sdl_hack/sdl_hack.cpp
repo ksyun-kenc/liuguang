@@ -16,10 +16,12 @@
 
 #include "sdl_hack.h"
 
-#include <atlstr.h>
-#include <sddl.h>
+#include <format>
 
 #include <boost/scope_exit.hpp>
+
+#include <atlstr.h>
+#include <sddl.h>
 
 //#include "umu/apppath_t.h"
 #include "umu/com_initializer.hpp"
@@ -175,31 +177,23 @@ HRESULT CaptureTexture(_In_ ID3D11DeviceContext* context,
 }  // namespace
 
 bool SdlHack::Initialize() noexcept {
-  SDL_version compiled;
-  SDL_VERSION(&compiled);
-  if (2 == compiled.major && 0 == compiled.minor && 12 <= compiled.patch) {
+  if (SDL_VERSION_ATLEAST(2, 0, 12)) {
     SDL_GetVersion(&linked_);
-    if (2 == linked_.major && 0 == linked_.minor && 12 == linked_.patch) {
+    if (2 == linked_.major && 0 == linked_.minor &&
+        (12 == linked_.patch || 14 == linked_.patch || 16 == linked_.patch ||
+         18 == linked_.patch || 20 == linked_.patch || 22 == linked_.patch)) {
       // yes
-    } else if (2 == linked_.major && 0 == linked_.minor &&
-               14 == linked_.patch) {
-      // yes
-    } else if (2 == linked_.major && 0 == linked_.minor &&
-               16 == linked_.patch) {
-      // yes
-    } else if (2 == linked_.major && 0 == linked_.minor &&
-               18 == linked_.patch) {
-      // yes
-    } else if (2 == linked_.major && 0 == linked_.minor &&
-               20 == linked_.patch) {
+    } else if (2 == linked_.major && 24 == linked_.minor &&
+               (0 == linked_.patch || 1 == linked_.patch)) {
       // yes
     } else {
       CString error_text;
       error_text.Format(
           _T("Compiled with SDL %u.%u.%u\nLinked to SDL %u.%u.%u"),
-          compiled.major, compiled.minor, compiled.patch, linked_.major,
+          SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL, linked_.major,
           linked_.minor, linked_.patch);
-      MessageBox(nullptr, error_text, _T("Warning"), MB_ICONWARNING);
+      MessageBox(nullptr, error_text, _T("Unsupported version"),
+                 MB_ICONWARNING);
     }
   } else {
     MessageBox(nullptr, _T("sdl_internal.h is only for SDL 2.0.12+!"), nullptr,
@@ -315,6 +309,12 @@ void SdlHack::CopyTexture(SDL_Renderer* renderer) {
   } else if (2 == linked_.major && 0 == linked_.minor && 20 == linked_.patch) {
     render_data = static_cast<D3D11_RenderData*>(
         reinterpret_cast<SDL_Renderer_2_0_20*>(renderer)->driverdata);
+  } else if ((2 == linked_.major && 0 == linked_.minor &&
+              22 == linked_.patch) ||
+             (2 == linked_.major && 24 == linked_.minor &&
+              (0 == linked_.patch || 1 == linked_.patch))) {
+    render_data = static_cast<D3D11_RenderData*>(
+        reinterpret_cast<SDL_Renderer_2_0_22*>(renderer)->driverdata);
   } else {
     ATLTRACE2(atlTraceException, 0, "Unsupported SDL version: %u.%u.%u!\n",
               linked_.major, linked_.minor, linked_.patch);
@@ -325,11 +325,19 @@ void SdlHack::CopyTexture(SDL_Renderer* renderer) {
   }
 
   switch (frame_type_) {
-    case VideoFrameType::kYuv:
-      CopyTextureToSharedYuv(render_data);
-      break;
     case VideoFrameType::kTexture:
       CopyTextureToSharedTexture(render_data);
+      break;
+    case VideoFrameType::kI420:
+      [[fallthrough]];
+    case VideoFrameType::kJ420:
+      [[fallthrough]];
+    case VideoFrameType::kI422:
+      [[fallthrough]];
+    case VideoFrameType::kJ422:
+      [[fallthrough]];
+    case VideoFrameType::kI444:
+      CopyTextureToSharedYuv(render_data);
       break;
   }
 }
@@ -559,12 +567,28 @@ void SdlHack::CopyTextureToSharedYuv(D3D11_RenderData* render_data) {
   }
 
   if (should_update) {
-    width_ = desc.Width & ~1;
-    height_ = desc.Height & ~1;
+    switch (frame_type_) {
+      case VideoFrameType::kI420:
+        [[fallthrough]];
+      case VideoFrameType::kJ420:
+        [[fallthrough]];
+      case VideoFrameType::kI422:
+        [[fallthrough]];
+      case VideoFrameType::kJ422:
+        width_ = desc.Width & ~1;
+        height_ = desc.Height & ~1;
+        break;
+      case VideoFrameType::kI444:
+        width_ = desc.Width;
+        height_ = desc.Height;
+        break;
+      default:
+        assert(false);
+    }
 
     SharedVideoFrameInfo* svfi = shared_frame_info_;
     svfi->timestamp = tick.QuadPart;
-    svfi->type = VideoFrameType::kYuv;
+    svfi->type = frame_type_;
     svfi->width = width_;
     svfi->height = height_;
     svfi->format = desc.Format;
@@ -575,8 +599,27 @@ void SdlHack::CopyTextureToSharedYuv(D3D11_RenderData* render_data) {
     }
     svfi->window = reinterpret_cast<std::uint64_t>(window);
   } else {
-    UINT width = desc.Width & ~1;
-    UINT height = desc.Height & ~1;
+    UINT width;
+    UINT height;
+    switch (frame_type_) {
+      case VideoFrameType::kI420:
+        [[fallthrough]];
+      case VideoFrameType::kJ420:
+        [[fallthrough]];
+      case VideoFrameType::kI422:
+        [[fallthrough]];
+      case VideoFrameType::kJ422:
+        width = desc.Width & ~1;
+        height = desc.Height & ~1;
+        break;
+      case VideoFrameType::kI444:
+        width = desc.Width;
+        height = desc.Height;
+        break;
+      default:
+        assert(false);
+    }
+
     if (width != width_ || height != height_) {
       width_ = width;
       height_ = height;
@@ -629,7 +672,25 @@ void SdlHack::CopyTextureToSharedYuv(D3D11_RenderData* render_data) {
   };
 
   size_t pixel_size = width_ * height_;
-  size_t frame_size = 4 * pixel_size;
+  size_t frame_size;
+  switch (frame_type_) {
+    case VideoFrameType::kI420:
+      [[fallthrough]];
+    case VideoFrameType::kJ420:
+      frame_size = pixel_size + (pixel_size >> 1);  // 1.5
+      break;
+    case VideoFrameType::kI422:
+      [[fallthrough]];
+    case VideoFrameType::kJ422:
+      frame_size = 2 * pixel_size;
+      break;
+    case VideoFrameType::kI444:
+      frame_size = 3 * pixel_size;
+      break;
+    default:
+      assert(false);
+  }
+
   size_t data_size = sizeof(PackedVideoYuvFrame) + frame_size;
   ATLTRACE2(atlTraceUtil, 0, "Frame[%zu] %u * %u, %zu + %zu = %zu\n",
             frame_count_, desc.Width, desc.Height, sizeof(PackedVideoYuvFrame),
@@ -665,8 +726,8 @@ void SdlHack::CopyTextureToSharedYuv(D3D11_RenderData* render_data) {
       return;
     }
 
-    ATLTRACE2(atlTraceUtil, 0, "MapSharedMem size = %zu + %zu * 2 = %zu\n",
-              sizeof(SharedVideoYuvFrames), data_size,
+    ATLTRACE2(atlTraceUtil, 0, "MapSharedMem size = %zu + %zu * %zu = %zu\n",
+              sizeof(SharedVideoYuvFrames), data_size, kNumberOfSharedFrames,
               sizeof(SharedVideoYuvFrames) + data_size * kNumberOfSharedFrames);
   }
   auto frames =
@@ -676,23 +737,83 @@ void SdlHack::CopyTextureToSharedYuv(D3D11_RenderData* render_data) {
   auto frame = reinterpret_cast<PackedVideoYuvFrame*>(
       static_cast<char*>(shared_yuv_frames_) + sizeof(SharedVideoYuvFrames) +
       (frame_count_ % kNumberOfSharedFrames) * data_size);
-  const int uv_stride = width_ >> 1;
   uint8_t* y = reinterpret_cast<uint8_t*>(frame->data);
   uint8_t* u = y + pixel_size;
-  uint8_t* v = u + (pixel_size >> 2);
 
-  {
-    umu::TimeMeasure tm(stats.elapsed.yuv_convert);
-    if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
-      ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u, uv_stride,
-                 v, uv_stride, width_, height_);
-    } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
-      ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u, uv_stride,
-                 v, uv_stride, width_, height_);
-    } else {
-      ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+  switch (umu::TimeMeasure tm(stats.elapsed.yuv_convert); frame_type_) {
+    case regame::VideoFrameType::kI420: {
+      const int uv_stride = width_ >> 1;
+      uint8_t* v = u + (pixel_size >> 2);
+
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
+        ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+                   uv_stride, v, uv_stride, width_, height_);
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
+        ARGBToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+                   uv_stride, v, uv_stride, width_, height_);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+      }
+      break;
     }
-  }
+    case regame::VideoFrameType::kJ420: {
+      const int uv_stride = width_ >> 1;
+      uint8_t* v = u + (pixel_size >> 2);
+
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
+        // ABGRToJ420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+        //            uv_stride, v, uv_stride, width_, height_);
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
+        // ARGBToJ420(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+        //            uv_stride, v, uv_stride, width_, height_);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+      }
+      break;
+    }
+    case regame::VideoFrameType::kI422: {
+      const int uv_stride = width_;
+      uint8_t* v = u + (pixel_size >> 1);
+
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
+        // TO-DO
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
+        // ARGBToI422(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+        //            uv_stride, v, uv_stride, width_, height_);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+      }
+      break;
+    }
+    case regame::VideoFrameType::kJ422: {
+      const int uv_stride = width_;
+      uint8_t* v = u + (pixel_size >> 1);
+
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
+        // TO-DO
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
+        // ARGBToJ422(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+        //            uv_stride, v, uv_stride, width_, height_);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+      }
+      break;
+    }
+    case regame::VideoFrameType::kI444: {
+      const int uv_stride = width_;
+      uint8_t* v = u + pixel_size;
+
+      if (DXGI_FORMAT_R8G8B8A8_UNORM == desc.Format) {
+        // TO-DO
+      } else if (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format) {
+        // ARGBToI444(mapped_rect.pBits, mapped_rect.Pitch, y, width_, u,
+        //            uv_stride, v, uv_stride, width_, height_);
+      } else {
+        ATLTRACE2(atlTraceException, 0, "Unsupported format %u.", desc.Format);
+      }
+      break;
+    }
+  }  // end of switch
   ATLTRACE2(atlTraceUtil, 0, "frame[%zd] stats.elapsed.yuv_convert = %llu, \n",
             frame_count_, stats.elapsed.yuv_convert);
 

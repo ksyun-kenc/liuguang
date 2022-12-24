@@ -23,7 +23,8 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/program_options.hpp>
-#include <boost/url/src.hpp>
+// Use Boost 1.81+
+// #include <boost/url/src.hpp>
 
 #include "app.hpp"
 #include "sound_capturer.h"
@@ -36,17 +37,17 @@
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "yuv.lib")
 
-//#ifdef _DEBUG
-//#pragma comment(lib, "avutild.lib")
-//#pragma comment(lib, "avcodecd.lib")
-//#pragma comment(lib, "avformatd.lib")
-//#pragma comment(lib, "swresampled.lib")
-//#else
+// #ifdef _DEBUG
+// #pragma comment(lib, "avutild.lib")
+// #pragma comment(lib, "avcodecd.lib")
+// #pragma comment(lib, "avformatd.lib")
+// #pragma comment(lib, "swresampled.lib")
+// #else
 #pragma comment(lib, "avutil.lib")
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avformat.lib")
 #pragma comment(lib, "swresample.lib")
-//#endif  // DEBUG
+// #endif  // DEBUG
 
 #pragma warning(push)
 #pragma warning(disable : 4073)
@@ -58,7 +59,7 @@ namespace po = boost::program_options;
 
 using namespace std::literals::string_view_literals;
 
-constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.4 Beta"sv};
+constexpr auto kProgramInfo{"KSYUN Edge Cloud Gaming Engine v0.5 Beta"sv};
 
 constexpr uint64_t kDefaultAudioBitrate = 128000;
 constexpr auto kDefaultBindAddress{"::"sv};

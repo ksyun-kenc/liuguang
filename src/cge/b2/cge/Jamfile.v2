@@ -13,35 +13,42 @@
 # limitations under the License.
 
 import modules ;
-  modules.load boost-config : : $(PROJECT_B2) ;
+  # Now use the msvc way!
+  #modules.load boost-config : : $(PROJECT_B2) ;
   modules.load ffmpeg : : $(PROJECT_B2) ;
   modules.load sdl2 : : $(PROJECT_B2) ;
+import os ;
+  local boost-root = [ os.environ BOOST_ROOT ] ;
 
 project cge
   : requirements
-    <cxxstd>latest
+    <cxxstd>20
     <define>UNICODE <define>_UNICODE
-    <implicit-dependency>/boost//headers
+    #<implicit-dependency>/boost//headers
     <include>../../cge
     <include>../..
     <include>../../third_party/ViGEmClient/include
     <include>../../../deps
     <include>../../../deps/include
+    <include>../../../deps/umu/include
+    <include>$(boost-root)
     <address-model>32:<library-path>../../../deps/lib/x86
     <address-model>64:<library-path>../../../deps/lib/x64
     <target-os>windows,<toolset>msvc:<find-static-library>Setupapi
-    <library>/boost//date_time
-    <library>/boost//json
-    <library>/boost//log
-    <library>/boost//log_setup
-    <library>/boost//program_options
-    <library>/boost//system
+    #<library>/boost//date_time
+    #<library>/boost//json
+    #<library>/boost//log
+    #<library>/boost//log_setup
+    #<library>/boost//program_options
+    #<library>/boost//system
+    #<library>/boost//url
     <library>/ffmpeg//avutil
     <library>/ffmpeg//avcodec
     <library>/ffmpeg//avformat
     <library>/ffmpeg//swresample
     <library>/ffmpeg//swscale
     <library>/sdl2//sdl2
+    <library-path>$(boost-root)/stage/lib
     <threading>multi
   : default-build release
   : build-dir ./bin
@@ -53,13 +60,13 @@ lib deps
   ../cgvhid_client/cgvhid.cpp
   ../cgvhid_client/cgvhid_client.cpp
   ../third_party/ViGEmClient/src/ViGEmClient.cpp
-  ;
+  : <link>static ;
 
 cpp-pch pch : pch.h ;
 explicit pch ;
 
 exe cge
-  : pch deps
+  : deps pch
     audio_encoder.cpp
     audio_resampler.cpp
     cge.cpp

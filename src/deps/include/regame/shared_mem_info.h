@@ -51,7 +51,15 @@ struct SharedAudioFrames {
   PackedAudioFrame frame0;
 };
 
-enum class VideoFrameType : std::uint32_t { kNone = 0, kYuv, kTexture };
+enum class VideoFrameType : std::uint32_t {
+  kNone = 0,
+  kTexture,
+  kI420,  // YUV420P
+  kJ420,  // YUV420P, AVCOL_RANGE_JPEG
+  kI422,  // YUV422P
+  kJ422,  // YUV422P, AVCOL_RANGE_JPEG
+  kI444,  // YUV444P
+};
 
 struct SharedVideoFrameInfo {
   std::uint64_t timestamp;
@@ -110,7 +118,7 @@ constexpr std::wstring_view kSharedAudioFrameFileMappingName{
     L"{185A6EAB-BA8D-4FFB-BE3F-135C72A61606}"};
 
 constexpr std::wstring_view kVideoStartedEventName{
-    L"{75B053EC-7CF7-4608-961F-3D2663F3FB2D}"};
+    L"{4BBDEBFF-4711-4F99-B3D5-8171B7D1B09B}"};  // since v0.5
 constexpr std::wstring_view kVideoStoppedEventName{
     L"{6D27BAD8-A314-4421-8CC1-1285E940631D}"};
 constexpr std::wstring_view kSharedVideoFrameReadyEventName{

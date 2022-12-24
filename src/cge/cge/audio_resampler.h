@@ -23,10 +23,10 @@ class AudioResampler {
   AudioResampler() noexcept {}
   ~AudioResampler() noexcept { Free(); }
 
-  int Initialize(int64_t in_channel_layout,
+  int Initialize(const AVChannelLayout* in_channel_layout,
                  enum AVSampleFormat in_sample_format,
                  int in_sample_rate,
-                 int64_t out_channel_layout,
+                 AVChannelLayout* out_channel_layout,
                  enum AVSampleFormat out_sample_format,
                  int out_sample_rate,
                  int frame_size) noexcept;
@@ -38,7 +38,7 @@ class AudioResampler {
  private:
   int in_sample_rate_ = 0;
 
-  int64_t out_channel_layout_ = 0;
+  AVChannelLayout out_channel_layout_{};
   AVSampleFormat out_sample_format_ = AV_SAMPLE_FMT_NONE;
   int out_sample_rate_ = 0;
   int frame_size_ = 0;

@@ -139,9 +139,37 @@ int VideoEncoder::EncodingThread() {
              << saved_frame_info_.height
              << ", format: " << saved_frame_info_.format
              << ", window: " << saved_frame_info_.window << '\n';
+  if (VideoFrameType::kNone == saved_frame_info_.type) {
+    return ERROR_INVALID_DATA;
+  }
 
-  if (VideoFrameType::kYuv == saved_frame_info_.type) {
-    size_t yuv_size = 4 * saved_frame_info_.width * saved_frame_info_.height;
+  if (VideoFrameType::kTexture == saved_frame_info_.type) {
+    HRESULT hr = shared_texture_frames_.OpenMapping(
+        object_namer_.Get(kSharedVideoTextureFramesFileMappingName).data(),
+        sizeof(SharedVideoTextureFrames));
+    if (FAILED(hr)) {
+      APP_ERROR() << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
+      restart = true;
+      return hr;
+    }
+  } else {
+    size_t pixel_size = saved_frame_info_.width * saved_frame_info_.height;
+    size_t yuv_size;
+    switch (saved_frame_info_.type) {
+      case VideoFrameType::kI420:
+        [[fallthrough]];
+      case VideoFrameType::kJ420:
+        yuv_size = pixel_size + (pixel_size >> 1);
+        break;
+      case VideoFrameType::kI422:
+        [[fallthrough]];
+      case VideoFrameType::kJ422:
+        yuv_size = 2 * pixel_size;
+        break;
+      case VideoFrameType::kI444:
+        yuv_size = 3 * pixel_size;
+        break;
+    }
     size_t frames_size = sizeof(SharedVideoYuvFrames) +
                          sizeof(PackedVideoYuvFrame) * kNumberOfSharedFrames +
                          yuv_size * kNumberOfSharedFrames;
@@ -163,15 +191,6 @@ int VideoEncoder::EncodingThread() {
                   << '\n';
       restart = true;
       return -1;
-    }
-  } else if (VideoFrameType::kTexture == saved_frame_info_.type) {
-    HRESULT hr = shared_texture_frames_.OpenMapping(
-        object_namer_.Get(kSharedVideoTextureFramesFileMappingName).data(),
-        sizeof(SharedVideoTextureFrames));
-    if (FAILED(hr)) {
-      APP_ERROR() << "OpenMapping() failed with 0x" << std::hex << hr << '\n';
-      restart = true;
-      return hr;
     }
   }
 
@@ -196,7 +215,9 @@ int VideoEncoder::EncodingThread() {
     APP_ERROR() << "Init frame failed with " << error_code << ".\n";
     return error_code;
   }
-  BOOST_SCOPE_EXIT_ALL(&frame) { av_frame_free(&frame); };
+  BOOST_SCOPE_EXIT_ALL(&frame) {
+    av_frame_free(&frame);
+  };
 
   for (;;) {
     error_code = EncodeFrame(frame);
@@ -344,9 +365,35 @@ int VideoEncoder::Open(const AVCodec* codec, AVDictionary** opts) {
   codec_context_->time_base = stream_->time_base;
   codec_context_->max_b_frames = 0;
   codec_context_->gop_size = gop_;
-  codec_context_->pix_fmt = HardwareEncoder::QSV == hardware_encoder_
-                                ? AV_PIX_FMT_NV12
-                                : AV_PIX_FMT_YUV420P;
+
+  switch (saved_frame_info_.type) {
+    case VideoFrameType::kI420:
+      [[fallthrough]];
+    case VideoFrameType::kTexture:
+      if (HardwareEncoder::QSV == hardware_encoder_) {
+        codec_context_->pix_fmt = AV_PIX_FMT_NV12;
+      } else {
+        codec_context_->pix_fmt = AV_PIX_FMT_YUV420P;
+      }
+      break;
+    case VideoFrameType::kJ420:
+      if (HardwareEncoder::QSV == hardware_encoder_) {
+        codec_context_->pix_fmt = AV_PIX_FMT_NV12;
+      } else {
+        codec_context_->pix_fmt = AV_PIX_FMT_YUV420P;
+        codec_context_->color_range = AVCOL_RANGE_JPEG;
+      }
+      break;
+    case VideoFrameType::kJ422:
+      codec_context_->color_range = AVCOL_RANGE_JPEG;
+      [[fallthrough]];
+    case VideoFrameType::kI422:
+      codec_context_->pix_fmt = AV_PIX_FMT_YUV422P;
+      break;
+    case VideoFrameType::kI444:
+      codec_context_->pix_fmt = AV_PIX_FMT_YUV444P;
+      break;
+  }
   codec_context_->codec_id = GetCodecID();
   codec_context_->flags |= AV_CODEC_FLAG_LOW_DELAY;
   if (format_context_->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -446,7 +493,25 @@ int VideoEncoder::InitializeFrame(AVFrame*& frame) const noexcept {
     return AVERROR(ENOMEM);
   }
 
-  frame->format = AV_PIX_FMT_YUV420P;
+  switch (saved_frame_info_.type) {
+    case VideoFrameType::kJ420:
+      frame->color_range = AVCOL_RANGE_JPEG;
+      [[fallthrough]];
+    case VideoFrameType::kI420:
+      [[fallthrough]];
+    case VideoFrameType::kTexture:
+      frame->format = AV_PIX_FMT_YUV420P;
+      break;
+    case VideoFrameType::kJ422:
+      frame->color_range = AVCOL_RANGE_JPEG;
+      [[fallthrough]];
+    case VideoFrameType::kI422:
+      frame->format = AV_PIX_FMT_YUV422P;
+      break;
+    case VideoFrameType::kI444:
+      frame->format = AV_PIX_FMT_YUV444P;
+      break;
+  }
   frame->width = codec_context_->width;
   frame->height = codec_context_->height;
   frame->pict_type = AV_PICTURE_TYPE_NONE;
@@ -464,6 +529,9 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
   assert(nullptr != codec_context_);
   assert(nullptr != frame);
   assert(nullptr != shared_frame_info_);
+  assert(nullptr != shared_frame_info_);
+
+  assert(VideoFrameType::kNone != saved_frame_info_.type);
 
   if (produce_keyframe_) {
     produce_keyframe_ = false;
@@ -473,21 +541,7 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
   }
 
   int error_code = 0;
-  if (VideoFrameType::kYuv == saved_frame_info_.type) {
-    assert(nullptr != shared_yuv_frames_);
-    auto yuv_frames =
-        reinterpret_cast<SharedVideoYuvFrames*>(shared_yuv_frames_.GetData());
-    auto yuv_frame = reinterpret_cast<PackedVideoYuvFrame*>(yuv_frames->data);
-    auto yuv_frame1 = reinterpret_cast<PackedVideoYuvFrame*>(
-        yuv_frames->data + yuv_frames->data_size);
-
-    if (yuv_frame->stats.timestamp < yuv_frame1->stats.timestamp) {
-      yuv_frame = yuv_frame1;
-    }
-    ATLTRACE2(atlTraceUtil, 0, "latest video frame %llu\n",
-              yuv_frame->stats.timestamp);
-    error_code = EncodeYuvFrame(frame, yuv_frame->data);
-  } else if (VideoFrameType::kTexture == saved_frame_info_.type) {
+  if (VideoFrameType::kTexture == saved_frame_info_.type) {
     assert(nullptr != shared_texture_frames_);
     HRESULT hr = GetSharedTexture();
     if (FAILED(hr)) {
@@ -508,7 +562,9 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
       ATLTRACE2(atlTraceException, 0, "!Map(IDXGISurface), #0x%08X\n", hr);
       return hr;
     }
-    BOOST_SCOPE_EXIT_ALL(&) { staging_surface->Unmap(); };
+    BOOST_SCOPE_EXIT_ALL(&) {
+      staging_surface->Unmap();
+    };
 
     uint32_t width = saved_frame_info_.width;
     uint32_t height = saved_frame_info_.height;
@@ -520,6 +576,7 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
     uint8_t* v = u + (pixel_size >> 2);
 
     {
+      // TO-DO: Texture is alwayse convert to YUV420P now!
       if (DXGI_FORMAT_R8G8B8A8_UNORM == saved_frame_info_.format) {
         ABGRToI420(mapped_rect.pBits, mapped_rect.Pitch, y, width, u, uv_stride,
                    v, uv_stride, width, height);
@@ -533,6 +590,20 @@ int VideoEncoder::EncodeFrame(AVFrame* frame) noexcept {
       }
     }
     error_code = EncodeYuvFrame(frame, yuv_frame_data_.data());
+  } else {
+    assert(nullptr != shared_yuv_frames_);
+    auto yuv_frames =
+        reinterpret_cast<SharedVideoYuvFrames*>(shared_yuv_frames_.GetData());
+    auto yuv_frame = reinterpret_cast<PackedVideoYuvFrame*>(yuv_frames->data);
+    auto yuv_frame1 = reinterpret_cast<PackedVideoYuvFrame*>(
+        yuv_frames->data + yuv_frames->data_size);
+
+    if (yuv_frame->stats.timestamp < yuv_frame1->stats.timestamp) {
+      yuv_frame = yuv_frame1;
+    }
+    ATLTRACE2(atlTraceUtil, 0, "latest video frame %llu\n",
+              yuv_frame->stats.timestamp);
+    error_code = EncodeYuvFrame(frame, yuv_frame->data);
   }
   return error_code;
 }
@@ -569,7 +640,9 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
   if (nullptr == packet) {
     return ERROR_OUTOFMEMORY;
   }
-  BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_free(&packet); };
+  BOOST_SCOPE_EXIT_ALL(&packet) {
+    av_packet_free(&packet);
+  };
 
   for (int written = -1;;) {
     error_code = avcodec_receive_packet(codec_context_, packet);
@@ -579,7 +652,9 @@ int VideoEncoder::EncodeYuvFrame(AVFrame* frame, const uint8_t* yuv) noexcept {
       }
       break;
     }
-    BOOST_SCOPE_EXIT_ALL(&packet) { av_packet_unref(packet); };
+    BOOST_SCOPE_EXIT_ALL(&packet) {
+      av_packet_unref(packet);
+    };
 
     packet->stream_index = stream_->index;
     written = av_write_frame(format_context_, packet);

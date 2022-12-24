@@ -36,6 +36,7 @@
 #include "../cliprdr.h"
 
 #define CLIPRDR_SVC_CHANNEL_NAME "cliprdr"
+const TCHAR kClassName[] = { _T("HiddenClipboardMessageProcessor") };
 
 /**
  * Clipboard Formats
@@ -133,10 +134,10 @@ typedef struct _FORMAT_IDS FORMAT_IDS;
 #define CHANNEL_RC_UNSUPPORTED_VERSION 19
 #define CHANNEL_RC_INITIALIZATION_ERROR 20
 
-#define TAG "windows"
+//#define TAG "windows"
 
 #ifdef WITH_DEBUG_CLIPRDR
-#define DEBUG_CLIPRDR(...) printf(TAG, __VA_ARGS__)
+#define DEBUG_CLIPRDR(...) printf(__VA_ARGS__)
 #else
 #define DEBUG_CLIPRDR(...) \
 	do                     \
@@ -674,13 +675,12 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject *This, FO
 		return E_INVALIDARG;
 
 	clipboard = (wfClipboard *)instance->m_pData;
-	if (!clipboard->context->CheckEnabled(instance->m_connID))
+	if (!clipboard)
+		return E_INVALIDARG;
+        if (!clipboard->context->CheckEnabled(clipboard->context, instance->m_connID))
 	{
 		return E_INVALIDARG;
 	}
-
-	if (!clipboard)
-		return E_INVALIDARG;
 
 	if ((idx = cliprdr_lookup_format(instance, pFormatEtc)) == -1)
 	{
@@ -1448,6 +1448,8 @@ static UINT cliprdr_send_data_request(UINT32 connID, wfClipboard *clipboard, UIN
 	remoteFormatId = get_remote_format_id(clipboard, formatId);
 
 	formatDataRequest.connID = connID;
+	formatDataRequest.msgType = 0;	// UMU
+	formatDataRequest.msgFlags = 0;	// UMU
 	formatDataRequest.dataLen = 0;	// UMU
 	formatDataRequest.requestedFormatId = remoteFormatId;
 	clipboard->requestedFormatId = formatId;
@@ -1463,7 +1465,7 @@ static UINT cliprdr_send_data_request(UINT32 connID, wfClipboard *clipboard, UIN
 		DWORD waitRes = WaitForSingleObject(clipboard->response_data_event, 50);
 		if (waitRes == WAIT_TIMEOUT)
 		{
-			if (clipboard->context->CheckEnabled(connID))
+			if (clipboard->context->CheckEnabled(clipboard->context, connID))
 			{
 				continue;
 			}
@@ -1515,6 +1517,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard *clipboard, UINT32 connID, co
 		return ERROR_INTERNAL_ERROR;
 
 	fileContentsRequest.connID = connID;
+	fileContentsRequest.msgFlags = 0;
 	fileContentsRequest.streamId = (UINT32)(ULONG_PTR)streamid;
 	fileContentsRequest.listIndex = index;
 	fileContentsRequest.dwFlags = flag;
@@ -1522,7 +1525,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard *clipboard, UINT32 connID, co
 	fileContentsRequest.nPositionHigh = positionhigh;
 	fileContentsRequest.cbRequested = nreq;
 	fileContentsRequest.clipDataId = 0;
-	fileContentsRequest.msgFlags = 0;
+
 	rc = clipboard->context->ClientFileContentsRequest(clipboard->context, &fileContentsRequest);
 	if (rc != ERROR_SUCCESS)
 	{
@@ -1535,7 +1538,7 @@ UINT cliprdr_send_request_filecontents(wfClipboard *clipboard, UINT32 connID, co
 		DWORD waitRes = WaitForSingleObject(clipboard->req_fevent, 50);
 		if (waitRes == WAIT_TIMEOUT)
 		{
-			if (clipboard->context->CheckEnabled(connID))
+			if (clipboard->context->CheckEnabled(clipboard->context, connID))
 			{
 				continue;
 			}
@@ -1608,7 +1611,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 	switch (Msg)
 	{
 	case WM_CREATE:
-		DEBUG_CLIPRDR("info: WM_CREATE");
+		DEBUG_CLIPRDR("info: WM_CREATE\n");
 		clipboard = (wfClipboard *)((CREATESTRUCT *)lParam)->lpCreateParams;
 		clipboard->hwnd = hWnd;
 
@@ -1620,7 +1623,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_CLOSE:
-		DEBUG_CLIPRDR("info: WM_CLOSE");
+		DEBUG_CLIPRDR("info: WM_CLOSE\n");
 
 		if (!clipboard->legacyApi)
 			clipboard->RemoveClipboardFormatListener(hWnd);
@@ -1634,7 +1637,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_CLIPBOARDUPDATE:
-		DEBUG_CLIPRDR("info: WM_CLIPBOARDUPDATE");
+		DEBUG_CLIPRDR("info: WM_CLIPBOARDUPDATE\n");
 		// if (clipboard->sync)
 		{
 			if ((GetClipboardOwner() != clipboard->hwnd) &&
@@ -1653,12 +1656,12 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_RENDERALLFORMATS:
-		DEBUG_CLIPRDR("info: WM_RENDERALLFORMATS");
+		DEBUG_CLIPRDR("info: WM_RENDERALLFORMATS\n");
 
 		/* discard all contexts in clipboard */
 		if (!try_open_clipboard(clipboard->hwnd))
 		{
-			DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
+			DEBUG_CLIPRDR("OpenClipboard failed with 0x%x\n", GetLastError());
 			break;
 		}
 
@@ -1667,18 +1670,18 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_RENDERFORMAT:
-		DEBUG_CLIPRDR("info: WM_RENDERFORMAT");
+		DEBUG_CLIPRDR("info: WM_RENDERFORMAT\n");
 
 		// https://docs.microsoft.com/en-us/windows/win32/dataxchg/wm-renderformat?redirectedfrom=MSDN
 		if (cliprdr_send_data_request(0, clipboard, (UINT32)wParam) != 0)
 		{
-			DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.");
+			DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.\n");
 			break;
 		}
 
 		if (!SetClipboardData((UINT)wParam, clipboard->hmem))
 		{
-			DEBUG_CLIPRDR("SetClipboardData failed with 0x%x", GetLastError());
+			DEBUG_CLIPRDR("SetClipboardData failed with 0x%x\n", GetLastError());
 
 			if (clipboard->hmem)
 			{
@@ -1719,12 +1722,12 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_CLIPRDR_MESSAGE:
-		DEBUG_CLIPRDR("info: WM_CLIPRDR_MESSAGE");
+		DEBUG_CLIPRDR("info: WM_CLIPRDR_MESSAGE\n");
 
 		switch (wParam)
 		{
 		case OLE_SETCLIPBOARD:
-			DEBUG_CLIPRDR("info: OLE_SETCLIPBOARD");
+			DEBUG_CLIPRDR("info: OLE_SETCLIPBOARD\n");
 
 			if (WaitForSingleObject(clipboard->data_obj_mutex, INFINITE) != WAIT_OBJECT_0)
 			{
@@ -1768,14 +1771,14 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			{
 				if (cliprdr_send_data_request(format_ids->connID, clipboard, format_ids->formats[i]) != 0)
 				{
-					DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.");
+					DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.\n");
 					continue;
 				}
 
 				if (!SetClipboardData(format_ids->formats[i], clipboard->hmem))
 				{
 					printf("SetClipboardData failed with 0x%x\n", GetLastError());
-					DEBUG_CLIPRDR("SetClipboardData failed with 0x%x", GetLastError());
+					DEBUG_CLIPRDR("SetClipboardData failed with 0x%x\n", GetLastError());
 
 					if (clipboard->hmem)
 					{
@@ -1826,17 +1829,17 @@ static int create_cliprdr_window(wfClipboard *clipboard)
 	wnd_cls.hCursor = NULL;
 	wnd_cls.hbrBackground = NULL;
 	wnd_cls.lpszMenuName = NULL;
-	wnd_cls.lpszClassName = _T("ClipboardHiddenMessageProcessor");
+	wnd_cls.lpszClassName = kClassName;
 	wnd_cls.hInstance = GetModuleHandle(NULL);
 	wnd_cls.hIconSm = NULL;
 	RegisterClassEx(&wnd_cls);
 	clipboard->hwnd =
-		CreateWindowEx(WS_EX_LEFT, _T("ClipboardHiddenMessageProcessor"), _T("rdpclip"), 0, 0, 0, 0,
+		CreateWindowEx(WS_EX_LEFT, kClassName, _T("rdpclip"), 0, 0, 0, 0,
 					   0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), clipboard);
 
 	if (!clipboard->hwnd)
 	{
-		DEBUG_CLIPRDR("error: CreateWindowEx failed with %x.", GetLastError());
+		DEBUG_CLIPRDR("error: CreateWindowEx failed with %x.\n", GetLastError());
 		return -1;
 	}
 
@@ -1854,7 +1857,7 @@ static DWORD WINAPI cliprdr_thread_func(LPVOID arg)
 	if ((ret = create_cliprdr_window(clipboard)) != 0)
 	{
 		OleUninitialize();
-		DEBUG_CLIPRDR("error: create clipboard window failed.");
+		DEBUG_CLIPRDR("error: create clipboard window failed.\n");
 		return 0;
 	}
 
@@ -1862,7 +1865,7 @@ static DWORD WINAPI cliprdr_thread_func(LPVOID arg)
 	{
 		if (mcode == -1)
 		{
-			DEBUG_CLIPRDR("error: clipboard thread GetMessage failed.");
+			DEBUG_CLIPRDR("error: clipboard thread GetMessage failed.\n");
 			break;
 		}
 		else
@@ -1939,7 +1942,7 @@ static BOOL wf_cliprdr_get_file_contents(WCHAR *file_name, BYTE *buffer, LONG po
 
 	if (!ReadFile(hFile, buffer, nRequested, &nGet, NULL))
 	{
-		DEBUG_CLIPRDR("ReadFile failed with 0x%08lX.", GetLastError());
+		DEBUG_CLIPRDR("ReadFile failed with 0x%08lX.\n", GetLastError());
 		goto error;
 	}
 
@@ -2032,7 +2035,7 @@ static BOOL wf_cliprdr_add_to_file_arrays(wfClipboard *clipboard, WCHAR *full_fi
 		return FALSE;
 
 	/* add to name array */
-	clipboard->file_names[clipboard->nFiles] = (LPWSTR)malloc(MAX_PATH * 2);
+	clipboard->file_names[clipboard->nFiles] = (LPWSTR)malloc(MAX_PATH * sizeof(WCHAR));
 
 	if (!clipboard->file_names[clipboard->nFiles])
 		return FALSE;
@@ -2056,7 +2059,7 @@ static BOOL wf_cliprdr_traverse_directory(wfClipboard *clipboard, WCHAR *Dir, si
 {
 	HANDLE hFind;
 	WCHAR DirSpec[MAX_PATH];
-	WIN32_FIND_DATA FindFileData;
+	WIN32_FIND_DATAW FindFileData;
 
 	if (!clipboard || !Dir)
 		return FALSE;
@@ -2072,7 +2075,7 @@ static BOOL wf_cliprdr_traverse_directory(wfClipboard *clipboard, WCHAR *Dir, si
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
 		// printf("FindFirstFile failed with 0x%x.\n", GetLastError());
-		DEBUG_CLIPRDR("FindFirstFile failed with 0x%x.", GetLastError());
+		DEBUG_CLIPRDR("FindFirstFile failed with 0x%x.\n", GetLastError());
 		return FALSE;
 	}
 
@@ -2547,6 +2550,7 @@ exit:
 		response.msgFlags = CB_RESPONSE_FAIL;
 	}
 	response.connID = formatDataRequest->connID;
+	response.msgType = 0;
 	response.dataLen = (UINT)size;
 	response.requestedFormatData = (BYTE *)buff;
 	if (ERROR_SUCCESS != clipboard->context->ClientFormatDataResponse(clipboard->context, &response))
@@ -2969,7 +2973,7 @@ BOOL wf_cliprdr_uninit(wfClipboard *clipboard, CliprdrClientContext *cliprdr)
 	{
 		if (!EmptyClipboard())
 		{
-			DEBUG_CLIPRDR("EmptyClipboard failed with 0x%x", GetLastError());
+			DEBUG_CLIPRDR("EmptyClipboard failed with 0x%x\n", GetLastError());
 		}
 		if (!CloseClipboard())
 		{
@@ -2978,7 +2982,7 @@ BOOL wf_cliprdr_uninit(wfClipboard *clipboard, CliprdrClientContext *cliprdr)
 	}
 	else
 	{
-		DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
+		DEBUG_CLIPRDR("OpenClipboard failed with 0x%x\n", GetLastError());
 	}
 
 	if (clipboard->hwnd)
@@ -3079,7 +3083,7 @@ BOOL wf_do_empty_cliprdr(wfClipboard *clipboard)
 		/* discard all contexts in clipboard */
 		if (!try_open_clipboard(clipboard->hwnd))
 		{
-			DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
+			DEBUG_CLIPRDR("OpenClipboard failed with 0x%x\n", GetLastError());
 			rc = FALSE;
 			break;
 		}

@@ -29,14 +29,18 @@ constexpr REFERENCE_TIME kReferenceTimePerSecond = 10000000;
 constexpr REFERENCE_TIME kReferenceTimePerMilliSecond = 10000;
 
 namespace {
-int64_t GetChannelLayout(const WAVEFORMATEX* wave_format) noexcept {
+void GetChannelLayout(const WAVEFORMATEX* wave_format,
+                      AVChannelLayout* channel_layout) noexcept {
   assert(nullptr != wave_format);
 
   if (WAVE_FORMAT_EXTENSIBLE == wave_format->wFormatTag) {
-    return reinterpret_cast<const WAVEFORMATEXTENSIBLE*>(wave_format)
-        ->dwChannelMask;
+    av_channel_layout_from_mask(
+        channel_layout,
+        reinterpret_cast<const WAVEFORMATEXTENSIBLE*>(wave_format)
+            ->dwChannelMask);
+  } else {
+    av_channel_layout_default(channel_layout, wave_format->nChannels);
   }
-  return av_get_default_channel_layout(wave_format->nChannels);
 }
 
 AVSampleFormat GetSampleFormat(const WAVEFORMATEX* wave_format) noexcept {
@@ -172,8 +176,9 @@ HRESULT SoundCapturer::GetAudioInfo(AudioInfo* info) {
 
   info->sample_rate = wave_format->nSamplesPerSec;
   info->sample_bits = wave_format->wBitsPerSample;
-  info->channel_layout = GetChannelLayout(wave_format);
-  info->channels = wave_format->nChannels;
+  // info->channel_layout = GetChannelLayout(wave_format);
+  // info->channels = wave_format->nChannels;
+  GetChannelLayout(wave_format, &info->channel_layout);
   info->sample_format = GetSampleFormat(wave_format);
   return hr;
 }
@@ -254,12 +259,14 @@ HRESULT SoundCapturer::CaptureThread() {
       kReferenceTimePerMilliSecond);  // convert to milliseconds
   ATLTRACE2(atlTraceUtil, 0, "time_between_fires = %d\n", time_between_fires);
 
-  assert(0 != out_channel_layout_);
+  // assert(0 != out_channel_layout_);
   assert(AV_SAMPLE_FMT_NONE != out_sample_format_);
   assert(0 != out_sample_rate_);
+  AVChannelLayout in_channel_layout;
+  GetChannelLayout(wave_format, &in_channel_layout);
   int error_code = audio_resampler_.Initialize(
-      GetChannelLayout(wave_format), GetSampleFormat(wave_format),
-      wave_format->nSamplesPerSec, out_channel_layout_, out_sample_format_,
+      &in_channel_layout, GetSampleFormat(wave_format),
+      wave_format->nSamplesPerSec, &out_channel_layout_, out_sample_format_,
       out_sample_rate_, frame_size_);
   if (error_code < 0) {
     APP_ERROR() << "Initialize resampler failed with " << error_code << ".\n";
@@ -273,7 +280,7 @@ HRESULT SoundCapturer::CaptureThread() {
     return hr;
   }
   SharedAudioFrames* saf = shared_frame_;
-  if (saf->channels != av_get_channel_layout_nb_channels(out_channel_layout_) ||
+  if (saf->channels != out_channel_layout_.nb_channels ||
       saf->frame_size != frame_size_ ||
       saf->sample_format != out_sample_format_) {
     APP_ERROR() << "Invalid audio frame format.\n";
@@ -361,7 +368,7 @@ HRESULT SoundCapturer::CaptureThread() {
       if (ok) {
         int new_size = 0;
         audio_resampler_.Store(data, frames_to_read, &new_size);
-        if (new_size > frame_size_) {
+        if (new_size >= frame_size_) {
           // Map
           SetEvent(shared_frame_ready_event_);
         }

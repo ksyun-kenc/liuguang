@@ -72,11 +72,11 @@ void Engine::Run(tcp::endpoint ws_endpoint,
     switch (u.host_type()) {
       case host_type::ipv4:
         user_service_endpoint_ = tcp::endpoint{
-            net::ip::address_v4(u.ipv4_address().to_uint()), port};
+            net::ip::address_v4(u.host_ipv4_address().to_uint()), port};
         break;
       case host_type::ipv6:
         user_service_endpoint_ = tcp::endpoint{
-            net::ip::address_v6{u.ipv6_address().to_bytes()}, port};
+            net::ip::address_v6{u.host_ipv6_address().to_bytes()}, port};
         break;
       default:
         APP_ERROR() << "Unsupported host type in user service URI: " << u.host()
