@@ -3,7 +3,7 @@
 	url = https://github.com/ViGEm/ViGEmClient.git
 [submodule "src/deps/include/dry"]
 	path = src/deps/include/dry
-	url = https://github.com/UMU618/dry
+	url = https://github.com/ksyun-kenc/dry
 [submodule "src/deps/fast_io"]
 	path = src/deps/fast_io
 	url = https://github.com/cppfastio/fast_io
@@ -12,10 +12,7 @@
 	url = https://github.com/protocolbuffers/protobuf
 [submodule "src/ClipboardSync"]
 	path = src/ClipboardSync
-	url = https://github.com/UMU618/ClipboardSync
+	url = https://github.com/ksyun-kenc/ClipboardSync
 [submodule "src/deps/umu"]
 	path = src/deps/umu
 	url = https://github.com/UMU618/umu
-[submodule "src/deps/boostorg/url"]
-	path = src/deps/boostorg/url
-	url = https://github.com/boostorg/url
